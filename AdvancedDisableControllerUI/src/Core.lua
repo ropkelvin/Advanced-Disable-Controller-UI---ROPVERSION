@@ -153,6 +153,7 @@ local function RefreshPlatformMode()
 end
 
 function ADDON:Refresh()
+    self:LogDebug("Refreshing UI presentation.")
     InstallModeOverride()
 
     if self.ApplyAll then
@@ -213,24 +214,28 @@ end
 function ADDON:ToggleUI()
     local settings = GetSettings()
     settings.useControllerUI = not settings.useControllerUI
+    self:LogInfo("UI mode toggled. Native gamepad UI:", tostring(settings.useControllerUI))
     self:Refresh()
 end
 
 function ADDON:ToggleButtons()
     local settings = GetSettings()
     settings.useGamepadButtons = not settings.useGamepadButtons
+    self:LogInfo("Gamepad button prompts:", tostring(settings.useGamepadButtons))
     self:Refresh()
 end
 
 function ADDON:ToggleActionBar()
     local settings = GetSettings()
     settings.useGamepadActionBar = not settings.useGamepadActionBar
+    self:LogInfo("Gamepad action bar:", tostring(settings.useGamepadActionBar))
     self:Refresh()
 end
 
 function ADDON:ToggleResourceBars()
     local settings = GetSettings()
     settings.useGamepadResourceBars = not settings.useGamepadResourceBars
+    self:LogInfo("Gamepad resource bars:", tostring(settings.useGamepadResourceBars))
     self:Refresh()
 end
 
@@ -306,6 +311,7 @@ end
 
 local function OnLockpickBegin()
     ADDON.runtime.isLockpicking = true
+    ADDON:LogDebug("Lockpicking began.")
     ADDON:Refresh()
 end
 
@@ -314,10 +320,12 @@ local function OnLockpickEnd()
         return
     end
     ADDON.runtime.isLockpicking = false
+    ADDON:LogDebug("Lockpicking ended.")
     ADDON:Refresh()
 end
 
 local function OnGamepadPreferredModeChanged()
+    ADDON:LogDebug("ESO gamepad-preferred-mode event received. Physical gamepad preference:", tostring(OriginalGamepadPreferredMode()))
     InstallModeOverride()
     if ADDON.ApplyAll then
         ADDON:ApplyAll()
@@ -330,6 +338,11 @@ local function OnAddonLoaded(_, addonName)
     end
 
     InitializeSavedVariables()
+    if ADDON.InitializeDiagnostics then
+        ADDON:InitializeDiagnostics()
+        ADDON:RegisterDiagnosticCommands()
+        ADDON:LogInfo("Initializing addon", ADDON.VERSION)
+    end
     InstallModeOverride()
 
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickBegin", EVENT_BEGIN_LOCKPICK, OnLockpickBegin)
@@ -360,7 +373,7 @@ local function OnAddonLoaded(_, addonName)
     ADDON:Refresh()
 
     if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-        CHAT_SYSTEM:AddMessage("[ADCUI] " .. ADDON.VERSION .. " loaded. Controller input remains enabled; use /adcui for the UI toggle.")
+        CHAT_SYSTEM:AddMessage("[ADCUI] " .. ADDON.VERSION .. " loaded. Controller input remains enabled; use /adcui for the UI toggle. Debug: /adcui_debug on, snapshot: /adcui_dump.")
     end
     EVENT_MANAGER:UnregisterForEvent(ADDON.ADDON_NAME, EVENT_ADD_ON_LOADED)
 end

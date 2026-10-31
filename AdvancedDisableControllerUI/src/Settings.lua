@@ -28,6 +28,20 @@ function ADDON:RegisterSettings()
         },
         {
             type = "checkbox",
+            name = "Use account-wide settings",
+            tooltip = "Share this addon's settings across all characters on this account.",
+            default = false,
+            getFunc = function()
+                return ADDON.savedVariables.useAccountWideSettings
+            end,
+            setFunc = function(value)
+                ADDON.savedVariables.useAccountWideSettings = value
+                ADDON.savedVariablesAccountWide.useAccountWideSettings = value
+                ADDON:Refresh()
+            end,
+        },
+        {
+            type = "checkbox",
             name = "Use native gamepad UI",
             tooltip = "Enable ESO's normal gamepad interface. Disable this to use the keyboard-style interface while continuing to play with a controller.",
             default = ADDON.defaults.useControllerUI,

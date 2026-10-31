@@ -193,6 +193,27 @@ local function RefreshRegisteredPromptLabels()
     end
 end
 
+local function InstallDeathPromptHook()
+    local runtime = ADDON.runtime
+    if runtime.deathPromptHookInstalled or not DEATH or type(DEATH.ApplyStyle) ~= "function" then
+        return
+    end
+
+    local originalApplyStyle = DEATH.ApplyStyle
+    runtime.originalDeathApplyStyle = originalApplyStyle
+    DEATH.ApplyStyle = function(death, ...)
+        if ShouldForceControllerPrompts() then
+            -- ESO's death screen selects its keyboard button templates because
+            -- Hybrid mode intentionally reports keyboard UI during gameplay.
+            -- Temporarily expose the real native Gamepad preference while
+            -- the death screen applies its own platform templates.
+            return ADDON:WithNativeGamepadMode(originalApplyStyle, death, ...)
+        end
+        return originalApplyStyle(death, ...)
+    end
+    runtime.deathPromptHookInstalled = true
+end
+
 local function RefreshReticlePrompt()
     if not RETICLE or not RETICLE.interactKeybindButton then return end
     local button = RETICLE.interactKeybindButton
@@ -288,6 +309,7 @@ function ADDON:ApplyPrompts()
     HookStackAllMapping()
     ApplyReticleFonts(settings, forceGamepadPrompts)
     InstallSynergyPromptHook()
+    InstallDeathPromptHook()
     RefreshRegisteredPromptLabels()
     RefreshReticlePrompt()
     RefreshPlayerInteractionPrompt()

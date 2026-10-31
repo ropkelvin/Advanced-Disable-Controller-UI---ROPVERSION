@@ -59,8 +59,8 @@ local function CopyGamepadDefaultBindings(sourceActionName, targetActionName)
         end
 
         if key and key ~= KEY_INVALID and (not IsKeyCodeGamepadKey or IsKeyCodeGamepadKey(key)) then
-            local ok = pcall(CreateDefaultActionBind, targetActionName, key, mod1, mod2, mod3, mod4)
-            if ok then copiedAny = true end
+            local ok, result = pcall(CreateDefaultActionBind, targetActionName, key, mod1, mod2, mod3, mod4)
+            if ok and result ~= false then copiedAny = true end
         end
     end
 

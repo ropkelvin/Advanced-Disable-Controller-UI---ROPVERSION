@@ -9,7 +9,7 @@ local function IsCategoryAvailable(category)
 
     local categoryInfo = MAIN_MENU_KEYBOARD.categoryInfo[category]
     local layoutInfo = ZO_CATEGORY_LAYOUT_INFO[category]
-    if not categoryInfo or not layoutInfo or layoutInfo.hideCategoryBar then
+    if not categoryInfo or not layoutInfo or layoutInfo.hideCategoryBar or layoutInfo.alias then
         return false
     end
 
@@ -18,16 +18,27 @@ local function IsCategoryAvailable(category)
         if not ok or not visible then return false end
     end
 
-    if categoryInfo.disableWhenDead and MAIN_MENU_MANAGER and MAIN_MENU_MANAGER.IsPlayerDead
-        and MAIN_MENU_MANAGER:IsPlayerDead() then
+    local manager = MAIN_MENU_MANAGER
+    if layoutInfo.disableWhenDead and manager and manager.IsPlayerDead and manager:IsPlayerDead() then
         return false
     end
-    if categoryInfo.disableWhenInCombat and MAIN_MENU_MANAGER and MAIN_MENU_MANAGER.IsPlayerInCombat
-        and MAIN_MENU_MANAGER:IsPlayerInCombat() then
+    if layoutInfo.disableWhenInCombat and manager and manager.IsPlayerInCombat and manager:IsPlayerInCombat() then
         return false
     end
-    if categoryInfo.disableWhenReviving and MAIN_MENU_MANAGER and MAIN_MENU_MANAGER.IsPlayerReviving
-        and MAIN_MENU_MANAGER:IsPlayerReviving() then
+    if layoutInfo.disableWhenReviving and manager and manager.IsPlayerReviving and manager:IsPlayerReviving() then
+        return false
+    end
+    if layoutInfo.disableWhenSwimming and manager and manager.IsPlayerSwimming and manager:IsPlayerSwimming() then
+        return false
+    end
+    if layoutInfo.disableWhenWerewolf and manager and manager.IsPlayerWerewolf and manager:IsPlayerWerewolf() then
+        return false
+    end
+    if layoutInfo.disableWhenPassenger and manager and manager.IsPlayerPassenger and manager:IsPlayerPassenger() then
+        return false
+    end
+    if layoutInfo.disableWhenNoTamrielTomesAreAvailable and TAMRIEL_TOMES_MANAGER
+        and not TAMRIEL_TOMES_MANAGER:AreTomesAvailable() then
         return false
     end
 

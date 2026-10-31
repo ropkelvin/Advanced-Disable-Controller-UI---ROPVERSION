@@ -123,6 +123,84 @@ local function HookStackAllMapping()
     ADDON.runtime.promptHooksInstalled = true
 end
 
+local function ShouldForceControllerPrompts()
+    local settings = ADDON:GetSettings()
+    return settings.useGamepadButtons == true
+        and settings.useControllerUI ~= true
+        and ADDON:IsNativeGamepadMode()
+end
+
+local function InstallGlobalPromptHooks()
+    local runtime = ADDON.runtime
+    if runtime.globalPromptHooksInstalled then return end
+
+    runtime.promptBindingRegistrations = runtime.promptBindingRegistrations or setmetatable({}, { __mode = "k" })
+
+    local originalRegister = ZO_Keybindings_RegisterLabelForBindingUpdate
+    if type(originalRegister) == "function" then
+        runtime.originalRegisterPromptLabel = originalRegister
+        ZO_Keybindings_RegisterLabelForBindingUpdate = function(label, actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ...)
+            local force = ShouldForceControllerPrompts()
+            runtime.promptBindingRegistrations[label] = {
+                register = originalRegister,
+                args = { actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ... },
+            }
+            return originalRegister(label, actionName, showUnbound, gamepadActionName, callback, force or alwaysPreferGamepadMode, ...)
+        end
+    end
+
+    local originalInline = ZO_Keybindings_RegisterLabelForInLineBindingUpdate
+    if type(originalInline) == "function" then
+        runtime.originalRegisterInlinePromptLabel = originalInline
+        ZO_Keybindings_RegisterLabelForInLineBindingUpdate = function(label, actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ...)
+            local force = ShouldForceControllerPrompts()
+            runtime.promptBindingRegistrations[label] = {
+                register = originalInline,
+                args = { actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ... },
+            }
+            return originalInline(label, actionName, showUnbound, gamepadActionName, callback, force or alwaysPreferGamepadMode, ...)
+        end
+    end
+
+    if ZO_KeybindButtonMixin and type(ZO_KeybindButtonMixin.SetKeybind) == "function" then
+        local originalSetKeybind = ZO_KeybindButtonMixin.SetKeybind
+        runtime.originalKeybindButtonSetKeybind = originalSetKeybind
+        ZO_KeybindButtonMixin.SetKeybind = function(button, keybind, showUnbound, gamepadPreferredKeybind, alwaysPreferGamepadMode, ...)
+            local force = ShouldForceControllerPrompts()
+            button.adcuiPromptKeybind = {
+                keybind, showUnbound, gamepadPreferredKeybind, alwaysPreferGamepadMode, ...
+            }
+            return originalSetKeybind(button, keybind, showUnbound, gamepadPreferredKeybind, force or alwaysPreferGamepadMode, ...)
+        end
+    end
+
+    runtime.globalPromptHooksInstalled = true
+end
+
+local function RefreshRegisteredPromptLabels()
+    local runtime = ADDON.runtime
+    local registrations = runtime.promptBindingRegistrations
+    local unregister = ZO_Keybindings_UnregisterLabelForBindingUpdate
+    if not registrations or type(unregister) ~= "function" then return end
+
+    local force = ShouldForceControllerPrompts()
+    for label, registration in pairs(registrations) do
+        if label and registration and registration.register then
+            unregister(label)
+            local args = registration.args
+            registration.register(label, args[1], args[2], args[3], args[4], force or args[5], unpack(args, 6))
+        end
+    end
+end
+
+local function RefreshReticlePrompt()
+    if not RETICLE or not RETICLE.interactKeybindButton then return end
+    local button = RETICLE.interactKeybindButton
+    if type(button.SetKeybind) == "function" then
+        button:SetKeybind("GAME_CAMERA_INTERACT", false, "GAMEPAD_JUMP_OR_INTERACT", ShouldForceControllerPrompts())
+    end
+end
+
 local function ApplyReticleFonts(settings, forceGamepadPrompts)
     if settings.useControllerUI or not ADDON:IsNativeGamepadMode() then
         return
@@ -160,6 +238,7 @@ function ADDON:ApplyPrompts()
         and not settings.useControllerUI
         and self:IsNativeGamepadMode()
 
+    InstallGlobalPromptHooks()
     KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = forceGamepadPrompts
     if not forceGamepadPrompts then
         RestoreStackAllMappings()
@@ -167,6 +246,8 @@ function ADDON:ApplyPrompts()
     RemapKnownDescriptors(forceGamepadPrompts)
     HookStackAllMapping()
     ApplyReticleFonts(settings, forceGamepadPrompts)
+    RefreshRegisteredPromptLabels()
+    RefreshReticlePrompt()
 
     if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle then
         KEYBIND_STRIP:SetStyle(KEYBIND_STRIP_STANDARD_STYLE)
@@ -178,4 +259,6 @@ function ADDON:RestorePromptStyles()
         KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = self.runtime.promptStyleOriginal
     end
     RestoreSavedValues()
+    RefreshRegisteredPromptLabels()
+    RefreshReticlePrompt()
 end

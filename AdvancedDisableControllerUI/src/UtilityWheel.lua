@@ -53,7 +53,7 @@ local function CopyGamepadDefaultBindings(sourceActionName, targetActionName)
         local key, mod1, mod2, mod3, mod4 =
             GetActionBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
 
-        if key == KEY_INVALID and type(GetActionDefaultBindingInfo) == "function" then
+        if (not key or key == KEY_INVALID) and type(GetActionDefaultBindingInfo) == "function" then
             key, mod1, mod2, mod3, mod4 =
                 GetActionDefaultBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
         end

@@ -41,6 +41,7 @@ The original addon's default enabled the large gamepad action bar. The modernize
 ## Commands
 
 - `/adcui` — toggle native gamepad UI vs keyboard-style UI.
+- `/adcui_settings` — open the addon settings panel.
 - `/adcui_status` — print active mode, prompts, action-bar and resource-bar state.
 - `/adcui_buttons` — toggle gamepad button prompts.
 - `/adcui_actionbar` — toggle gamepad-style action bar.

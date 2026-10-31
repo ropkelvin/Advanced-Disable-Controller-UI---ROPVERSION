@@ -70,7 +70,7 @@ local function ShouldUseControllerActionGlyphs()
 end
 
 local function RegisterControllerActionGlyph(button)
-    if not button or not button.buttonText or not ShouldUseControllerActionGlyphs()
+    if not button or not button.buttonText
         or type(ZO_Keybindings_RegisterLabelForBindingUpdate) ~= "function" then
         return
     end
@@ -101,8 +101,23 @@ local function RegisterControllerActionGlyph(button)
         HIDE_UNBOUND,
         gamepadActionName,
         nil,
-        true
+        ShouldUseControllerActionGlyphs()
     )
+end
+
+local function RefreshExistingActionGlyphs()
+    if type(ZO_ActionBar_GetButton) ~= "function" then return end
+
+    for _, hotbarCategory in ipairs({ HOTBAR_CATEGORY_PRIMARY, HOTBAR_CATEGORY_BACKUP }) do
+        for slotNum = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1,
+            ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + ACTION_BAR_SLOTS_PER_PAGE - 1 do
+            RegisterControllerActionGlyph(ZO_ActionBar_GetButton(slotNum, hotbarCategory))
+        end
+        RegisterControllerActionGlyph(ZO_ActionBar_GetButton(ACTION_BAR_ULTIMATE_SLOT_INDEX + 1, hotbarCategory))
+    end
+
+    RegisterControllerActionGlyph(ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL))
+    RegisterControllerActionGlyph(ZO_ActionBar_GetButton(ACTION_BAR_ULTIMATE_SLOT_INDEX + 1, HOTBAR_CATEGORY_COMPANION))
 end
 
 local function InstallActionButtonHooks()
@@ -156,6 +171,7 @@ function ADDON:ApplyActionBar()
     InstallTemplateHook()
     InstallPlatformStyleHook()
     InstallActionButtonHooks()
+    RefreshExistingActionGlyphs()
     -- The core refreshes EVENT_GAMEPAD_PREFERRED_MODE_CHANGED after hooks are
     -- installed. ESO's own platform-style manager then reapplies the bar layout.
 end

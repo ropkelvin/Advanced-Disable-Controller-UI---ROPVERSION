@@ -1,0 +1,33 @@
+name: Addon static checks
+
+on:
+  push:
+    branches:
+      - "modernize/**"
+  pull_request:
+
+jobs:
+  lua-and-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua 5.1 parser
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1
+      - name: Check Lua syntax
+        run: |
+          find AdvancedDisableControllerUI -name '*.lua' -print0 | xargs -0 -r -n1 luac5.1 -p
+      - name: Check manifest and dependency migration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path("AdvancedDisableControllerUI")
+          manifest = (root / "AdvancedDisableControllerUI.txt").read_text()
+          assert "## APIVersion: 101051" in manifest
+          assert "## DependsOn: LibAddonMenu-2.0>=43" in manifest
+          assert "LibStub" not in manifest
+          for path in root.rglob("*.lua"):
+              assert "LibStub" not in path.read_text(), f"Legacy LibStub reference in {path}"
+          print("Manifest and dependency checks passed.")
+          PY

@@ -51,13 +51,14 @@ function ADDON:WithNativeGamepadMode(callback, ...)
     local runtime = ADDON.runtime
     runtime.forceNativeModeDepth = runtime.forceNativeModeDepth + 1
 
-    local results = { pcall(callback, ...) }
+    local function Pack(...) return { n = select("#", ...), ... } end
+    local results = Pack(pcall(callback, ...))
     runtime.forceNativeModeDepth = math.max(0, runtime.forceNativeModeDepth - 1)
 
     if not results[1] then
         error(results[2], 0)
     end
-    return unpack(results, 2)
+    return unpack(results, 2, results.n)
 end
 
 local function IsGamepadUIAllowed()

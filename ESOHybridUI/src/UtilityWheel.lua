@@ -3,8 +3,8 @@
 -- gamepad cycle actions on IsInGamepadPreferredMode(). We keep the keyboard
 -- wheel selected, then add a short-lived gamepad-input action layer.
 
-local ADDON = ADCUI
-local BRIDGE_LAYER = "ADCUI_UTILITY_WHEEL_BRIDGE"
+local ADDON = ESOHybridUI
+local BRIDGE_LAYER = "ESOHybridUI_UTILITY_WHEEL_BRIDGE"
 
 if ZO_CreateStringId then
     ZO_CreateStringId("SI_BINDING_NAME_ADCUI_UTILITY_WHEEL_CYCLE_LEFT", "Cycle utility wheel left (controller)")

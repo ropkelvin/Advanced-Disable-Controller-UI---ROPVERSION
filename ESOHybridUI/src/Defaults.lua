@@ -1,10 +1,10 @@
--- Advanced Disable Controller UI
--- ADCUI Update 51 baseline. This is a clean, independent addon configuration.
+-- ESO Hybrid UI
+-- ESOHybridUI Update 51 baseline. This is a clean, independent addon configuration.
 
-ADCUI = ADCUI or {}
+ESOHybridUI = ESOHybridUI or {}
 
 if ZO_CreateStringId then
-    ZO_CreateStringId("SI_KEYBINDINGS_CATEGORY_ADCUI", "Advanced Disable Controller UI")
+    ZO_CreateStringId("SI_KEYBINDINGS_CATEGORY_ESO_HYBRID_UI", "ESO Hybrid UI")
     ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_UI", "Toggle keyboard / gamepad UI")
     ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_BUTTONS", "Toggle gamepad button prompts")
     ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_ACTION_BAR", "Toggle gamepad action bar")
@@ -12,12 +12,12 @@ if ZO_CreateStringId then
     ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_COMPASS_LOCK", "Lock / unlock compass")
 end
 
-ADCUI.ADDON_NAME = "ADCUI"
-ADCUI.SAVED_VARIABLES = "ADCUI_SavedVariables"
-ADCUI.SAVED_VARIABLES_VERSION = 1
-ADCUI.VERSION = "2.1.0"
+ESOHybridUI.ADDON_NAME = "ESOHybridUI"
+ESOHybridUI.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
+ESOHybridUI.SAVED_VARIABLES_VERSION = 1
+ESOHybridUI.VERSION = "2.1.0"
 
-ADCUI.defaults = {
+ESOHybridUI.defaults = {
     -- Main behavior
     useControllerUI = false,
     useHybridUI = false,
@@ -50,7 +50,7 @@ ADCUI.defaults = {
     debugLoggingEnabled = false,
 }
 
-ADCUI.runtime = {
+ESOHybridUI.runtime = {
     originalIsInGamepadPreferredMode = nil,
     forceNativeModeDepth = 0,
     isLockpicking = false,

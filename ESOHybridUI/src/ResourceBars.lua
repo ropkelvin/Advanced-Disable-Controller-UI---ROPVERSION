@@ -1,7 +1,7 @@
 -- Resource bars are independently styleable from the action bar and the rest
 -- of the keyboard-style interface.
 
-local ADDON = ADCUI
+local ADDON = ESOHybridUI
 
 function ADDON:ShouldUseGamepadResourceBars()
     local settings = self:GetSettings()

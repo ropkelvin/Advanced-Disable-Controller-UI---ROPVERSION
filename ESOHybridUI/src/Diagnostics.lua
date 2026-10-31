@@ -1,7 +1,7 @@
 -- Optional LibDebugLogger integration and in-game diagnostics.
 -- LibDebugLogger is deliberately optional: the addon remains usable without it.
 
-local ADDON = ADCUI
+local ADDON = ESOHybridUI
 
 local function SafeCall(object, method, ...)
     if object and type(object[method]) == "function" then
@@ -15,7 +15,7 @@ local function FallbackMessage(level, ...)
     for index = 1, select("#", ...) do
         parts[#parts + 1] = tostring(select(index, ...))
     end
-    local message = "[ADCUI][" .. tostring(level) .. "] " .. table.concat(parts, " ")
+    local message = "[ESO Hybrid UI][" .. tostring(level) .. "] " .. table.concat(parts, " ")
     if type(d) == "function" then
         d(message)
     elseif CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
@@ -26,10 +26,10 @@ end
 function ADDON:InitializeDiagnostics()
     local logger
     if type(LibDebugLogger) == "function" then
-        local ok, result = pcall(LibDebugLogger, "ADCUI")
+        local ok, result = pcall(LibDebugLogger, "ESOHybridUI")
         if ok then logger = result end
     elseif type(LibDebugLogger) == "table" and type(LibDebugLogger.Create) == "function" then
-        local ok, result = pcall(LibDebugLogger.Create, "ADCUI")
+        local ok, result = pcall(LibDebugLogger.Create, "ESOHybridUI")
         if ok then logger = result end
     end
 
@@ -141,7 +141,7 @@ function ADDON:DumpDiagnostics()
 end
 
 function ADDON:RegisterDiagnosticCommands()
-    SLASH_COMMANDS["/adcui_debug"] = function(argument)
+    SLASH_COMMANDS["/esohybrid_debug"] = function(argument)
         local value = string.lower(tostring(argument or "")):match("^%s*(.-)%s*$")
         if value == "on" then
             ADDON:SetDebugLogging(true)
@@ -152,7 +152,9 @@ function ADDON:RegisterDiagnosticCommands()
         end
     end
 
-    SLASH_COMMANDS["/adcui_dump"] = function()
+    SLASH_COMMANDS["/esohybrid_dump"] = function()
         ADDON:DumpDiagnostics()
     end
+    SLASH_COMMANDS["/adcui_debug"] = SLASH_COMMANDS["/esohybrid_debug"]
+    SLASH_COMMANDS["/adcui_dump"] = SLASH_COMMANDS["/esohybrid_dump"]
 end

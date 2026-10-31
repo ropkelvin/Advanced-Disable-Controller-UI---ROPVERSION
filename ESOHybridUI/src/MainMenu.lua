@@ -1,6 +1,6 @@
 -- Shoulder-button category navigation for the keyboard main menu.
 
-local ADDON = ADCUI
+local ADDON = ESOHybridUI
 
 local function IsCategoryAvailable(category)
     if not MAIN_MENU_KEYBOARD or not MAIN_MENU_KEYBOARD.categoryInfo or not ZO_CATEGORY_LAYOUT_INFO then

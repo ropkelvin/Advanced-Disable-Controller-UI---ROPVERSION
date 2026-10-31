@@ -1,6 +1,6 @@
 -- LibAddonMenu-2.0 settings panel. Access LAM through its native global; no LibStub.
 
-local ADDON = ADCUI
+local ADDON = ESOHybridUI
 
 local function SettingCheckbox(name, tooltip, key, refresh)
     return {
@@ -40,18 +40,18 @@ end
 function ADDON:RegisterSettings()
     if not LibAddonMenu2 then
         if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-            CHAT_SYSTEM:AddMessage("[ADCUI] LibAddonMenu-2.0 >= 43 is required; settings panel was skipped.")
+            CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] LibAddonMenu-2.0 >= 43 is required; settings panel was skipped.")
         end
         return
     end
 
-    local panelName = "ADCUI_Settings"
+    local panelName = "ESOHybridUI_Settings"
     LibAddonMenu2:RegisterAddonPanel(panelName, {
         type = "panel",
-        name = "Advanced Disable Controller UI",
+        name = "ESO Hybrid UI",
         author = "RopKelvin",
         version = ADDON.VERSION,
-        slashCommand = "/adcui_settings",
+        slashCommand = "/esohybrid_settings",
         registerForRefresh = true,
         registerForDefaults = true,
     })
@@ -116,7 +116,7 @@ function ADDON:RegisterSettings()
         {
             type = "checkbox",
             name = "Enable diagnostic logging",
-            tooltip = "Record detailed ADCUI debug messages and stack traces through LibDebugLogger. Use /adcui_debug on or /adcui_debug off. Install LibDebugLogger and DebugLogViewer to inspect and share logs.",
+            tooltip = "Record detailed ESOHybridUI debug messages and stack traces through LibDebugLogger. Use /esohybrid_debug on or /esohybrid_debug off. Install LibDebugLogger and DebugLogViewer to inspect and share logs.",
             default = false,
             getFunc = function() return ADDON.runtime.debugLoggingEnabled end,
             setFunc = function(value) ADDON:SetDebugLogging(value) end,
@@ -205,7 +205,7 @@ function ADDON:RegisterSettings()
         FontDropdown("Reticle context font", "Font used for the interaction context text.", "reticleContext", fontNames, fontValues),
         FontDropdown("Stealth icon font", "Font used for stealth and lockpicking prompts.", "stealthIcon", fontNames, fontValues),
 
-        { type = "description", text = "Quick commands: /adcui, /adcui_status, /adcui_buttons, /adcui_actionbar, /adcui_compasslock, /adcui_debug on|off, /adcui_dump." },
+        { type = "description", text = "Quick commands: /esohybrid, /esohybrid_status, /esohybrid_buttons, /esohybrid_actionbar, /esohybrid_compasslock, /esohybrid_debug on|off, /esohybrid_dump." },
     }
 
     LibAddonMenu2:RegisterOptionControls(panelName, options)

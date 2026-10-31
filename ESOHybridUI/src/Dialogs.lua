@@ -1,7 +1,7 @@
 -- Keep the keyboard dialog layout while allowing gamepad glyph generation
 -- during dialog construction. The explicit isGamepad argument is preserved.
 
-local ADDON = ADCUI
+local ADDON = ESOHybridUI
 
 function ADDON:ApplyDialogs()
     if self.runtime.dialogHooksInstalled or type(ZO_Dialogs_ShowDialog) ~= "function" then

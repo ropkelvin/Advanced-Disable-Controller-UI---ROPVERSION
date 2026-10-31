@@ -1,6 +1,6 @@
 -- Gamepad glyphs on keyboard-style UI, without switching the entire UI platform.
 
-local ADDON = ADCUI
+local ADDON = ESOHybridUI
 local NIL_VALUE = {}
 
 local function SaveAndSet(object, key, value)
@@ -167,7 +167,7 @@ local function InstallGlobalPromptHooks()
         runtime.originalKeybindButtonSetKeybind = originalSetKeybind
         ZO_KeybindButtonMixin.SetKeybind = function(button, keybind, showUnbound, gamepadPreferredKeybind, alwaysPreferGamepadMode, ...)
             local force = ShouldForceControllerPrompts()
-            button.adcuiPromptKeybind = {
+            button.esoHybridPromptKeybind = {
                 keybind, showUnbound, gamepadPreferredKeybind, alwaysPreferGamepadMode, ...
             }
             return originalSetKeybind(button, keybind, showUnbound, gamepadPreferredKeybind, force or alwaysPreferGamepadMode, ...)

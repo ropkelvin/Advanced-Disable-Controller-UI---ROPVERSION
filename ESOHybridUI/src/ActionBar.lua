@@ -2,7 +2,7 @@
 -- Uses current ZO_PlatformStyle and ActionButton entry points instead of copying
 -- the old 2019 ActionButton implementation.
 
-local ADDON = ADCUI
+local ADDON = ESOHybridUI
 
 local ACTION_BAR_TEMPLATES = {
     ZO_ActionButton = true,

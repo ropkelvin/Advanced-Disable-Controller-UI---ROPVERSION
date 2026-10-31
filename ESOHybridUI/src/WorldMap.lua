@@ -1,6 +1,6 @@
 -- Keep the keyboard map's default pan origin when opened with a controller.
 
-local ADDON = ADCUI
+local ADDON = ESOHybridUI
 
 local function ResetWorldMapOffset()
     local settings = ADDON:GetSettings()

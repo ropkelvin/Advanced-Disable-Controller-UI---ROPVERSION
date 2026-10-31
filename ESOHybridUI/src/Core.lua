@@ -1,6 +1,6 @@
 -- Core: separates controller input preference from the UI's preferred platform.
 
-local ADDON = ADCUI
+local ADDON = ESOHybridUI
 
 local function DeepCopy(source)
     if type(source) ~= "table" then
@@ -180,20 +180,20 @@ function ADDON:SetUseAccountWideSettings(enabled)
     local character = self.savedVariables
     local account = self.savedVariablesAccountWide
 
-    if enabled and not account._adcuiInitialized then
-        -- First-time account-wide setup: copy this character's clean ADCUI
+    if enabled and not account._esoHybridInitialized then
+        -- First-time account-wide setup: copy this character's clean ESOHybridUI
         -- profile into the new account-wide profile.
         local snapshot = DeepCopy(character)
         snapshot.useAccountWideSettings = true
         for key, value in pairs(snapshot) do
             account[key] = value
         end
-        account._adcuiInitialized = true
+        account._esoHybridInitialized = true
     end
 
     if not enabled and character.useAccountWideSettings then
         for key, value in pairs(account) do
-            if key ~= "_adcuiInitialized" then
+            if key ~= "_esoHybridInitialized" then
                 character[key] = DeepCopy(value)
             end
         end
@@ -266,32 +266,39 @@ local function PrintStatus()
     local resourceMode = settings.useGamepadResourceBars and "gamepad resource bars" or "compact keyboard resource bars"
     local promptMode = settings.useGamepadButtons and "controller prompts enabled" or "keyboard prompts"
     if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-        CHAT_SYSTEM:AddMessage("[ADCUI] " .. uiMode .. " | " .. barMode .. " | " .. resourceMode .. " | " .. promptMode)
+        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] " .. uiMode .. " | " .. barMode .. " | " .. resourceMode .. " | " .. promptMode)
     end
 end
 
 local function RegisterSlashCommands()
-    SLASH_COMMANDS["/adcui"] = function()
+    SLASH_COMMANDS["/esohybrid"] = function()
         ADDON:ToggleUI()
         PrintStatus()
     end
-    SLASH_COMMANDS["/adcui_status"] = PrintStatus
-    SLASH_COMMANDS["/adcui_buttons"] = function()
+    SLASH_COMMANDS["/esohybrid_status"] = PrintStatus
+    SLASH_COMMANDS["/esohybrid_buttons"] = function()
         ADDON:ToggleButtons()
         PrintStatus()
     end
-    SLASH_COMMANDS["/adcui_actionbar"] = function()
+    SLASH_COMMANDS["/esohybrid_actionbar"] = function()
         ADDON:ToggleActionBar()
         PrintStatus()
     end
-    SLASH_COMMANDS["/adcui_resourcebars"] = function()
+    SLASH_COMMANDS["/esohybrid_resourcebars"] = function()
         ADDON:ToggleResourceBars()
         PrintStatus()
     end
-    SLASH_COMMANDS["/adcui_compasslock"] = function()
+    SLASH_COMMANDS["/esohybrid_compasslock"] = function()
         ADDON:ToggleCompassLock()
         PrintStatus()
     end
+    -- Backward-compatible aliases for existing chat macros.
+    SLASH_COMMANDS["/adcui"] = SLASH_COMMANDS["/esohybrid"]
+    SLASH_COMMANDS["/adcui_status"] = SLASH_COMMANDS["/esohybrid_status"]
+    SLASH_COMMANDS["/adcui_buttons"] = SLASH_COMMANDS["/esohybrid_buttons"]
+    SLASH_COMMANDS["/adcui_actionbar"] = SLASH_COMMANDS["/esohybrid_actionbar"]
+    SLASH_COMMANDS["/adcui_resourcebars"] = SLASH_COMMANDS["/esohybrid_resourcebars"]
+    SLASH_COMMANDS["/adcui_compasslock"] = SLASH_COMMANDS["/esohybrid_compasslock"]
 end
 
 local function OnLockpickBegin()
@@ -322,6 +329,10 @@ local function OnAddonLoaded(_, addonName)
         return
     end
 
+    -- Preserve existing settings when upgrading from the ADCUI-branded build.
+    if type(_G.ADCUI_SavedVariables) == "table" and type(_G.ESOHybridUI_SavedVariables) ~= "table" then
+        _G.ESOHybridUI_SavedVariables = DeepCopy(_G.ADCUI_SavedVariables)
+    end
     InitializeSavedVariables()
     if ADDON.InitializeDiagnostics then
         ADDON:InitializeDiagnostics()
@@ -358,9 +369,9 @@ local function OnAddonLoaded(_, addonName)
     ADDON:Refresh()
 
     if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-        CHAT_SYSTEM:AddMessage("[ADCUI] " .. ADDON.VERSION .. " loaded. Controller input remains enabled; use /adcui for the UI toggle. Debug: /adcui_debug on, snapshot: /adcui_dump.")
+        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] " .. ADDON.VERSION .. " loaded. Controller input remains enabled; use /esohybrid for the UI toggle. Debug: /esohybrid_debug on, snapshot: /esohybrid_dump.")
     end
     EVENT_MANAGER:UnregisterForEvent(ADDON.ADDON_NAME, EVENT_ADD_ON_LOADED)
 end
 
-EVENT_MANAGER:RegisterForEvent(ADCUI.ADDON_NAME, EVENT_ADD_ON_LOADED, OnAddonLoaded)
+EVENT_MANAGER:RegisterForEvent(ESOHybridUI.ADDON_NAME, EVENT_ADD_ON_LOADED, OnAddonLoaded)

@@ -1,7 +1,7 @@
 -- Compass sizing and positioning, using the live compass controls.
 -- No polling loop: settings and mouse-release events drive updates.
 
-local ADDON = ADCUI
+local ADDON = ESOHybridUI
 
 local function GetCompassControls()
     local frame = ZO_CompassFrame

@@ -105,6 +105,14 @@ function ADDON:RegisterSettings()
         SettingCheckbox("Use gamepad lockpicking UI", "Temporarily show the native gamepad lockpicking interface while lockpicking.", "useGamepadLockpicking"),
         SettingCheckbox("Shoulder buttons change main-menu categories", "Use LB/RB to move between keyboard main-menu categories.", "enableMainMenuShoulderButtons"),
         SettingCheckbox("Center world map when opened", "Apply the keyboard map's default pan origin when the map opens.", "centerWorldMap"),
+        {
+            type = "checkbox",
+            name = "Enable diagnostic logging",
+            tooltip = "Record detailed ADCUI debug messages and stack traces through LibDebugLogger. Use /adcui_debug on or /adcui_debug off. Install LibDebugLogger and DebugLogViewer to inspect and share logs.",
+            default = false,
+            getFunc = function() return ADDON.runtime.debugLoggingEnabled end,
+            setFunc = function(value) ADDON:SetDebugLogging(value) end,
+        },
 
         { type = "header", name = "Compass" },
         SettingCheckbox("Enable compass customization", "Enable saved compass size, scale, position and locking.", "enableCompassCustomization", false),
@@ -189,7 +197,7 @@ function ADDON:RegisterSettings()
         FontDropdown("Reticle context font", "Font used for the interaction context text.", "reticleContext", fontNames, fontValues),
         FontDropdown("Stealth icon font", "Font used for stealth and lockpicking prompts.", "stealthIcon", fontNames, fontValues),
 
-        { type = "description", text = "Quick commands: /adcui, /adcui_status, /adcui_buttons, /adcui_actionbar, /adcui_compasslock." },
+        { type = "description", text = "Quick commands: /adcui, /adcui_status, /adcui_buttons, /adcui_actionbar, /adcui_compasslock, /adcui_debug on|off, /adcui_dump." },
     }
 
     LibAddonMenu2:RegisterOptionControls(panelName, options)

@@ -10,6 +10,9 @@
             <Action name="ADCUI_TOGGLE_ACTION_BAR">
                 <Down>ADCUI:ToggleActionBar()</Down>
             </Action>
+            <Action name="ADCUI_TOGGLE_RESOURCE_BARS">
+                <Down>ADCUI:ToggleResourceBars()</Down>
+            </Action>
             <Action name="ADCUI_TOGGLE_COMPASS_LOCK">
                 <Down>ADCUI:ToggleCompassLock()</Down>
             </Action>

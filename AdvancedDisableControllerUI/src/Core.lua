@@ -203,6 +203,12 @@ function ADDON:ToggleActionBar()
     self:Refresh()
 end
 
+function ADDON:ToggleResourceBars()
+    local settings = GetSettings()
+    settings.useGamepadResourceBars = not settings.useGamepadResourceBars
+    self:Refresh()
+end
+
 function ADDON:ToggleCompassLock()
     local settings = GetSettings()
     settings.lockEnabled = not settings.lockEnabled
@@ -241,9 +247,10 @@ local function PrintStatus()
     local settings = GetSettings()
     local uiMode = settings.useControllerUI and "native gamepad UI" or "keyboard-style UI"
     local barMode = settings.useGamepadActionBar and "gamepad action bar" or "compact keyboard action bar"
+    local resourceMode = settings.useGamepadResourceBars and "gamepad resource bars" or "compact keyboard resource bars"
     local promptMode = settings.useGamepadButtons and "controller prompts enabled" or "keyboard prompts"
     if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-        CHAT_SYSTEM:AddMessage("[ADCUI] " .. uiMode .. " | " .. barMode .. " | " .. promptMode)
+        CHAT_SYSTEM:AddMessage("[ADCUI] " .. uiMode .. " | " .. barMode .. " | " .. resourceMode .. " | " .. promptMode)
     end
 end
 
@@ -259,6 +266,10 @@ local function RegisterSlashCommands()
     end
     SLASH_COMMANDS["/adcui_actionbar"] = function()
         ADDON:ToggleActionBar()
+        PrintStatus()
+    end
+    SLASH_COMMANDS["/adcui_resourcebars"] = function()
+        ADDON:ToggleResourceBars()
         PrintStatus()
     end
     SLASH_COMMANDS["/adcui_compasslock"] = function()

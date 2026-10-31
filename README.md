@@ -18,6 +18,7 @@ Modernized replacement for the original 1.5.3 addon.
 - Optional native gamepad action-bar styling while the rest of the interface remains keyboard-style.
 - Optional native gamepad resource-bar styling, independently switchable from the action bar.
 - Compact keyboard action bar and resource bars by default.
+- Controller shoulder-button cycling for the current keyboard utility wheel.
 - Optional gamepad lockpicking interface.
 - Saved compass scale, dimensions, position and lock.
 - LB/RB main-menu category navigation.
@@ -43,6 +44,7 @@ The original addon's default enabled the large gamepad action bar. The modernize
 - `/adcui_status` — print active mode and prompt/action-bar state.
 - `/adcui_buttons` — toggle gamepad button prompts.
 - `/adcui_actionbar` — toggle gamepad-style action bar.
+- `/adcui_resourcebars` — toggle gamepad-style resource bars.
 - `/adcui_compasslock` — lock/unlock compass position.
 
 ## Current architecture notes

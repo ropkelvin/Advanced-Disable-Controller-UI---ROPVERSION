@@ -101,6 +101,7 @@ end
 
 assert(createdStringIds.SI_KEYBINDINGS_CATEGORY_ADCUI == "Advanced Disable Controller UI", "keybind category string was not registered")
 assert(createdStringIds.SI_BINDING_NAME_ADCUI_TOGGLE_UI ~= nil, "UI toggle binding name was not registered")
+assert(createdStringIds.SI_BINDING_NAME_ADCUI_TOGGLE_RESOURCE_BARS ~= nil, "resource-bar binding name was not registered")
 assert(ADCUI.runtime.initialized == true, "addon did not initialize")
 assert(ADCUI:GetSettings().useGamepadActionBar == false, "compact action bar should be default")
 assert(NativeIsGamepadPreferred() == true, "native controller preference unexpectedly changed")
@@ -463,5 +464,7 @@ assert(IsInGamepadPreferredMode() == false, "resource-bar style leaked into the 
 ADCUI.savedVariables.useGamepadResourceBars = false
 PLAYER_ATTRIBUTE_BARS:OnGamepadPreferredModeChanged()
 assert(resourceBarMode == false, "keyboard resource-bar style was not restored")
+SLASH_COMMANDS["/adcui_resourcebars"]()
+assert(ADCUI.savedVariables.useGamepadResourceBars == true, "resource-bar slash toggle did not enable the feature")
 
 print("ADCUI core, prompts, dialogs, action bar, resource bars, utility wheel, compass, map and menu smoke tests passed.")

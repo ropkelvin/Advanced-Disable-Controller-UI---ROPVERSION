@@ -18,6 +18,19 @@ local function IsCategoryAvailable(category)
         if not ok or not visible then return false end
     end
 
+    if categoryInfo.disableWhenDead and MAIN_MENU_MANAGER and MAIN_MENU_MANAGER.IsPlayerDead
+        and MAIN_MENU_MANAGER:IsPlayerDead() then
+        return false
+    end
+    if categoryInfo.disableWhenInCombat and MAIN_MENU_MANAGER and MAIN_MENU_MANAGER.IsPlayerInCombat
+        and MAIN_MENU_MANAGER:IsPlayerInCombat() then
+        return false
+    end
+    if categoryInfo.disableWhenReviving and MAIN_MENU_MANAGER and MAIN_MENU_MANAGER.IsPlayerReviving
+        and MAIN_MENU_MANAGER:IsPlayerReviving() then
+        return false
+    end
+
     return true
 end
 

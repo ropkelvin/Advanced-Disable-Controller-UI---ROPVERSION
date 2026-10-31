@@ -12,7 +12,7 @@ if ZO_CreateStringId then
     ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_COMPASS_LOCK", "Lock / unlock compass")
 end
 
-ADCUI.ADDON_NAME = "AdvancedDisableControllerUI"
+ADCUI.ADDON_NAME = "ADCUI"
 ADCUI.SAVED_VARIABLES = "AdvancedDisableControllerUI_SavedPrefs"
 ADCUI.SAVED_VARIABLES_VERSION = 1
 ADCUI.VERSION = "2.1.0"

@@ -81,6 +81,16 @@ local function IsGamepadUIAllowed()
     -- In Hybrid mode, ESO's own UI-mode state selects native gamepad menus,
     -- while the base gameplay HUD remains on the compact keyboard platform.
     if settings.useHybridUI then
+        -- Keep the combat/world HUD on the compact keyboard platform, but let
+        -- the world map opt into ESO's native gamepad map presentation even
+        -- though opening the map does not necessarily enter UI mode.
+        local worldMapShowing = WORLD_MAP_SCENE
+            and WORLD_MAP_SCENE.IsShowing
+            and WORLD_MAP_SCENE:IsShowing()
+        if worldMapShowing then
+            return OriginalGamepadPreferredMode()
+        end
+
         return OriginalGamepadPreferredMode()
             and SCENE_MANAGER
             and SCENE_MANAGER.IsInUIMode

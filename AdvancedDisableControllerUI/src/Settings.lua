@@ -51,7 +51,7 @@ function ADDON:RegisterSettings()
         name = "Advanced Disable Controller UI",
         author = "RopKelvin",
         version = ADDON.VERSION,
-        slashCommand = "/adcui",
+        slashCommand = "/adcui_settings",
         registerForRefresh = true,
         registerForDefaults = true,
     })

@@ -144,7 +144,7 @@ function ADDON:RegisterSettings()
             width = "half",
         },
 
-        { type = "description", text = "Quick commands: /esohybrid, /esohybrid_status, /esohybrid_buttons, /esohybrid_actionbar, /esohybrid_compasslock, /esohybrid_debug on|off, /esohybrid_dump." },
+        { type = "description", text = "Quick commands: /esohybrid, /esohybrid_status, /esohybrid_buttons, /esohybrid_actionbar, /esohybrid_debug on|off, /esohybrid_dump." },
     }
 
     LibAddonMenu2:RegisterOptionControls(panelName, options)

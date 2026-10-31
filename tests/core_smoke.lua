@@ -86,7 +86,6 @@ for _, event in ipairs({
     EVENT_BEGIN_LOCKPICK,
     EVENT_LOCKPICK_SUCCESS,
     EVENT_LOCKPICK_FAILED,
-    EVENT_LOCKPICK_BROKE,
     EVENT_GAMEPAD_PREFERRED_MODE_CHANGED,
 }) do
     events[event] = events[event] or {}
@@ -117,8 +116,8 @@ end
 assert(ADCUI.runtime.isLockpicking == true, "lockpicking begin was not handled")
 assert(IsInGamepadPreferredMode() == true, "native lockpicking UI was not enabled")
 
-for _, item in ipairs(events[EVENT_LOCKPICK_BROKE]) do
-    item.callback(EVENT_LOCKPICK_BROKE)
+for _, item in ipairs(events[EVENT_LOCKPICK_SUCCESS]) do
+    item.callback(EVENT_LOCKPICK_SUCCESS)
 end
 assert(ADCUI.runtime.isLockpicking == false, "lockpicking break was not handled")
 assert(IsInGamepadPreferredMode() == false, "keyboard UI was not restored after lockpicking")

@@ -153,7 +153,7 @@ ActionButton = {
     end,
 }
 
-local actionButton = {}
+local actionButton = setmetatable({}, { __index = ActionButton })
 local actionBarStyle = {
     keyboardStyle = { width = 483, showWeaponSwapButton = true },
     gamepadStyle = { width = 606, showWeaponSwapButton = false },

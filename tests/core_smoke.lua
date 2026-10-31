@@ -255,6 +255,12 @@ assert(GUILD_HOME.keybindStripDescriptor[1].keybind == "GUILD_ORIGINAL", "guild 
 assert(LOCK_PICK.keybindStripDescriptor[4].alignment == nil, "nil lockpick alignment was not restored")
 
 -- Compass sizing, movement locking and reset-to-original behavior.
+MOUSE_BUTTON_INDEX_LEFT = 1
+EVENT_GLOBAL_MOUSE_UP = "EVENT_GLOBAL_MOUSE_UP"
+ZO_PreHookHandler = function(control, handler, callback)
+    control.hooks = control.hooks or {}
+    control.hooks[handler] = callback
+end
 local function MakeControl(width, height, scale)
     local control = { width = width, height = height, scale = scale or 1 }
     function control:SetScale(value) self.scale = value end
@@ -283,6 +289,8 @@ end
 function compassFrame:SetClampedToScreen(value) self.clamped = value end
 function compassFrame:SetMovable(value) self.movable = value end
 function compassFrame:SetMouseEnabled(value) self.mouseEnabled = value end
+function compassFrame:StartMoving() self.moving = true end
+function compassFrame:StopMovingOrSizing() self.moving = false end
 function compassFrame:GetNamedChild(name)
     if name == "Left" then return leftEdge end
     if name == "Right" then return rightEdge end
@@ -302,10 +310,19 @@ assert(compassFrame.width == 560 and compassFrame.height == 32, "compass dimensi
 assert(compass.scale == 1.1 and pinLabel.scale == 0.9, "compass scale settings were not applied")
 assert(compassFrame.movable == true and compassFrame.mouseEnabled == true, "unlocked compass is not draggable")
 assert(compassFrame.clamped == true, "compass is not clamped to the screen")
+assert(compassFrame.hooks and compassFrame.hooks.OnMouseDown and compassFrame.hooks.OnMouseUp, "compass drag handlers were not installed")
+compassFrame.hooks.OnMouseDown(compassFrame, MOUSE_BUTTON_INDEX_LEFT)
+assert(compassFrame.moving == true, "unlocked compass did not start moving")
+frameAnchor = { BOTTOM, GuiRoot, BOTTOM, 12, -45 }
+compassFrame.hooks.OnMouseUp(compassFrame, MOUSE_BUTTON_INDEX_LEFT)
+assert(compassFrame.moving == false, "compass did not stop moving")
+assert(ADCUI.savedVariables.point == BOTTOM and ADCUI.savedVariables.anchorOffsetX == 12 and ADCUI.savedVariables.anchorOffsetY == -45, "dragged compass position was not saved")
 
 ADCUI.savedVariables.lockEnabled = true
 ADCUI:ApplyCompass()
 assert(compassFrame.movable == false and compassFrame.mouseEnabled == false, "compass lock did not disable dragging")
+compassFrame.hooks.OnMouseDown(compassFrame, MOUSE_BUTTON_INDEX_LEFT)
+assert(compassFrame.moving == false, "locked compass still started moving")
 ADCUI.savedVariables.enableCompassCustomization = false
 ADCUI:ApplyCompass()
 assert(compassFrame.width == 600 and compassFrame.height == 39, "compass reset did not restore original dimensions")

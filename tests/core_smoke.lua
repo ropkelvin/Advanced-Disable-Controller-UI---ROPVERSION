@@ -442,4 +442,22 @@ assert(ADCUI:CycleUtilityWheel(1) == true and INTERACTIVE_WHEEL_MANAGER.lastCycl
 INTERACTIVE_WHEEL_MANAGER:StopInteraction(ZO_INTERACTIVE_WHEEL_TYPE_UTILITY)
 assert(ADCUI.runtime.utilityWheelLayerActive == false and removedLayers[1] == "ADCUI_UTILITY_WHEEL_BRIDGE", "controller bridge layer was not removed")
 
-print("ADCUI core, prompts, dialogs, action bar, utility wheel, compass, map and menu smoke tests passed.")
+
+-- Resource-bar style is independently switchable from action-bar style.
+local resourceBarMode
+PLAYER_ATTRIBUTE_BARS = {
+    OnGamepadPreferredModeChanged = function()
+        resourceBarMode = IsInGamepadPreferredMode()
+    end,
+}
+dofile("AdvancedDisableControllerUI/src/ResourceBars.lua")
+ADCUI:ApplyResourceBars()
+ADCUI.savedVariables.useGamepadResourceBars = true
+PLAYER_ATTRIBUTE_BARS:OnGamepadPreferredModeChanged()
+assert(resourceBarMode == true, "gamepad resource-bar style was not applied")
+assert(IsInGamepadPreferredMode() == false, "resource-bar style leaked into the rest of the UI")
+ADCUI.savedVariables.useGamepadResourceBars = false
+PLAYER_ATTRIBUTE_BARS:OnGamepadPreferredModeChanged()
+assert(resourceBarMode == false, "keyboard resource-bar style was not restored")
+
+print("ADCUI core, prompts, dialogs, action bar, resource bars, utility wheel, compass, map and menu smoke tests passed.")

@@ -106,8 +106,12 @@ local function InstallManagerHooks()
     end
 
     manager.StopInteraction = function(self, wheelType, ...)
-        -- Remove our layer before ESO pops the wheel's own action layers.
-        RemoveBridgeLayer()
+        -- Only the utility wheel owns this temporary bridge layer. Other
+        -- wheels can stop while it is still open (or during nested UI flows).
+        if wheelType == ZO_INTERACTIVE_WHEEL_TYPE_UTILITY then
+            -- Remove our layer before ESO pops the utility wheel's own layer.
+            RemoveBridgeLayer()
+        end
         return originalStop(self, wheelType, ...)
     end
 

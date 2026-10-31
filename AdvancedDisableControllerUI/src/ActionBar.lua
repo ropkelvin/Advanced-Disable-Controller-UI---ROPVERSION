@@ -52,7 +52,7 @@ local function InstallPlatformStyleHook()
 
     local wrapper = function(self)
         if IsActionBarPlatformStyle(self) and ADDON:ShouldUseGamepadActionBar() then
-            return self.applyFunction(self.gamepadStyle)
+            return ADDON:WithNativeGamepadMode(self.applyFunction, self.gamepadStyle)
         end
         return original(self)
     end
@@ -83,11 +83,12 @@ local function InstallActionButtonHooks()
 
     ADDON.runtime.actionButtonOriginals = {}
     for _, methodName in ipairs(methods) do
-        local original = ActionButton[methodName]
+        local method = methodName
+        local original = ActionButton[method]
         if type(original) == "function" then
-            ADDON.runtime.actionButtonOriginals[methodName] = original
-            ActionButton[methodName] = function(self, ...)
-                local callback = ADDON.runtime.actionButtonOriginals[methodName]
+            ADDON.runtime.actionButtonOriginals[method] = original
+            ActionButton[method] = function(self, ...)
+                local callback = ADDON.runtime.actionButtonOriginals[method]
                 if ADDON:ShouldUseGamepadActionBar() then
                     return ADDON:WithNativeGamepadMode(callback, self, ...)
                 end

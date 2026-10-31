@@ -42,7 +42,7 @@ end
 
 local function InstallModeOverride()
     if type(IsInGamepadPreferredMode) ~= "function" then
-        d("[ADCUI] IsInGamepadPreferredMode is unavailable; UI override not installed.")
+        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then CHAT_SYSTEM:AddMessage("[ADCUI] IsInGamepadPreferredMode is unavailable; UI override not installed.") end
         return false
     end
 
@@ -118,14 +118,14 @@ local function RegisterSlashCommand()
         ADDON:Refresh()
 
         local mode = settings.useControllerUI and "native gamepad UI" or "keyboard-style UI"
-        d("[ADCUI] " .. mode .. " selected. Controller input is not disabled.")
+        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then CHAT_SYSTEM:AddMessage("[ADCUI] " .. mode .. " selected. Controller input is not disabled.") end
     end
 
     SLASH_COMMANDS["/adcui_status"] = function()
         local settings = GetSettings()
         local mode = settings.useControllerUI and "native gamepad UI" or "keyboard-style UI"
-        d("[ADCUI] " .. mode .. "; lockpicking override: " ..
-            (ADDON.runtime.isLockpicking and "active" or "inactive"))
+        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then CHAT_SYSTEM:AddMessage("[ADCUI] " .. mode .. "; lockpicking override: " ..
+            (ADDON.runtime.isLockpicking and "active" or "inactive")) end
     end
 end
 
@@ -150,7 +150,7 @@ local function OnAddonLoaded(_, addonName)
     ADDON.runtime.initialized = true
     ADDON:Refresh()
 
-    d("[ADCUI] Loaded. Use /adcui to switch UI presentation.")
+    if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then CHAT_SYSTEM:AddMessage("[ADCUI] Loaded. Use /adcui to switch UI presentation.") end
     EVENT_MANAGER:UnregisterForEvent(ADDON.ADDON_NAME, EVENT_ADD_ON_LOADED)
 end
 

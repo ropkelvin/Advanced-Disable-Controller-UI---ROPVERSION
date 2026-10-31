@@ -162,6 +162,14 @@ function ADDON:SetUseAccountWideSettings(enabled)
         end
     end
 
+    if not enabled and character.useAccountWideSettings then
+        for key, value in pairs(account) do
+            if key ~= "_adcuiInitialized" then
+                character[key] = DeepCopy(value)
+            end
+        end
+    end
+
     character.useAccountWideSettings = enabled == true
     if enabled then
         account._adcuiInitialized = true
@@ -214,7 +222,7 @@ local function InitializeSavedVariables()
         ADDON.savedVariables.useGamepadActionBar = false
         ADDON.savedVariables._adcuiV2Migrated = true
     end
-    if ADDON.savedVariablesAccountWide.useAccountWideSettings
+    if ADDON.savedVariables.useAccountWideSettings
         and not ADDON.savedVariablesAccountWide._adcuiV2Migrated then
         ADDON.savedVariablesAccountWide.useGamepadActionBar = false
         ADDON.savedVariablesAccountWide._adcuiV2Migrated = true

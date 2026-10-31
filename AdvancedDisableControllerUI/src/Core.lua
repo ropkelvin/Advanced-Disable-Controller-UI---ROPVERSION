@@ -60,22 +60,33 @@ local function RefreshPlatformMode()
     end
 
     if type(SetSetting) ~= "function"
+        or type(GetSetting) ~= "function"
         or type(SETTING_TYPE_GAMEPAD) ~= "number"
-        or type(GAMEPAD_SETTING_GAMEPAD_PREFERRED) ~= "number" then
+        or type(GAMEPAD_SETTING_INPUT_PREFERRED_MODE) ~= "number"
+        or type(INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD) ~= "number"
+        or type(INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD) ~= "number" then
         return
     end
 
+    local currentMode = GetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE)
+    if currentMode == nil then
+        return
+    end
+
+    -- GAMEPAD_SETTING_GAMEPAD_PREFERRED was removed in favor of the
+    -- three-state INPUT_PREFERRED_MODE setting. Temporarily flip to the
+    -- opposite fixed mode, then restore the exact user's original value
+    -- (including AUTOMATIC). Never leave the user's preference changed.
+    local temporaryMode
+    if tostring(currentMode) == tostring(INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD) then
+        temporaryMode = INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
+    else
+        temporaryMode = INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
+    end
+
     ADDON.runtime.isRefreshing = true
-
-    -- Toggle the preference twice to make ESO rebuild controls which cache the
-    -- platform style. The user's original preferred-mode value is restored.
-    local wasPreferred = OriginalGamepadPreferredMode()
-    local firstValue = wasPreferred and "false" or "true"
-    local secondValue = wasPreferred and "true" or "false"
-
-    SetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_GAMEPAD_PREFERRED, firstValue)
-    SetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_GAMEPAD_PREFERRED, secondValue)
-
+    SetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, temporaryMode)
+    SetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, currentMode)
     ADDON.runtime.isRefreshing = false
 end
 

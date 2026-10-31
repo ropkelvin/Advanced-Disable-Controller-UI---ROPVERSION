@@ -91,11 +91,13 @@ for _, method in ipairs({ "Debug", "Info", "Warn", "Error" }) do
 end
 mockLogger.SetMinLevelOverride = function(_, level) mockLogger.minimumLevel = level end
 mockLogger.SetLogTracesOverride = function(_, enabled) mockLogger.logTraces = enabled end
-LibDebugLogger = function(tag)
-    assert(tag == "ADCUI", "diagnostic logger tag was incorrect")
-    return mockLogger
-end
-LibDebugLogger.LOG_LEVEL_DEBUG = 2
+LibDebugLogger = {
+    LOG_LEVEL_DEBUG = 2,
+    Create = function(tag)
+        assert(tag == "ADCUI", "diagnostic logger tag was incorrect")
+        return mockLogger
+    end,
+}
 
 dofile("AdvancedDisableControllerUI/src/Defaults.lua")
 dofile("AdvancedDisableControllerUI/src/Diagnostics.lua")

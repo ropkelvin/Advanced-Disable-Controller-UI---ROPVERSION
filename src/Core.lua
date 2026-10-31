@@ -22,14 +22,21 @@ local function OriginalGamepadPreferredMode()
 end
 
 local function GetSettings()
-    if not ADDON.savedVariables or not ADDON.savedVariablesAccountWide then
-        return ADDON.defaults
-    end
-
-    if ADDON.savedVariables.useAccountWideSettings then
+    -- Do not fall back to the defaults merely because one saved-variable
+    -- profile failed to initialize. That would make settings appear to work
+    -- for the session while every change was written only to the defaults
+    -- table and lost at logout.
+    if ADDON.savedVariables and ADDON.savedVariables.useAccountWideSettings
+        and ADDON.savedVariablesAccountWide then
         return ADDON.savedVariablesAccountWide
     end
-    return ADDON.savedVariables
+    if ADDON.savedVariables then
+        return ADDON.savedVariables
+    end
+    if ADDON.savedVariablesAccountWide then
+        return ADDON.savedVariablesAccountWide
+    end
+    return ADDON.defaults
 end
 
 function ADDON:GetSettings()
@@ -253,6 +260,36 @@ function ADDON:ToggleCompassLock()
     self:ApplyCompass()
 end
 
+local function MergeMissing(target, source)
+    if type(target) ~= "table" or type(source) ~= "table" then
+        return
+    end
+    for key, value in pairs(source) do
+        if target[key] == nil then
+            target[key] = DeepCopy(value)
+        elseif type(target[key]) == "table" and type(value) == "table" then
+            MergeMissing(target[key], value)
+        end
+    end
+end
+
+local function MigrateLegacySavedVariables()
+    local legacy = _G.ADCUI_SavedVariables
+    if type(legacy) ~= "table" then
+        return
+    end
+
+    local current = _G.ESOHybridUI_SavedVariables
+    if type(current) ~= "table" then
+        _G.ESOHybridUI_SavedVariables = DeepCopy(legacy)
+    else
+        -- The game may already have created an empty ESOHybridUI table.
+        -- Merge legacy data into missing keys instead of checking only whether
+        -- the new top-level table exists. Never overwrite newer user choices.
+        MergeMissing(current, legacy)
+    end
+end
+
 local function InitializeSavedVariables()
     ADDON.savedVariablesAccountWide = ZO_SavedVars:NewAccountWide(
         ADDON.SAVED_VARIABLES,
@@ -267,7 +304,6 @@ local function InitializeSavedVariables()
         nil,
         ADDON.defaults
     )
-
 end
 
 local function PrintStatus()
@@ -340,10 +376,9 @@ local function OnAddonLoaded(_, addonName)
         return
     end
 
-    -- Preserve existing settings when upgrading from the ADCUI-branded build.
-    if type(_G.ADCUI_SavedVariables) == "table" and type(_G.ESOHybridUI_SavedVariables) ~= "table" then
-        _G.ESOHybridUI_SavedVariables = DeepCopy(_G.ADCUI_SavedVariables)
-    end
+    -- Preserve settings from the previous ADCUI name, including when ESO
+    -- has already created an empty table for the new saved-variable name.
+    MigrateLegacySavedVariables()
     InitializeSavedVariables()
     if ADDON.InitializeDiagnostics then
         ADDON:InitializeDiagnostics()

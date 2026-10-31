@@ -6,7 +6,7 @@ Modernized replacement for the original 1.5.3 addon.
 
 - ESO live UI source: Update 51 / API 101051 (live source snapshot 12.1.6).
 - LibAddonMenu-2.0: required dependency, minimum AddOnVersion 43.
-- No LibStub usage.
+- No LibStub usage in the new runtime; the historical 1.5.3 source is retained only for reference.
 - Original SavedVariables name retained.
 - Original 1.5.3 ZIP and extracted source remain under the repository root and `extracted/`.
 

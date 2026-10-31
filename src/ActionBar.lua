@@ -12,11 +12,12 @@ local ACTION_BAR_TEMPLATES = {
 }
 
 local function IsActionBarPlatformStyle(style)
-    return style
-        and style.keyboardStyle
-        and style.gamepadStyle
-        and style.keyboardStyle.width == 483
-        and style.gamepadStyle.width == 606
+    -- Identify the action-bar platform style by its action-bar-specific
+    -- swap-button property, not pixel dimensions. Dimensions vary with UI
+    -- scale, resolution and future ESO patches.
+    return type(style) == "table"
+        and type(style.keyboardStyle) == "table"
+        and type(style.gamepadStyle) == "table"
         and style.keyboardStyle.showWeaponSwapButton ~= nil
         and style.gamepadStyle.showWeaponSwapButton ~= nil
 end

@@ -78,6 +78,17 @@ local function IsGamepadUIAllowed()
         return OriginalGamepadPreferredMode()
     end
 
+    -- Loot containers have a dedicated native gamepad scene, but ESO can
+    -- request the keyboard scene while Hybrid mode keeps the gameplay HUD in
+    -- keyboard presentation. Preserve the native controller loot workflow.
+    if (settings.useHybridUI or settings.useGamepadButtons)
+        and OriginalGamepadPreferredMode()
+        and type(GetInteractionType) == "function"
+        and INTERACTION_LOOT ~= nil
+        and GetInteractionType() == INTERACTION_LOOT then
+        return true
+    end
+
     -- In Hybrid mode, ESO's own UI-mode state selects native gamepad menus,
     -- while the base gameplay HUD remains on the compact keyboard platform.
     if settings.useHybridUI then

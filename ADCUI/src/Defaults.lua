@@ -20,6 +20,7 @@ ADCUI.VERSION = "2.1.0"
 ADCUI.defaults = {
     -- Main behavior
     useControllerUI = false,
+    useHybridUI = false,
     useGamepadButtons = true,
     useGamepadActionBar = false,
     useGamepadResourceBars = false,

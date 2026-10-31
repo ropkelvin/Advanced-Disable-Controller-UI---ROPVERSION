@@ -78,6 +78,16 @@ local function IsGamepadUIAllowed()
         return OriginalGamepadPreferredMode()
     end
 
+    -- In Hybrid mode, ESO's own UI-mode state selects native gamepad menus,
+    -- while the base gameplay HUD remains on the compact keyboard platform.
+    if settings.useHybridUI then
+        return OriginalGamepadPreferredMode()
+            and SCENE_MANAGER
+            and SCENE_MANAGER.IsInUIMode
+            and SCENE_MANAGER:IsInUIMode()
+            or false
+    end
+
     return settings.useGamepadLockpicking
         and ADDON.runtime.isLockpicking
         and OriginalGamepadPreferredMode()
@@ -185,7 +195,12 @@ end
 
 function ADDON:ToggleUI()
     local settings = GetSettings()
-    settings.useControllerUI = not settings.useControllerUI
+    if settings.useHybridUI then
+        settings.useHybridUI = false
+        settings.useControllerUI = false
+    else
+        settings.useControllerUI = not settings.useControllerUI
+    end
     self:LogInfo("UI mode toggled. Native gamepad UI:", tostring(settings.useControllerUI))
     self:Refresh()
 end
@@ -236,7 +251,7 @@ end
 
 local function PrintStatus()
     local settings = GetSettings()
-    local uiMode = settings.useControllerUI and "native gamepad UI" or "keyboard-style UI"
+    local uiMode = settings.useHybridUI and "hybrid UI" or (settings.useControllerUI and "native gamepad UI" or "keyboard-style UI")
     local barMode = settings.useGamepadActionBar and "gamepad action bar" or "compact keyboard action bar"
     local resourceMode = settings.useGamepadResourceBars and "gamepad resource bars" or "compact keyboard resource bars"
     local promptMode = settings.useGamepadButtons and "controller prompts enabled" or "keyboard prompts"

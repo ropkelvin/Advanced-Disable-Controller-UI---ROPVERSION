@@ -62,9 +62,61 @@ local function InstallPlatformStyleHook()
     ADDON.runtime.actionBarPlatformHookInstalled = true
 end
 
+local function ShouldUseControllerActionGlyphs()
+    local settings = ADDON:GetSettings()
+    return settings.useGamepadButtons == true
+        and settings.useControllerUI ~= true
+        and ADDON:IsNativeGamepadMode()
+end
+
+local function RegisterControllerActionGlyph(button)
+    if not button or not button.buttonText or not ShouldUseControllerActionGlyphs()
+        or type(ZO_Keybindings_RegisterLabelForBindingUpdate) ~= "function" then
+        return
+    end
+
+    local slotNum = button:GetSlot()
+    local hotbarCategory = button:GetHotbarCategory()
+    local keyboardActionName
+    local gamepadActionName
+
+    if hotbarCategory == HOTBAR_CATEGORY_COMPANION then
+        keyboardActionName = "COMMAND_PET"
+        gamepadActionName = "COMMAND_PET"
+    elseif hotbarCategory == HOTBAR_CATEGORY_QUICKSLOT_WHEEL then
+        keyboardActionName = "ACTION_BUTTON_9"
+        gamepadActionName = "GAMEPAD_ACTION_BUTTON_9"
+    else
+        keyboardActionName = "ACTION_BUTTON_" .. tostring(slotNum)
+        gamepadActionName = "GAMEPAD_ACTION_BUTTON_" .. tostring(slotNum)
+    end
+
+    ZO_Keybindings_UnregisterLabelForBindingUpdate(button.buttonText)
+    local HIDE_UNBOUND = false
+    -- Force only the action label to resolve its gamepad binding; the button
+    -- control and all action-bar dimensions retain their keyboard style.
+    ZO_Keybindings_RegisterLabelForBindingUpdate(
+        button.buttonText,
+        keyboardActionName,
+        HIDE_UNBOUND,
+        gamepadActionName,
+        nil,
+        true
+    )
+end
+
 local function InstallActionButtonHooks()
     if ADDON.runtime.actionButtonHooksInstalled or type(ActionButton) ~= "table" then
         return
+    end
+
+    local originalInitialize = ActionButton.Initialize
+    if type(originalInitialize) == "function" then
+        ADDON.runtime.originalActionButtonInitialize = originalInitialize
+        ActionButton.Initialize = function(self, ...)
+            originalInitialize(self, ...)
+            RegisterControllerActionGlyph(self)
+        end
     end
 
     local methods = {

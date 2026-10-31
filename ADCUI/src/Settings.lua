@@ -89,13 +89,21 @@ function ADDON:RegisterSettings()
             setFunc = function(value) ADDON:SetUseAccountWideSettings(value) end,
         },
         {
-            type = "checkbox",
-            name = "Use keyboard-style UI",
-            tooltip = "Enabled: keep ESO's keyboard-style interface while using a controller. Disabled: use ESO's full native gamepad interface.",
-            default = true,
-            getFunc = function() return not ADDON:GetSettings().useControllerUI end,
+            type = "dropdown",
+            name = "Interface mode",
+            tooltip = "Keyboard keeps the compact keyboard interface everywhere. Gamepad uses ESO's full native controller interface. Hybrid keeps the compact gameplay HUD but uses native gamepad menus.",
+            choices = { "Keyboard", "Gamepad", "Hybrid" },
+            choicesValues = { "keyboard", "gamepad", "hybrid" },
+            default = "keyboard",
+            getFunc = function()
+                local settings = ADDON:GetSettings()
+                if settings.useHybridUI then return "hybrid" end
+                return settings.useControllerUI and "gamepad" or "keyboard"
+            end,
             setFunc = function(value)
-                ADDON:GetSettings().useControllerUI = not value
+                local settings = ADDON:GetSettings()
+                settings.useHybridUI = value == "hybrid"
+                settings.useControllerUI = value == "gamepad"
                 ADDON:Refresh()
             end,
         },

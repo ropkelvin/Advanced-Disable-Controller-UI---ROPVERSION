@@ -72,6 +72,8 @@ function ADDON:ApplyCompass()
     if not settings.enableCompassCustomization then
         if self.runtime.compassOriginal then
             local original = self.runtime.compassOriginal
+            frame:SetMovable(false)
+            frame:SetMouseEnabled(false)
             frame:ClearAnchors()
             frame:SetAnchor(original.point, original.relativeTo, original.relativePoint, original.offsetX, original.offsetY)
             frame:SetDimensions(original.width, original.height)

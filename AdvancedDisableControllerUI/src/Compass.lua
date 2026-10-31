@@ -26,6 +26,7 @@ local function SaveAnchor()
     if not point then return end
 
     local settings = ADDON:GetSettings()
+    if not settings.enableCompassCustomization then return end
     settings.point = point
     settings.anchorOffsetX = offsetX or 0
     settings.anchorOffsetY = offsetY or 0
@@ -51,6 +52,21 @@ local function InstallCompassHandlers()
     if ADDON.runtime.compassHooksInstalled or not ZO_CompassFrame then return end
 
     local frame = ZO_CompassFrame
+    if ZO_PreHookHandler then
+        ZO_PreHookHandler(frame, "OnMouseDown", function(control, button)
+            local settings = ADDON:GetSettings()
+            if button == MOUSE_BUTTON_INDEX_LEFT and settings.enableCompassCustomization and not settings.lockEnabled then
+                control:StartMoving()
+            end
+        end)
+        ZO_PreHookHandler(frame, "OnMouseUp", function(control, button)
+            if button == MOUSE_BUTTON_INDEX_LEFT then
+                control:StopMovingOrSizing()
+                SaveAnchor()
+            end
+        end)
+    end
+
     if EVENT_MANAGER and EVENT_GLOBAL_MOUSE_UP then
         EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_CompassSave", EVENT_GLOBAL_MOUSE_UP, SaveAnchor)
     end

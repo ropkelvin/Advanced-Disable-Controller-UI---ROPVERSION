@@ -8,6 +8,7 @@
 ## SavedVariables: AdvancedDisableControllerUI_SavedPrefs
 
 src/Defaults.lua
+src/Diagnostics.lua
 src/Core.lua
 src/Prompts.lua
 src/Dialogs.lua

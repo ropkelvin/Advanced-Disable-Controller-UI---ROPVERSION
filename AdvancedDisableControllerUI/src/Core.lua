@@ -284,6 +284,9 @@ local function OnLockpickBegin()
 end
 
 local function OnLockpickEnd()
+    if not ADDON.runtime.isLockpicking then
+        return
+    end
     ADDON.runtime.isLockpicking = false
     ADDON:Refresh()
 end

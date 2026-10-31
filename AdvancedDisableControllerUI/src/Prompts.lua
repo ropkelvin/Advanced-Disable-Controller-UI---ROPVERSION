@@ -18,7 +18,11 @@ end
 local function RestoreSavedValues()
     for object, values in pairs(ADDON.runtime.promptOriginals) do
         for key, value in pairs(values) do
-            object[key] = value == NIL_VALUE and nil or value
+            if value == NIL_VALUE then
+                object[key] = nil
+            else
+                object[key] = value
+            end
         end
     end
 end

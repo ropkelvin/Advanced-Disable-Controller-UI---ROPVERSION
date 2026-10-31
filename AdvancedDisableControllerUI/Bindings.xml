@@ -15,4 +15,15 @@
             </Action>
         </Category>
     </Layer>
+
+    <Layer name="ADCUI_UTILITY_WHEEL_BRIDGE" allowFallthrough="true">
+        <Category name="SI_KEYBINDINGS_CATEGORY_UTILITY_WHEEL_GAMEPAD">
+            <Action name="ADCUI_UTILITY_WHEEL_CYCLE_LEFT">
+                <Down>if ADCUI and ADCUI:ShouldBridgeUtilityWheelInput() then return ADCUI:CycleUtilityWheel(-1) end return false</Down>
+            </Action>
+            <Action name="ADCUI_UTILITY_WHEEL_CYCLE_RIGHT">
+                <Down>if ADCUI and ADCUI:ShouldBridgeUtilityWheelInput() then return ADCUI:CycleUtilityWheel(1) end return false</Down>
+            </Action>
+        </Category>
+    </Layer>
 </Bindings>

@@ -17,19 +17,37 @@ jobs:
           sudo apt-get install -y lua5.1
       - name: Check Lua syntax
         run: |
-          find AdvancedDisableControllerUI -name '*.lua' -print0 | xargs -0 -r -n1 luac5.1 -p
-      - name: Check manifest and dependency migration
+          find AdvancedDisableControllerUI tests -name '*.lua' -print0 | xargs -0 -r -n1 luac5.1 -p
+      - name: Run core behavior smoke tests
+        run: lua5.1 tests/core_smoke.lua
+      - name: Check manifest, XML, and dependencies
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import xml.etree.ElementTree as ET
+
           root = Path("AdvancedDisableControllerUI")
-          manifest = (root / "AdvancedDisableControllerUI.txt").read_text()
+          manifest_path = root / "AdvancedDisableControllerUI.txt"
+          manifest = manifest_path.read_text()
           assert "## APIVersion: 101051" in manifest
           assert "## DependsOn: LibAddonMenu-2.0>=43" in manifest
+          assert "## SavedVariables: AdvancedDisableControllerUI_SavedPrefs" in manifest
           assert "LibStub" not in manifest
+
+          missing = []
+          for line in manifest.splitlines():
+              line = line.strip()
+              if not line or line.startswith("#"):
+                  continue
+              if not (root / line).is_file():
+                  missing.append(line)
+          assert not missing, f"Manifest files missing: {missing}"
+
+          ET.parse(root / "Bindings.xml")
+
           for path in root.rglob("*.lua"):
               source = path.read_text()
               assert "LibStub:GetLibrary" not in source, f"Legacy LibStub lookup in {path}"
               assert "LibStub(" not in source, f"Legacy LibStub call in {path}"
-          print("Manifest and dependency checks passed.")
+          print("Manifest, file list, XML, and dependency checks passed.")
           PY

@@ -102,9 +102,7 @@ end
 
 local function InstallModeOverride()
     if type(IsInGamepadPreferredMode) ~= "function" then
-        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-            CHAT_SYSTEM:AddMessage("[ADCUI] IsInGamepadPreferredMode is unavailable; UI mode override was not installed.")
-        end
+        ADDON:LogWarn("IsInGamepadPreferredMode is unavailable; UI mode override was not installed.")
         return false
     end
 
@@ -147,8 +145,8 @@ local function RefreshPlatformMode()
     local restored, restoreError = pcall(SetSetting, SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, tostring(currentMode))
     runtime.isRefreshing = false
 
-    if (not changed or not restored) and CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-        CHAT_SYSTEM:AddMessage("[ADCUI] Could not refresh platform styles: " .. tostring(changeError or restoreError))
+    if not changed or not restored then
+        ADDON:LogError("Could not refresh platform styles:", tostring(changeError or restoreError))
     end
 end
 
@@ -164,14 +162,14 @@ function ADDON:Refresh()
 end
 
 function ADDON:ApplyAll()
-    if self.ApplyPrompts then self:ApplyPrompts() end
-    if self.ApplyDialogs then self:ApplyDialogs() end
-    if self.ApplyUtilityWheel then self:ApplyUtilityWheel() end
-    if self.ApplyActionBar then self:ApplyActionBar() end
-    if self.ApplyResourceBars then self:ApplyResourceBars() end
-    if self.ApplyCompass then self:ApplyCompass() end
-    if self.ApplyMainMenu then self:ApplyMainMenu() end
-    if self.ApplyWorldMap then self:ApplyWorldMap() end
+    if self.ApplyPrompts then self:LogDebug("Applying prompt styles."); self:ApplyPrompts() end
+    if self.ApplyDialogs then self:LogDebug("Applying dialog styles."); self:ApplyDialogs() end
+    if self.ApplyUtilityWheel then self:LogDebug("Applying utility-wheel bridge."); self:ApplyUtilityWheel() end
+    if self.ApplyActionBar then self:LogDebug("Applying action-bar style."); self:ApplyActionBar() end
+    if self.ApplyResourceBars then self:LogDebug("Applying resource-bar style."); self:ApplyResourceBars() end
+    if self.ApplyCompass then self:LogDebug("Applying compass settings."); self:ApplyCompass() end
+    if self.ApplyMainMenu then self:LogDebug("Applying main-menu navigation."); self:ApplyMainMenu() end
+    if self.ApplyWorldMap then self:LogDebug("Applying world-map behavior."); self:ApplyWorldMap() end
 end
 
 function ADDON:SetUseAccountWideSettings(enabled)

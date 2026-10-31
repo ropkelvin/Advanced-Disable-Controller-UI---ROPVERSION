@@ -469,6 +469,7 @@ assert(ADCUI.savedVariables.useGamepadResourceBars == true, "resource-bar slash 
 
 
 -- Settings panel registration and slash-command separation.
+ADCUI.savedVariables.useGamepadResourceBars = false
 local registeredPanel
 local registeredOptions
 LibAddonMenu2 = {

@@ -49,7 +49,7 @@ function ADDON:RegisterSettings()
     LibAddonMenu2:RegisterAddonPanel(panelName, {
         type = "panel",
         name = "ESO Hybrid UI",
-        author = "RopKelvin",
+        author = "ZOSPlsFix",
         version = ADDON.VERSION,
         slashCommand = "/esohybrid_settings",
         registerForRefresh = true,
@@ -204,6 +204,23 @@ function ADDON:RegisterSettings()
         FontDropdown("Reticle button font", "Font used for the interaction button label.", "reticle", fontNames, fontValues),
         FontDropdown("Reticle context font", "Font used for the interaction context text.", "reticleContext", fontNames, fontValues),
         FontDropdown("Stealth icon font", "Font used for stealth and lockpicking prompts.", "stealthIcon", fontNames, fontValues),
+
+        { type = "header", name = "Support the addon" },
+        { type = "description", text = "Enjoying ESO Hybrid UI? You can send an optional in-game gold donation to @ZOSPlsFix. This opens ESO's mail composer with the recipient filled in. Add any amount of gold you wish to donate, then send the mail yourself." },
+        {
+            type = "button",
+            name = "Send an in-game gold donation",
+            tooltip = "Open a new ESO mail addressed to @ZOSPlsFix. You choose whether to attach gold and must send the mail manually.",
+            buttonText = "Open mail",
+            func = function()
+                if MAIL_SEND and MAIL_SEND.ComposeMailTo then
+                    MAIL_SEND:ComposeMailTo("@ZOSPlsFix")
+                elseif CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
+                    CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] The mail composer is not available right now.")
+                end
+            end,
+            width = "half",
+        },
 
         { type = "description", text = "Quick commands: /esohybrid, /esohybrid_status, /esohybrid_buttons, /esohybrid_actionbar, /esohybrid_compasslock, /esohybrid_debug on|off, /esohybrid_dump." },
     }

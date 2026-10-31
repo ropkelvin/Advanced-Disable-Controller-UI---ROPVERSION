@@ -38,9 +38,13 @@ The addon targets ESO Update 51 (API 101051).
 
 The previous `/adcui` command family remains available as compatibility aliases.
 
+## Support the addon
+
+Optional in-game gold donations are welcome. In ESO, open Settings > Addon Settings > ESO Hybrid UI and select **Open mail** under **Support the addon**. The mail composer opens addressed to **@ZOSPlsFix**; add any amount of gold you choose and send it manually.
+
 ## Project history and attribution
 
-This repository is maintained by RopKelvin. It contains a substantial Update 51 modernization and additional Hybrid-mode functionality built on the history of the Advanced Disable Controller UI addon. Historical authorship and licensing information are documented in [NOTICE.md](NOTICE.md).
+This repository is maintained by **ZOSPlsFix**. It contains a substantial Update 51 modernization and additional Hybrid-mode functionality built on the history of the Advanced Disable Controller UI addon. Historical authorship and licensing information are documented in [NOTICE.md](NOTICE.md).
 
 ## Disclaimer
 

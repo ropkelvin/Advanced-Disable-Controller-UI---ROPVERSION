@@ -46,6 +46,7 @@ ADCUI.defaults = {
     },
 
     useAccountWideSettings = false,
+    debugLoggingEnabled = false,
 }
 
 ADCUI.runtime = {
@@ -69,4 +70,6 @@ ADCUI.runtime = {
     promptOriginals = {},
     stackAllOriginals = setmetatable({}, { __mode = "k" }),
     compassOriginal = nil,
+    logger = nil,
+    debugLoggingEnabled = false,
 }

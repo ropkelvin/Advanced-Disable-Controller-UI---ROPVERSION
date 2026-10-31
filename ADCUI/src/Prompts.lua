@@ -208,6 +208,22 @@ local function RefreshReticlePrompt()
     end
 end
 
+local function RefreshPlayerInteractionPrompt()
+    if not PLAYER_TO_PLAYER or not PLAYER_TO_PLAYER.actionKeybindButton then return end
+    local button = PLAYER_TO_PLAYER.actionKeybindButton
+    if type(button.SetKeybind) == "function" then
+        -- This control is initialized before third-party addons load, so the
+        -- SetKeybind hook cannot update its original keyboard-only binding.
+        -- Explicitly re-register it with the controller interact alternate.
+        button:SetKeybind(
+            "PLAYER_TO_PLAYER_INTERACT",
+            false,
+            ShouldForceControllerPrompts() and "GAMEPAD_JUMP_OR_INTERACT" or nil,
+            ShouldForceControllerPrompts()
+        )
+    end
+end
+
 local function ApplyReticleFonts(settings, forceGamepadPrompts)
     if settings.useControllerUI or not ADDON:IsNativeGamepadMode() then
         return
@@ -255,6 +271,7 @@ function ADDON:ApplyPrompts()
     ApplyReticleFonts(settings, forceGamepadPrompts)
     RefreshRegisteredPromptLabels()
     RefreshReticlePrompt()
+    RefreshPlayerInteractionPrompt()
 
     if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle then
         KEYBIND_STRIP:SetStyle(KEYBIND_STRIP_STANDARD_STYLE)
@@ -268,4 +285,5 @@ function ADDON:RestorePromptStyles()
     RestoreSavedValues()
     RefreshRegisteredPromptLabels()
     RefreshReticlePrompt()
+    RefreshPlayerInteractionPrompt()
 end

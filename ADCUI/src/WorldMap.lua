@@ -16,7 +16,29 @@ local function ResetWorldMapOffset()
     end
 end
 
+local function InstallHybridWorldMapSceneHook()
+    if ADDON.runtime.hybridWorldMapHookInstalled or type(ZO_WorldMap_ShowWorldMap) ~= "function" then
+        return
+    end
+
+    local originalShowWorldMap = ZO_WorldMap_ShowWorldMap
+    ADDON.runtime.originalShowWorldMap = originalShowWorldMap
+    ZO_WorldMap_ShowWorldMap = function(...)
+        local settings = ADDON:GetSettings()
+        if settings.useHybridUI and ADDON:IsNativeGamepadMode() then
+            -- ESO chooses between "worldMap" and "gamepad_worldMap" inside
+            -- this function. Force the native platform only for that choice;
+            -- gameplay immediately returns to the compact keyboard HUD.
+            return ADDON:WithNativeGamepadMode(originalShowWorldMap, ...)
+        end
+        return originalShowWorldMap(...)
+    end
+
+    ADDON.runtime.hybridWorldMapHookInstalled = true
+end
+
 function ADDON:ApplyWorldMap()
+    InstallHybridWorldMapSceneHook()
     if self.runtime.worldMapHooksInstalled then return end
 
     if WORLD_MAP_SCENE and WORLD_MAP_SCENE.RegisterCallback then

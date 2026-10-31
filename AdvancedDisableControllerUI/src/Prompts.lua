@@ -1,15 +1,16 @@
 -- Gamepad glyphs on keyboard-style UI, without switching the entire UI platform.
 
 local ADDON = ADCUI
+local NIL_VALUE = {}
 
 local function SaveAndSet(object, key, value)
-    if type(object) ~= "table" or object[key] == nil then
+    if type(object) ~= "table" then
         return
     end
     local saved = ADDON.runtime.promptOriginals
     if saved[object] == nil then saved[object] = {} end
     if saved[object][key] == nil then
-        saved[object][key] = object[key]
+        saved[object][key] = object[key] == nil and NIL_VALUE or object[key]
     end
     object[key] = value
 end
@@ -17,7 +18,7 @@ end
 local function RestoreSavedValues()
     for object, values in pairs(ADDON.runtime.promptOriginals) do
         for key, value in pairs(values) do
-            object[key] = value
+            object[key] = value == NIL_VALUE and nil or value
         end
     end
 end

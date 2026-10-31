@@ -9,7 +9,6 @@ if ZO_CreateStringId then
     ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_BUTTONS", "Toggle gamepad button prompts")
     ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_ACTION_BAR", "Toggle gamepad action bar")
     ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_RESOURCE_BARS", "Toggle gamepad resource bars")
-    ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_COMPASS_LOCK", "Lock / unlock compass")
 end
 
 ESOHybridUI.ADDON_NAME = "ESOHybridUI"
@@ -27,17 +26,6 @@ ESOHybridUI.defaults = {
     useGamepadLockpicking = true,
     enableMainMenuShoulderButtons = true,
     centerWorldMap = true,
-
-    -- Compass
-    enableCompassCustomization = true,
-    scale = 1.0,
-    width = 550,
-    height = 30,
-    point = TOP,
-    anchorOffsetX = 0,
-    anchorOffsetY = 40,
-    lockEnabled = false,
-    pinLabelScale = 1.0,
 
     -- Reticle / stealth prompt fonts
     fonts = {
@@ -59,7 +47,6 @@ ESOHybridUI.runtime = {
     actionBarHooksInstalled = false,
     resourceBarHooksInstalled = false,
     promptHooksInstalled = false,
-    compassHooksInstalled = false,
     mainMenuHooksInstalled = false,
     worldMapHooksInstalled = false,
     utilityWheelHooksInstalled = false,
@@ -70,7 +57,6 @@ ESOHybridUI.runtime = {
     menuGroupActive = false,
     promptOriginals = {},
     stackAllOriginals = setmetatable({}, { __mode = "k" }),
-    compassOriginal = nil,
     logger = nil,
     debugLoggingEnabled = false,
 }

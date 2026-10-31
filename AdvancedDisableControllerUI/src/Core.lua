@@ -143,6 +143,7 @@ end
 
 function ADDON:ApplyAll()
     if self.ApplyPrompts then self:ApplyPrompts() end
+    if self.ApplyDialogs then self:ApplyDialogs() end
     if self.ApplyActionBar then self:ApplyActionBar() end
     if self.ApplyCompass then self:ApplyCompass() end
     if self.ApplyMainMenu then self:ApplyMainMenu() end

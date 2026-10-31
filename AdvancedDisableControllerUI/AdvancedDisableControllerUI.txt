@@ -10,6 +10,7 @@
 src/Defaults.lua
 src/Core.lua
 src/Prompts.lua
+src/Dialogs.lua
 src/ActionBar.lua
 src/Compass.lua
 src/MainMenu.lua

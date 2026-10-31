@@ -1,44 +1,55 @@
-# Advanced Disable Controller UI — modernization
+# Advanced Disable Controller UI
 
-This repository retains the original 1.5.3 archive and extracted source under
-`extracted/`. The new addon lives in `AdvancedDisableControllerUI/`.
+Modernized replacement for the original 1.5.3 addon.
 
-## Current target
+## Target platform
 
-- ESO live API: 101051 (Update 51 / October 2026 source snapshot).
-- LibAddonMenu-2.0: native dependency, minimum AddOnVersion 43.
-- No LibStub calls or bundled library copies.
-- Original SavedVariables name and schema version are retained to avoid
-  intentionally resetting existing user preferences.
+- ESO live UI source: Update 51 / API 101051 (live source snapshot 12.1.6).
+- LibAddonMenu-2.0: required dependency, minimum AddOnVersion 43.
+- No LibStub usage.
+- Original SavedVariables name retained.
+- Original 1.5.3 ZIP and extracted source remain under the repository root and `extracted/`.
 
-## First modernization milestone
+## Features in the modernized addon
 
-The new core focuses on the primary use case: keep physical gamepad input while
-making ESO's UI report keyboard mode. The native gamepad UI can be restored
-through the settings panel or `/adcui`.
+- Keep controller input while the UI reports keyboard mode.
+- Optional native gamepad UI toggle.
+- Optional gamepad button glyphs on keyboard-style keybind strips and reticle prompts.
+- Optional native gamepad action-bar styling while the rest of the interface remains keyboard-style.
+- Compact keyboard action bar and resource bars by default.
+- Optional gamepad lockpicking interface.
+- Saved compass scale, dimensions, position and lock.
+- LB/RB main-menu category navigation.
+- Keyboard-style world-map pan reset.
+- Character-specific or account-wide settings.
+- In-game settings panel, slash commands and bindable actions.
 
-The old action-bar/resource-bar overrides, gamepad prompt remapping, compass
-customization, and main-menu shoulder navigation are not loaded by this rewrite.
-They are preserved in `extracted/` for controlled reimplementation after their
-current UI dependencies are checked against the live ESO source.
+## Install
 
-## Install for testing
+1. Install LibAddonMenu-2.0 r43 or newer separately through ESOUI/Minion.
+2. Copy the `AdvancedDisableControllerUI` folder into:
+   `Documents/Elder Scrolls Online/live/AddOns/`
+3. Keep the separate `LibAddonMenu-2.0` folder in AddOns. Do not install an old embedded LibStub copy for this addon.
+4. Enable the addon and load a character.
 
-Copy the `AdvancedDisableControllerUI` folder into:
-`Documents/Elder Scrolls Online/live/AddOns/`
+## First-run behavior
 
-Install LibAddonMenu-2.0 separately and ensure version 43 or newer is enabled.
+The original addon's default enabled the large gamepad action bar. The modernized addon migrates that one setting to **off** on first load, so the default HUD is compact. You can turn it back on independently in the settings panel.
 
-## In-game checks still required
+## Commands
 
-1. Load with a controller connected and Gamepad Preferred enabled in ESO.
-2. Confirm movement, combat, weapon swap, interaction, and menus still accept
-   controller input while the keyboard-style UI is shown.
-3. Toggle the native gamepad UI using `/adcui` and the settings checkbox.
-4. Test lockpicking success, failure, and exiting the lockpicking UI.
-5. Check bank, guild, inventory, map, journal, dialogs, and character select.
-6. Check for conflicts with other addons that replace
-   `IsInGamepadPreferredMode()`.
+- `/adcui` — toggle native gamepad UI vs keyboard-style UI.
+- `/adcui_status` — print active mode and prompt/action-bar state.
+- `/adcui_buttons` — toggle gamepad button prompts.
+- `/adcui_actionbar` — toggle gamepad-style action bar.
+- `/adcui_compasslock` — lock/unlock compass position.
 
-This is a code modernization milestone, not a claim of verified in-game
-compatibility. The live game client is required for runtime validation.
+## Current architecture notes
+
+The core overrides the UI-facing `IsInGamepadPreferredMode()` function while preserving the game's original function for input-mode checks. Action-bar styling is independently handled through the current `ZO_PlatformStyle`, `ZO_GetPlatformTemplate`, and `ActionButton` APIs. Other UI subsystems remain keyboard-style unless the native gamepad UI option is selected.
+
+The original broad crafting/transmute callback hack was intentionally not carried forward; it fired a global callback unrelated to this addon's input/UI purpose.
+
+## Verification
+
+GitHub Actions performs Lua 5.1 syntax parsing and manifest/dependency checks. These do not emulate the ESO client. Runtime verification is still required for controller navigation in menus, action-bar updates, prompts, compass dragging, lockpicking, and addon conflicts.

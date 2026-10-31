@@ -1,23 +1,16 @@
--- Advanced Disable Controller UI
--- Core input/UI separation. This intentionally avoids the legacy action-bar
--- and platform-template monkey-patches until each can be verified on live UI.
+-- Core: separates controller input preference from the UI's preferred platform.
 
 local ADDON = ADCUI
 
-local function GetSettings()
-    if not ADDON.savedVariables or not ADDON.savedVariablesAccountWide then
-        return ADDON.defaults
+local function DeepCopy(source)
+    if type(source) ~= "table" then
+        return source
     end
-
-    if ADDON.savedVariables.useAccountWideSettings then
-        return ADDON.savedVariablesAccountWide
+    local target = {}
+    for key, value in pairs(source) do
+        target[key] = DeepCopy(value)
     end
-
-    return ADDON.savedVariables
-end
-
-function ADDON:GetSettings()
-    return GetSettings()
+    return target
 end
 
 local function OriginalGamepadPreferredMode()
@@ -28,21 +21,66 @@ local function OriginalGamepadPreferredMode()
     return false
 end
 
-local function IsGamepadUIAllowed()
-    local settings = GetSettings()
+local function GetSettings()
+    if not ADDON.savedVariables or not ADDON.savedVariablesAccountWide then
+        return ADDON.defaults
+    end
 
+    if ADDON.savedVariables.useAccountWideSettings then
+        return ADDON.savedVariablesAccountWide
+    end
+    return ADDON.savedVariables
+end
+
+function ADDON:GetSettings()
+    return GetSettings()
+end
+
+function ADDON:IsNativeGamepadMode()
+    return OriginalGamepadPreferredMode()
+end
+
+function ADDON:ShouldUseGamepadActionBar()
+    local settings = GetSettings()
+    return settings.useGamepadActionBar == true
+        and settings.useControllerUI ~= true
+        and OriginalGamepadPreferredMode()
+end
+
+function ADDON:WithNativeGamepadMode(callback, ...)
+    local runtime = ADDON.runtime
+    runtime.forceNativeModeDepth = runtime.forceNativeModeDepth + 1
+
+    local results = { pcall(callback, ...) }
+    runtime.forceNativeModeDepth = math.max(0, runtime.forceNativeModeDepth - 1)
+
+    if not results[1] then
+        error(results[2], 0)
+    end
+    return unpack(results, 2)
+end
+
+local function IsGamepadUIAllowed()
+    if ADDON.runtime.forceNativeModeDepth > 0 then
+        return OriginalGamepadPreferredMode()
+    end
+
+    local settings = GetSettings()
     if settings.useControllerUI then
         return OriginalGamepadPreferredMode()
     end
 
-    -- Keep the native gamepad lockpicking interface when requested by the
-    -- original behavior. Physical controller input remains available either way.
-    return ADDON.runtime.isLockpicking and OriginalGamepadPreferredMode() or false
+    return settings.useGamepadLockpicking
+        and ADDON.runtime.isLockpicking
+        and OriginalGamepadPreferredMode()
+        or false
 end
 
 local function InstallModeOverride()
     if type(IsInGamepadPreferredMode) ~= "function" then
-        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then CHAT_SYSTEM:AddMessage("[ADCUI] IsInGamepadPreferredMode is unavailable; UI override not installed.") end
+        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
+            CHAT_SYSTEM:AddMessage("[ADCUI] IsInGamepadPreferredMode is unavailable; UI mode override was not installed.")
+        end
         return false
     end
 
@@ -55,7 +93,8 @@ local function InstallModeOverride()
 end
 
 local function RefreshPlatformMode()
-    if ADDON.runtime.isRefreshing then
+    local runtime = ADDON.runtime
+    if runtime.isRefreshing then
         return
     end
 
@@ -73,37 +112,84 @@ local function RefreshPlatformMode()
         return
     end
 
-    -- GAMEPAD_SETTING_GAMEPAD_PREFERRED was removed in favor of the
-    -- three-state INPUT_PREFERRED_MODE setting. Temporarily flip to the
-    -- opposite fixed mode, then restore the exact user's original value
-    -- (including AUTOMATIC). Never leave the user's preference changed.
-    local temporaryMode
-    if tostring(currentMode) == tostring(INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD) then
-        temporaryMode = INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
-    else
-        temporaryMode = INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
-    end
+    local currentNumeric = tonumber(currentMode)
+    local keyboardMode = INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
+    local temporaryMode = currentNumeric == keyboardMode
+        and INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
+        or keyboardMode
 
-    ADDON.runtime.isRefreshing = true
-    SetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, temporaryMode)
-    SetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, currentMode)
-    ADDON.runtime.isRefreshing = false
+    runtime.isRefreshing = true
+    local ok, err = pcall(function()
+        SetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, tostring(temporaryMode))
+        SetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, tostring(currentMode))
+    end)
+    runtime.isRefreshing = false
+
+    if not ok and CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
+        CHAT_SYSTEM:AddMessage("[ADCUI] Could not refresh platform styles: " .. tostring(err))
+    end
 end
 
 function ADDON:Refresh()
-    if InstallModeOverride() then
-        RefreshPlatformMode()
+    InstallModeOverride()
+
+    if self.ApplyAll then
+        self:ApplyAll()
     end
+
+    RefreshPlatformMode()
 end
 
-local function OnLockpickBegin()
-    ADDON.runtime.isLockpicking = true
-    ADDON:Refresh()
+function ADDON:ApplyAll()
+    if self.ApplyPrompts then self:ApplyPrompts() end
+    if self.ApplyActionBar then self:ApplyActionBar() end
+    if self.ApplyCompass then self:ApplyCompass() end
+    if self.ApplyMainMenu then self:ApplyMainMenu() end
+    if self.ApplyWorldMap then self:ApplyWorldMap() end
 end
 
-local function OnLockpickEnd()
-    ADDON.runtime.isLockpicking = false
-    ADDON:Refresh()
+function ADDON:SetUseAccountWideSettings(enabled)
+    local character = self.savedVariables
+    local account = self.savedVariablesAccountWide
+
+    if enabled and not account._adcuiInitialized then
+        local snapshot = DeepCopy(character)
+        snapshot.useAccountWideSettings = true
+        snapshot._adcuiInitialized = true
+        for key, value in pairs(snapshot) do
+            account[key] = value
+        end
+    end
+
+    character.useAccountWideSettings = enabled == true
+    if enabled then
+        account._adcuiInitialized = true
+    end
+    self:Refresh()
+end
+
+function ADDON:ToggleUI()
+    local settings = GetSettings()
+    settings.useControllerUI = not settings.useControllerUI
+    self:Refresh()
+end
+
+function ADDON:ToggleButtons()
+    local settings = GetSettings()
+    settings.useGamepadButtons = not settings.useGamepadButtons
+    self:Refresh()
+end
+
+function ADDON:ToggleActionBar()
+    local settings = GetSettings()
+    settings.useGamepadActionBar = not settings.useGamepadActionBar
+    self:Refresh()
+end
+
+function ADDON:ToggleCompassLock()
+    local settings = GetSettings()
+    settings.lockEnabled = not settings.lockEnabled
+    self:ApplyCompass()
 end
 
 local function InitializeSavedVariables()
@@ -120,23 +206,64 @@ local function InitializeSavedVariables()
         nil,
         ADDON.defaults
     )
+
+    -- The legacy default forced the oversized gamepad action bar on. The
+    -- modern default is compact, matching the addon's primary purpose.
+    if not ADDON.savedVariables._adcuiV2Migrated then
+        ADDON.savedVariables.useGamepadActionBar = false
+        ADDON.savedVariables._adcuiV2Migrated = true
+    end
+    if ADDON.savedVariablesAccountWide.useAccountWideSettings
+        and not ADDON.savedVariablesAccountWide._adcuiV2Migrated then
+        ADDON.savedVariablesAccountWide.useGamepadActionBar = false
+        ADDON.savedVariablesAccountWide._adcuiV2Migrated = true
+    end
 end
 
-local function RegisterSlashCommand()
-    SLASH_COMMANDS["/adcui"] = function()
-        local settings = GetSettings()
-        settings.useControllerUI = not settings.useControllerUI
-        ADDON:Refresh()
-
-        local mode = settings.useControllerUI and "native gamepad UI" or "keyboard-style UI"
-        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then CHAT_SYSTEM:AddMessage("[ADCUI] " .. mode .. " selected. Controller input is not disabled.") end
+local function PrintStatus()
+    local settings = GetSettings()
+    local uiMode = settings.useControllerUI and "native gamepad UI" or "keyboard-style UI"
+    local barMode = settings.useGamepadActionBar and "gamepad action bar" or "compact keyboard action bar"
+    local promptMode = settings.useGamepadButtons and "controller prompts enabled" or "keyboard prompts"
+    if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
+        CHAT_SYSTEM:AddMessage("[ADCUI] " .. uiMode .. " | " .. barMode .. " | " .. promptMode)
     end
+end
 
-    SLASH_COMMANDS["/adcui_status"] = function()
-        local settings = GetSettings()
-        local mode = settings.useControllerUI and "native gamepad UI" or "keyboard-style UI"
-        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then CHAT_SYSTEM:AddMessage("[ADCUI] " .. mode .. "; lockpicking override: " ..
-            (ADDON.runtime.isLockpicking and "active" or "inactive")) end
+local function RegisterSlashCommands()
+    SLASH_COMMANDS["/adcui"] = function()
+        ADDON:ToggleUI()
+        PrintStatus()
+    end
+    SLASH_COMMANDS["/adcui_status"] = PrintStatus
+    SLASH_COMMANDS["/adcui_buttons"] = function()
+        ADDON:ToggleButtons()
+        PrintStatus()
+    end
+    SLASH_COMMANDS["/adcui_actionbar"] = function()
+        ADDON:ToggleActionBar()
+        PrintStatus()
+    end
+    SLASH_COMMANDS["/adcui_compasslock"] = function()
+        ADDON:ToggleCompassLock()
+        PrintStatus()
+    end
+end
+
+local function OnLockpickBegin()
+    ADDON.runtime.isLockpicking = true
+    ADDON:Refresh()
+end
+
+local function OnLockpickEnd()
+    ADDON.runtime.isLockpicking = false
+    ADDON:Refresh()
+end
+
+local function OnGamepadPreferredModeChanged()
+    InstallModeOverride()
+    if ADDON.ApplyAll then
+        ADDON:ApplyAll()
     end
 end
 
@@ -152,8 +279,17 @@ local function OnAddonLoaded(_, addonName)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickSuccess", EVENT_LOCKPICK_SUCCESS, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickFailed", EVENT_LOCKPICK_FAILED, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickBroke", EVENT_LOCKPICK_BROKE, OnLockpickEnd)
+    EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_ModeChanged", EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, OnGamepadPreferredModeChanged)
 
-    RegisterSlashCommand()
+    if LOCK_PICK_SCENE and LOCK_PICK_SCENE.RegisterCallback then
+        LOCK_PICK_SCENE:RegisterCallback("StateChange", function(_, newState)
+            if newState == SCENE_HIDDEN then
+                OnLockpickEnd()
+            end
+        end)
+    end
+
+    RegisterSlashCommands()
 
     if ADDON.RegisterSettings then
         ADDON:RegisterSettings()
@@ -162,7 +298,9 @@ local function OnAddonLoaded(_, addonName)
     ADDON.runtime.initialized = true
     ADDON:Refresh()
 
-    if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then CHAT_SYSTEM:AddMessage("[ADCUI] Loaded. Use /adcui to switch UI presentation.") end
+    if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
+        CHAT_SYSTEM:AddMessage("[ADCUI] " .. ADDON.VERSION .. " loaded. Controller input remains enabled; use /adcui for the UI toggle.")
+    end
     EVENT_MANAGER:UnregisterForEvent(ADDON.ADDON_NAME, EVENT_ADD_ON_LOADED)
 end
 

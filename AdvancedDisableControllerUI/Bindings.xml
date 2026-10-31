@@ -1,0 +1,18 @@
+<Bindings>
+    <Layer name="SI_KEYBINDINGS_CATEGORY_GENERAL">
+        <Category name="Advanced Disable Controller UI">
+            <Action name="ADCUI_TOGGLE_UI">
+                <Down>ADCUI:ToggleUI()</Down>
+            </Action>
+            <Action name="ADCUI_TOGGLE_BUTTONS">
+                <Down>ADCUI:ToggleButtons()</Down>
+            </Action>
+            <Action name="ADCUI_TOGGLE_ACTION_BAR">
+                <Down>ADCUI:ToggleActionBar()</Down>
+            </Action>
+            <Action name="ADCUI_TOGGLE_COMPASS_LOCK">
+                <Down>ADCUI:ToggleCompassLock()</Down>
+            </Action>
+        </Category>
+    </Layer>
+</Bindings>

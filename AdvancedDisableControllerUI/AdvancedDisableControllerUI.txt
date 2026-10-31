@@ -1,13 +1,18 @@
 ## Title: Advanced Disable Controller UI
-## Description: Keep gamepad input while using the keyboard-style ESO interface.
+## Description: Keep gamepad input while using the keyboard-style ESO interface, with independent HUD and prompt controls.
 ## Author: RopKelvin (modernization of Lionas / Setsu original addon)
-## Version: 2.0.0
-## AddOnVersion: 20000
+## Version: 2.1.0
+## AddOnVersion: 20100
 ## APIVersion: 101051
 ## DependsOn: LibAddonMenu-2.0>=43
 ## SavedVariables: AdvancedDisableControllerUI_SavedPrefs
 
-# Original addon source and archive are retained in the extracted/ directory.
 src/Defaults.lua
 src/Core.lua
+src/Prompts.lua
+src/ActionBar.lua
+src/Compass.lua
+src/MainMenu.lua
+src/WorldMap.lua
 src/Settings.lua
+Bindings.xml

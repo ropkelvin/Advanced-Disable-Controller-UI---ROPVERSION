@@ -1,37 +1,56 @@
 -- Advanced Disable Controller UI
--- Modernized core. Keep the original SavedVariables name and schema version
--- so existing 1.5.3 preferences are not discarded.
+-- Modern Update 51 baseline. The original SavedVariables namespace is retained.
 
 ADCUI = ADCUI or {}
 
 ADCUI.ADDON_NAME = "AdvancedDisableControllerUI"
 ADCUI.SAVED_VARIABLES = "AdvancedDisableControllerUI_SavedPrefs"
 ADCUI.SAVED_VARIABLES_VERSION = 1
+ADCUI.VERSION = "2.1.0"
 
 ADCUI.defaults = {
-    -- Original 1.5.3 settings retained for SavedVariables compatibility.
-    scale = 1,
+    -- Main behavior
+    useControllerUI = false,
+    useGamepadButtons = true,
+    useGamepadActionBar = false,
+    useGamepadLockpicking = true,
+    enableMainMenuShoulderButtons = true,
+    centerWorldMap = true,
+
+    -- Compass
+    enableCompassCustomization = true,
+    scale = 1.0,
     width = 550,
     height = 30,
     point = TOP,
-    lockEnabled = false,
     anchorOffsetX = 0,
     anchorOffsetY = 40,
-    pinLabelScale = 1,
-    useAccountWideSettings = false,
-    useControllerUI = false,
-    useGamepadButtons = true,
-    useGamepadActionBar = true,
+    lockEnabled = false,
+    pinLabelScale = 1.0,
+
+    -- Reticle / stealth prompt fonts
     fonts = {
         reticle = "ZoFontKeybindStripDescription",
         reticleContext = "ZoInteractionPrompt",
         stealthIcon = "ZoInteractionPrompt",
     },
+
+    useAccountWideSettings = false,
 }
 
 ADCUI.runtime = {
     originalIsInGamepadPreferredMode = nil,
+    forceNativeModeDepth = 0,
     isLockpicking = false,
     isRefreshing = false,
     initialized = false,
+    actionBarHooksInstalled = false,
+    promptHooksInstalled = false,
+    compassHooksInstalled = false,
+    mainMenuHooksInstalled = false,
+    worldMapHooksInstalled = false,
+    menuGroupActive = false,
+    promptOriginals = {},
+    stackAllOriginals = setmetatable({}, { __mode = "k" }),
+    compassOriginal = nil,
 }

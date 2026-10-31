@@ -308,12 +308,17 @@ local function OnAddonLoaded(_, addonName)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickFailed", EVENT_LOCKPICK_FAILED, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_ModeChanged", EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, OnGamepadPreferredModeChanged)
 
+    local function OnLockpickSceneStateChanged(_, newState)
+        if newState == SCENE_HIDDEN then
+            OnLockpickEnd()
+        end
+    end
+
     if LOCK_PICK_SCENE and LOCK_PICK_SCENE.RegisterCallback then
-        LOCK_PICK_SCENE:RegisterCallback("StateChange", function(_, newState)
-            if newState == SCENE_HIDDEN then
-                OnLockpickEnd()
-            end
-        end)
+        LOCK_PICK_SCENE:RegisterCallback("StateChange", OnLockpickSceneStateChanged)
+    end
+    if LOCK_PICK_GAMEPAD_SCENE and LOCK_PICK_GAMEPAD_SCENE.RegisterCallback then
+        LOCK_PICK_GAMEPAD_SCENE:RegisterCallback("StateChange", OnLockpickSceneStateChanged)
     end
 
     RegisterSlashCommands()

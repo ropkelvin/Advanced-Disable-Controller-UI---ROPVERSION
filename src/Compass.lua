@@ -3,6 +3,23 @@
 
 local ADDON = ESOHybridUI
 
+-- Saved anchor values can outlive UI/API changes. Only pass known ESO
+-- anchor-point enum values to SetAnchor; malformed legacy values otherwise
+-- cause TopLevelWindowSetAnchorLua type-check errors during a refresh.
+local function NormalizeAnchorPoint(point)
+    local validPoints = {
+        TOPLEFT, TOP, TOPRIGHT,
+        LEFT, CENTER, RIGHT,
+        BOTTOMLEFT, BOTTOM, BOTTOMRIGHT,
+    }
+    for _, validPoint in ipairs(validPoints) do
+        if point == validPoint then
+            return point
+        end
+    end
+    return TOP
+end
+
 local function GetCompassControls()
     local frame = ZO_CompassFrame
     if not frame then return nil end
@@ -99,7 +116,7 @@ function ADDON:ApplyCompass()
             frame:SetMovable(false)
             frame:SetMouseEnabled(false)
             frame:ClearAnchors()
-            frame:SetAnchor(original.point, original.relativeTo, original.relativePoint, original.offsetX, original.offsetY)
+            frame:SetAnchor(NormalizeAnchorPoint(original.point), original.relativeTo or GuiRoot, NormalizeAnchorPoint(original.relativePoint), original.offsetX or 0, original.offsetY or 40)
             frame:SetDimensions(original.width, original.height)
             if ZO_Compass then
                 ZO_Compass:SetScale(original.compassScale)
@@ -115,9 +132,9 @@ function ADDON:ApplyCompass()
         local point, relativeTo, relativePoint, offsetX, offsetY = frame:GetAnchor()
         local width, height = frame:GetDimensions()
         self.runtime.compassOriginal = {
-            point = point or TOP,
+            point = NormalizeAnchorPoint(point),
             relativeTo = relativeTo or GuiRoot,
-            relativePoint = relativePoint or TOP,
+            relativePoint = NormalizeAnchorPoint(relativePoint),
             offsetX = offsetX or 0,
             offsetY = offsetY or 40,
             width = width,
@@ -130,7 +147,8 @@ function ADDON:ApplyCompass()
     end
 
     frame:ClearAnchors()
-    frame:SetAnchor(settings.point or TOP, GuiRoot, nil, settings.anchorOffsetX or 0, settings.anchorOffsetY or 40)
+    settings.point = NormalizeAnchorPoint(settings.point)
+    frame:SetAnchor(settings.point, GuiRoot, settings.point, settings.anchorOffsetX or 0, settings.anchorOffsetY or 40)
     frame:SetClampedToScreen(true)
     frame:SetMovable(not settings.lockEnabled)
     frame:SetMouseEnabled(not settings.lockEnabled)

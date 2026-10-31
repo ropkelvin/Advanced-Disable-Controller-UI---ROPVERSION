@@ -59,7 +59,19 @@ end
 function ADDON:ApplyCompass()
     local settings = self:GetSettings()
     local frame = ZO_CompassFrame
-    if not frame then return end
+    if not frame then
+        if not self.runtime.compassActivationHook and EVENT_MANAGER and EVENT_PLAYER_ACTIVATED then
+            EVENT_MANAGER:RegisterForEvent(self.ADDON_NAME .. "_CompassInit", EVENT_PLAYER_ACTIVATED, function()
+                if ZO_CompassFrame then
+                    EVENT_MANAGER:UnregisterForEvent(self.ADDON_NAME .. "_CompassInit", EVENT_PLAYER_ACTIVATED)
+                    self.runtime.compassActivationHook = false
+                    self:ApplyCompass()
+                end
+            end)
+            self.runtime.compassActivationHook = true
+        end
+        return
+    end
 
     InstallCompassHandlers()
 

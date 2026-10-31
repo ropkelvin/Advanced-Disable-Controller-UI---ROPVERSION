@@ -184,4 +184,184 @@ assert(actionBarStyle.appliedStyle == actionBarStyle.keyboardStyle, "keyboard ac
 assert(actionButton.template == "ZO_ActionButton_Keyboard_Template", "keyboard action button template was not restored")
 assert(actionButton.nativeModeDuringApply == false, "keyboard action bar unexpectedly used gamepad mode")
 
-print("ADCUI core and action-bar smoke tests passed.")
+
+-- Dialogs keep the keyboard dialog while using controller glyph generation.
+local dialogNativeMode
+ZO_Dialogs_ShowDialog = function(name, data, textParams, isGamepad)
+    dialogNativeMode = IsInGamepadPreferredMode()
+    return name .. "_shown"
+end
+dofile("AdvancedDisableControllerUI/src/Dialogs.lua")
+ADCUI.savedVariables.useGamepadButtons = true
+ADCUI.savedVariables.useControllerUI = false
+nativeMode = INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
+ADCUI:ApplyDialogs()
+assert(ZO_Dialogs_ShowDialog("TEST_DIALOG") == "TEST_DIALOG_shown", "dialog wrapper did not return original result")
+assert(dialogNativeMode == true, "dialog construction did not temporarily expose gamepad prompt mode")
+assert(IsInGamepadPreferredMode() == false, "dialog wrapper did not restore keyboard UI mode")
+ADCUI.savedVariables.useGamepadButtons = false
+ZO_Dialogs_ShowDialog("TEST_DIALOG")
+assert(dialogNativeMode == false, "dialog wrapper forced gamepad prompts while disabled")
+
+-- Prompt styles and the original descriptors must be restored exactly.
+KEYBIND_STRIP_ALIGN_RIGHT = 2
+KEYBIND_STRIP_ALIGN_LEFT = 1
+KEYBIND_STRIP_STANDARD_STYLE = { alwaysPreferGamepadMode = false }
+local keybindPreHooks = {}
+ZO_PreHook = function(object, method, callback)
+    keybindPreHooks[method] = callback
+end
+local activeKeybindGroups = {}
+KEYBIND_STRIP = {
+    SetStyle = function(self, style) self.style = style end,
+    AddKeybindButtonGroup = function(self, group)
+        self.lastGroup = group
+        activeKeybindGroups[group] = true
+    end,
+    RemoveKeybindButtonGroup = function(self, group)
+        activeKeybindGroups[group] = nil
+    end,
+}
+QUEST_JOURNAL_KEYBOARD = { keybindStripDescriptor = { [2] = { keybind = "QUEST_ORIGINAL" } } }
+ZONE_STORIES_KEYBOARD = { keybindStripDescriptor = { keybind = "STORY_ORIGINAL" } }
+GUILD_HOME = { keybindStripDescriptor = { [1] = { keybind = "GUILD_ORIGINAL" } } }
+LOCK_PICK = { keybindStripDescriptor = { {}, {}, {}, {} } }
+
+dofile("AdvancedDisableControllerUI/src/Prompts.lua")
+ADCUI.savedVariables.useGamepadButtons = true
+ADCUI:ApplyPrompts()
+assert(KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode == true, "gamepad glyph style was not enabled")
+assert(QUEST_JOURNAL_KEYBOARD.keybindStripDescriptor[2].keybind == "UI_SHORTCUT_SECONDARY", "quest journal prompt was not remapped")
+assert(ZONE_STORIES_KEYBOARD.keybindStripDescriptor.keybind == "UI_SHORTCUT_SECONDARY", "zone story prompt was not remapped")
+assert(GUILD_HOME.keybindStripDescriptor[1].keybind == "UI_SHORTCUT_LEFT_STICK", "guild prompt was not remapped")
+assert(LOCK_PICK.keybindStripDescriptor[4].alignment == KEYBIND_STRIP_ALIGN_RIGHT, "lockpick prompt alignment was not changed")
+
+local stackGroup = { { keybind = "UI_SHORTCUT_STACK_ALL" } }
+local currentSceneName = "inventory"
+SCENE_MANAGER = {
+    GetCurrentSceneName = function() return currentSceneName end,
+    RegisterCallback = function(self, event, callback) self.sceneCallback = callback end,
+}
+keybindPreHooks.AddKeybindButtonGroup(KEYBIND_STRIP, stackGroup)
+assert(stackGroup[1].keybind == "UI_SHORTCUT_LEFT_STICK", "stack-all prompt was not mapped for controller")
+ADCUI.savedVariables.useGamepadButtons = false
+ADCUI:ApplyPrompts()
+keybindPreHooks.AddKeybindButtonGroup(KEYBIND_STRIP, stackGroup)
+assert(stackGroup[1].keybind == "UI_SHORTCUT_STACK_ALL", "stack-all prompt was not restored")
+assert(KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode == false, "gamepad glyph style was not disabled")
+assert(QUEST_JOURNAL_KEYBOARD.keybindStripDescriptor[2].keybind == "QUEST_ORIGINAL", "quest prompt original was not restored")
+assert(ZONE_STORIES_KEYBOARD.keybindStripDescriptor.keybind == "STORY_ORIGINAL", "zone story original was not restored")
+assert(GUILD_HOME.keybindStripDescriptor[1].keybind == "GUILD_ORIGINAL", "guild prompt original was not restored")
+assert(LOCK_PICK.keybindStripDescriptor[4].alignment == nil, "nil lockpick alignment was not restored")
+
+-- Compass sizing, movement locking and reset-to-original behavior.
+local function MakeControl(width, height, scale)
+    local control = { width = width, height = height, scale = scale or 1 }
+    function control:SetScale(value) self.scale = value end
+    function control:GetScale() return self.scale end
+    function control:SetDimensions(w, h) self.width, self.height = w, h end
+    function control:GetDimensions() return self.width, self.height end
+    return control
+end
+GuiRoot = {}
+local pinLabel = MakeControl(100, 20, 1)
+local leftEdge = MakeControl(18, 39, 1)
+local rightEdge = MakeControl(18, 39, 1)
+local compass = MakeControl(580, 39, 1)
+function compass:GetNamedChild(name)
+    if name == "CenterOverPinLabel" then return pinLabel end
+end
+local compassFrame = MakeControl(600, 39, 1)
+local frameAnchor = { TOP, GuiRoot, TOP, 0, 40 }
+function compassFrame:GetAnchor()
+    return nil, frameAnchor[1], frameAnchor[2], frameAnchor[3], frameAnchor[4], frameAnchor[5]
+end
+function compassFrame:ClearAnchors() end
+function compassFrame:SetAnchor(point, relativeTo, relativePoint, x, y)
+    frameAnchor = { point, relativeTo, relativePoint, x, y }
+end
+function compassFrame:SetClampedToScreen(value) self.clamped = value end
+function compassFrame:SetMovable(value) self.movable = value end
+function compassFrame:SetMouseEnabled(value) self.mouseEnabled = value end
+function compassFrame:GetNamedChild(name)
+    if name == "Left" then return leftEdge end
+    if name == "Right" then return rightEdge end
+end
+ZO_CompassFrame = compassFrame
+ZO_Compass = compass
+
+dofile("AdvancedDisableControllerUI/src/Compass.lua")
+ADCUI.savedVariables.enableCompassCustomization = true
+ADCUI.savedVariables.width = 560
+ADCUI.savedVariables.height = 32
+ADCUI.savedVariables.scale = 1.1
+ADCUI.savedVariables.pinLabelScale = 0.9
+ADCUI.savedVariables.lockEnabled = false
+ADCUI:ApplyCompass()
+assert(compassFrame.width == 560 and compassFrame.height == 32, "compass dimensions were not applied")
+assert(compass.scale == 1.1 and pinLabel.scale == 0.9, "compass scale settings were not applied")
+assert(compassFrame.movable == true and compassFrame.mouseEnabled == true, "unlocked compass is not draggable")
+assert(compassFrame.clamped == true, "compass is not clamped to the screen")
+
+ADCUI.savedVariables.lockEnabled = true
+ADCUI:ApplyCompass()
+assert(compassFrame.movable == false and compassFrame.mouseEnabled == false, "compass lock did not disable dragging")
+ADCUI.savedVariables.enableCompassCustomization = false
+ADCUI:ApplyCompass()
+assert(compassFrame.width == 600 and compassFrame.height == 39, "compass reset did not restore original dimensions")
+assert(compass.scale == 1 and pinLabel.scale == 1, "compass reset did not restore original scales")
+
+-- World-map pan reset uses the current PanAndZoom API.
+SCENE_SHOWN = "SCENE_SHOWN"
+local worldMapCallback
+WORLD_MAP_SCENE = {
+    RegisterCallback = function(self, event, callback) worldMapCallback = callback end,
+}
+local mapCalls = { clearLock = 0, clearOffset = 0, delta = nil }
+local map = {
+    ClearLockPoint = function() mapCalls.clearLock = mapCalls.clearLock + 1 end,
+    ClearTargetOffset = function() mapCalls.clearOffset = mapCalls.clearOffset + 1 end,
+    AddTargetOffsetDelta = function(_, x, y) mapCalls.delta = { x, y } end,
+}
+ZO_WorldMap_GetPanAndZoom = function() return map end
+dofile("AdvancedDisableControllerUI/src/WorldMap.lua")
+ADCUI.savedVariables.centerWorldMap = true
+ADCUI:ApplyWorldMap()
+worldMapCallback("showing", SCENE_SHOWN)
+assert(mapCalls.clearLock == 1 and mapCalls.clearOffset == 1, "world-map pan/lock target was not cleared")
+assert(mapCalls.delta and mapCalls.delta[1] == 0 and mapCalls.delta[2] == 0, "world-map center offset was not re-established")
+
+-- Main-menu shoulder navigation skips hidden and unavailable categories.
+local menuCategories = {}
+MAIN_MENU_KEYBOARD = {
+    lastCategory = 1,
+    categoryInfo = { [1] = {}, [2] = {}, [3] = {}, [4] = {} },
+    sceneInfo = { mainMenu = { category = 1 } },
+    ShowCategory = function(self, category)
+        self.lastCategory = category
+        self.lastShownCategory = category
+    end,
+}
+ZO_CATEGORY_LAYOUT_INFO = {
+    [1] = {},
+    [2] = {},
+    [3] = { hideCategoryBar = true },
+    [4] = { visible = function() return false end },
+}
+SCENE_MANAGER.GetCurrentSceneName = function() return "mainMenu" end
+dofile("AdvancedDisableControllerUI/src/MainMenu.lua")
+ADCUI.savedVariables.enableMainMenuShoulderButtons = true
+ADCUI.savedVariables.useControllerUI = false
+ADCUI:ApplyMainMenu()
+assert(ADCUI.runtime.menuGroupActive == true, "main-menu shoulder group was not registered")
+local menuGroup = KEYBIND_STRIP.lastGroup
+assert(menuGroup and menuGroup[1].visible() and menuGroup[2].visible(), "shoulder prompts were not visible in a valid category")
+menuGroup[2].callback()
+assert(MAIN_MENU_KEYBOARD.lastShownCategory == 2, "next-category shoulder action failed")
+menuGroup[2].callback()
+assert(MAIN_MENU_KEYBOARD.lastShownCategory == 1, "category navigation did not skip hidden categories")
+ADCUI.savedVariables.enableMainMenuShoulderButtons = false
+ADCUI:ApplyMainMenu()
+assert(ADCUI.runtime.menuGroupActive == false, "main-menu shoulder group was not removed when disabled")
+
+print("ADCUI core, prompts, dialogs, action bar, compass, map and menu smoke tests passed.")

@@ -111,11 +111,14 @@ local function HookStackAllMapping()
     ADDON.runtime.promptHooksInstalled = true
 end
 
-local function ApplyReticleFonts(settings)
+local function ApplyReticleFonts(settings, forceGamepadPrompts)
+    if settings.useControllerUI or not ADDON:IsNativeGamepadMode() then
+        return
+    end
     if RETICLE and RETICLE.ApplyPlatformStyle and ZO_ShallowTableCopy and KEYBIND_STRIP_STANDARD_STYLE then
         local keybindStyle = ZO_ShallowTableCopy(KEYBIND_STRIP_STANDARD_STYLE)
         keybindStyle.nameFont = settings.fonts.reticle
-        keybindStyle.alwaysPreferGamepadMode = settings.useGamepadButtons
+        keybindStyle.alwaysPreferGamepadMode = forceGamepadPrompts
         RETICLE:ApplyPlatformStyle({
             font = settings.fonts.reticleContext,
             keybindButtonStyle = keybindStyle,
@@ -148,7 +151,7 @@ function ADDON:ApplyPrompts()
     KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = forceGamepadPrompts
     RemapKnownDescriptors(forceGamepadPrompts)
     HookStackAllMapping()
-    ApplyReticleFonts(settings)
+    ApplyReticleFonts(settings, forceGamepadPrompts)
 
     if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle then
         KEYBIND_STRIP:SetStyle(KEYBIND_STRIP_STANDARD_STYLE)

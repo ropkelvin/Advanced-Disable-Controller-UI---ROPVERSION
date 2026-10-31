@@ -287,7 +287,6 @@ local function OnAddonLoaded(_, addonName)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickBegin", EVENT_BEGIN_LOCKPICK, OnLockpickBegin)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickSuccess", EVENT_LOCKPICK_SUCCESS, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickFailed", EVENT_LOCKPICK_FAILED, OnLockpickEnd)
-    EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickBroke", EVENT_LOCKPICK_BROKE, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_ModeChanged", EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, OnGamepadPreferredModeChanged)
 
     if LOCK_PICK_SCENE and LOCK_PICK_SCENE.RegisterCallback then

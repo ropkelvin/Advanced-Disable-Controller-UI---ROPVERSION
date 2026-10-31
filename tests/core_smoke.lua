@@ -126,7 +126,7 @@ assert(IsInGamepadPreferredMode() == true, "native lockpicking UI was not enable
 for _, item in ipairs(events[EVENT_LOCKPICK_SUCCESS]) do
     item.callback(EVENT_LOCKPICK_SUCCESS)
 end
-assert(ADCUI.runtime.isLockpicking == false, "lockpicking break was not handled")
+assert(ADCUI.runtime.isLockpicking == false, "lockpicking success was not handled")
 assert(IsInGamepadPreferredMode() == false, "keyboard UI was not restored after lockpicking")
 
 characterSaved.useGamepadButtons = false

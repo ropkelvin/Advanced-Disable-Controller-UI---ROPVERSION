@@ -43,11 +43,16 @@ jobs:
                   missing.append(line)
           assert not missing, f"Manifest files missing: {missing}"
 
-          ET.parse(root / "Bindings.xml")
+          bindings = ET.parse(root / "Bindings.xml").getroot()
+          lua_sources = "\\n".join(path.read_text() for path in root.rglob("*.lua"))
+          for action in bindings.findall(".//Action"):
+              action_name = action.attrib["name"]
+              assert f"SI_BINDING_NAME_{action_name}" in lua_sources, f"Missing binding label for {action_name}"
 
           for path in root.rglob("*.lua"):
               source = path.read_text()
               assert "LibStub:GetLibrary" not in source, f"Legacy LibStub lookup in {path}"
               assert "LibStub(" not in source, f"Legacy LibStub call in {path}"
+              assert "GAMEPAD_SETTING_GAMEPAD_PREFERRED" not in source, f"Removed legacy input setting in {path}"
           print("Manifest, file list, XML, and dependency checks passed.")
           PY

@@ -14,7 +14,7 @@ Modernized replacement for the original 1.5.3 addon.
 
 - Keep controller input while the UI reports keyboard mode.
 - Optional native gamepad UI toggle.
-- Optional gamepad button glyphs on keyboard-style keybind strips and reticle prompts.
+- Optional gamepad button glyphs on keyboard-style keybind strips, reticle prompts and dialogs.
 - Optional native gamepad action-bar styling while the rest of the interface remains keyboard-style.
 - Optional native gamepad resource-bar styling, independently switchable from the action bar.
 - Compact keyboard action bar and resource bars by default.
@@ -41,7 +41,7 @@ The original addon's default enabled the large gamepad action bar. The modernize
 ## Commands
 
 - `/adcui` — toggle native gamepad UI vs keyboard-style UI.
-- `/adcui_status` — print active mode and prompt/action-bar state.
+- `/adcui_status` — print active mode, prompts, action-bar and resource-bar state.
 - `/adcui_buttons` — toggle gamepad button prompts.
 - `/adcui_actionbar` — toggle gamepad-style action bar.
 - `/adcui_resourcebars` — toggle gamepad-style resource bars.
@@ -49,7 +49,7 @@ The original addon's default enabled the large gamepad action bar. The modernize
 
 ## Current architecture notes
 
-The core overrides the UI-facing `IsInGamepadPreferredMode()` function while preserving the game's original function for input-mode checks. Action-bar styling is independently handled through the current `ZO_PlatformStyle`, `ZO_GetPlatformTemplate`, and `ActionButton` APIs. Other UI subsystems remain keyboard-style unless the native gamepad UI option is selected.
+The core overrides the UI-facing `IsInGamepadPreferredMode()` function while preserving the game's original function for input-mode checks. Action-bar styling is independently handled through the current `ZO_PlatformStyle`, `ZO_GetPlatformTemplate`, and `ActionButton` APIs. Other UI subsystems remain keyboard-style unless explicitly configured otherwise.
 
 The original broad crafting/transmute callback hack was intentionally not carried forward; it fired a global callback unrelated to this addon's input/UI purpose. The old `QUICKSLOT_RADIAL_MANAGER` hook was also replaced: current ESO uses `INTERACTIVE_WHEEL_MANAGER` with separate keyboard/gamepad utility-wheel classes, so the modern addon bridges the current gamepad cycle actions through a temporary addon action layer rather than referencing the removed legacy manager.
 

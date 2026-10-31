@@ -22,7 +22,7 @@ local function SaveAnchor()
     local frame = ZO_CompassFrame
     if not frame or not frame.GetAnchor then return end
 
-    local _, point, relativeTo, relativePoint, offsetX, offsetY = frame:GetAnchor()
+    local point, relativeTo, relativePoint, offsetX, offsetY = frame:GetAnchor()
     if not point then return end
 
     local settings = ADDON:GetSettings()
@@ -112,7 +112,7 @@ function ADDON:ApplyCompass()
     end
 
     if not self.runtime.compassOriginal then
-        local _, point, relativeTo, relativePoint, offsetX, offsetY = frame:GetAnchor()
+        local point, relativeTo, relativePoint, offsetX, offsetY = frame:GetAnchor()
         local width, height = frame:GetDimensions()
         self.runtime.compassOriginal = {
             point = point or TOP,

@@ -201,6 +201,36 @@ local function RefreshReticlePrompt()
     end
 end
 
+local function RefreshSynergyPrompt()
+    if not ShouldForceControllerPrompts() or not SYNERGY or not SYNERGY.action
+        or type(ZO_Keybindings_GetHighestPriorityBindingStringFromAction) ~= "function" then
+        return
+    end
+
+    -- USE_SYNERGY is the shared action name for keyboard and controller.
+    -- Its controller binding is a chord (Y+B by default), so ask ESO's
+    -- keybinding formatter to prefer the gamepad binding explicitly.
+    local bindingText = ZO_Keybindings_GetHighestPriorityBindingStringFromAction(
+        "USE_SYNERGY",
+        KEYBIND_TEXT_OPTIONS_FULL_NAME,
+        KEYBIND_TEXTURE_OPTIONS_EMBED_MARKUP,
+        true
+    )
+    if bindingText then
+        SYNERGY.action:SetText(bindingText)
+    end
+end
+
+local function InstallSynergyPromptHook()
+    if ADDON.runtime.synergyPromptHookInstalled or not SYNERGY
+        or type(SYNERGY.OnSynergyAbilityChanged) ~= "function" or type(ZO_PostHook) ~= "function" then
+        return
+    end
+
+    ZO_PostHook(SYNERGY, "OnSynergyAbilityChanged", RefreshSynergyPrompt)
+    ADDON.runtime.synergyPromptHookInstalled = true
+end
+
 local function RefreshPlayerInteractionPrompt()
     if not PLAYER_TO_PLAYER or not PLAYER_TO_PLAYER.actionKeybindButton then return end
     local button = PLAYER_TO_PLAYER.actionKeybindButton
@@ -257,9 +287,11 @@ function ADDON:ApplyPrompts()
     RemapKnownDescriptors(forceGamepadPrompts)
     HookStackAllMapping()
     ApplyReticleFonts(settings, forceGamepadPrompts)
+    InstallSynergyPromptHook()
     RefreshRegisteredPromptLabels()
     RefreshReticlePrompt()
     RefreshPlayerInteractionPrompt()
+    RefreshSynergyPrompt()
 
     if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle then
         KEYBIND_STRIP:SetStyle(KEYBIND_STRIP_STANDARD_STYLE)

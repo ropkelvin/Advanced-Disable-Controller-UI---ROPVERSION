@@ -13,7 +13,10 @@ end
 function ADDON:ApplyResourceBars()
     if self.runtime.resourceBarHooksInstalled then return end
 
-    local target = PLAYER_ATTRIBUTE_BARS or ZO_PlayerAttributeBars
+    local target = PLAYER_ATTRIBUTE_BARS
+    if not target or type(target.OnGamepadPreferredModeChanged) ~= "function" then
+        target = ZO_PlayerAttributeBars
+    end
     if not target or type(target.OnGamepadPreferredModeChanged) ~= "function" then
         return
     end

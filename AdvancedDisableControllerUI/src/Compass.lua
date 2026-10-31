@@ -49,12 +49,6 @@ local function InstallCompassHandlers()
     if ADDON.runtime.compassHooksInstalled or not ZO_CompassFrame then return end
 
     local frame = ZO_CompassFrame
-    frame:SetHandler("OnMouseUp", function(_, button)
-        if button == MOUSE_BUTTON_INDEX_LEFT then
-            SaveAnchor()
-        end
-    end, "ADCUICompass")
-
     if EVENT_MANAGER and EVENT_GLOBAL_MOUSE_UP then
         EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_CompassSave", EVENT_GLOBAL_MOUSE_UP, SaveAnchor)
     end
@@ -77,7 +71,12 @@ function ADDON:ApplyCompass()
             frame:ClearAnchors()
             frame:SetAnchor(original.point, original.relativeTo, original.relativePoint, original.offsetX, original.offsetY)
             frame:SetDimensions(original.width, original.height)
-            if ZO_Compass then ZO_Compass:SetScale(original.compassScale) end
+            if ZO_Compass then
+                ZO_Compass:SetScale(original.compassScale)
+                ZO_Compass:SetDimensions(original.compassWidth, original.compassHeight)
+            end
+            local _, _, pinLabel = GetCompassControls()
+            if pinLabel then pinLabel:SetScale(original.pinLabelScale) end
         end
         return
     end
@@ -94,6 +93,9 @@ function ADDON:ApplyCompass()
             width = width,
             height = height,
             compassScale = ZO_Compass and ZO_Compass:GetScale() or 1,
+            compassWidth = ZO_Compass and select(1, ZO_Compass:GetDimensions()) or width,
+            compassHeight = ZO_Compass and select(2, ZO_Compass:GetDimensions()) or height,
+            pinLabelScale = (select(3, GetCompassControls())) and select(3, GetCompassControls()):GetScale() or 1,
         }
     end
 

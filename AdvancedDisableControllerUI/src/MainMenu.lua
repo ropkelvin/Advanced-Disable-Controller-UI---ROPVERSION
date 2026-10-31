@@ -77,7 +77,6 @@ local keybindGroup = {
                 and not settings.useControllerUI
                 and ADDON:IsNativeGamepadMode()
                 and IsCategoryAvailable(GetCurrentCategory())
-                and IsCategoryAvailable(GetCurrentCategory())
         end,
     },
     {

@@ -8,12 +8,14 @@ local function GetCompassControls()
     if not frame then return nil end
 
     local compass = ZO_Compass
-    local pinLabel = frame.GetNamedChild and frame:GetNamedChild("CenterOverPinLabel")
+    local pinLabel = compass and compass.GetNamedChild and compass:GetNamedChild("CenterOverPinLabel")
     if not pinLabel then
         pinLabel = ZO_CompassCenterOverPinLabel or ZO_CompassFrameCenterOverPinLabel
     end
+    local left = frame.GetNamedChild and frame:GetNamedChild("Left") or ZO_CompassFrameLeft
+    local right = frame.GetNamedChild and frame:GetNamedChild("Right") or ZO_CompassFrameRight
 
-    return frame, compass, pinLabel, ZO_CompassFrameLeft, ZO_CompassFrameRight
+    return frame, compass, pinLabel, left, right
 end
 
 local function SaveAnchor()

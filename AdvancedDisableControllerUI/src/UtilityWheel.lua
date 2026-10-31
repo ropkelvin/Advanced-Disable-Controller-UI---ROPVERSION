@@ -117,20 +117,20 @@ end
 function ADDON:ApplyUtilityWheel()
     InstallManagerHooks()
 
-    if not self.runtime.utilityWheelDefaultsCopied then
-        local left = CopyGamepadDefaultBindings(
+    if not self.runtime.utilityWheelLeftCopied then
+        self.runtime.utilityWheelLeftCopied = CopyGamepadDefaultBindings(
             "UTILITY_WHEEL_GAMEPAD_CYCLE_LEFT",
             "ADCUI_UTILITY_WHEEL_CYCLE_LEFT"
         )
-        local right = CopyGamepadDefaultBindings(
+    end
+    if not self.runtime.utilityWheelRightCopied then
+        self.runtime.utilityWheelRightCopied = CopyGamepadDefaultBindings(
             "UTILITY_WHEEL_GAMEPAD_CYCLE_RIGHT",
             "ADCUI_UTILITY_WHEEL_CYCLE_RIGHT"
         )
-
-        if left and right then
-            self.runtime.utilityWheelDefaultsCopied = true
-        end
     end
+    self.runtime.utilityWheelDefaultsCopied =
+        self.runtime.utilityWheelLeftCopied and self.runtime.utilityWheelRightCopied
 
     if not self.runtime.utilityWheelRetryHook and EVENT_MANAGER and EVENT_PLAYER_ACTIVATED
         and (not self.runtime.utilityWheelHooksInstalled or not self.runtime.utilityWheelDefaultsCopied) then

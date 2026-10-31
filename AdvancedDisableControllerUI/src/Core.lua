@@ -127,14 +127,12 @@ local function RefreshPlatformMode()
         or keyboardMode
 
     runtime.isRefreshing = true
-    local ok, err = pcall(function()
-        SetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, tostring(temporaryMode))
-        SetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, tostring(currentMode))
-    end)
+    local changed, changeError = pcall(SetSetting, SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, tostring(temporaryMode))
+    local restored, restoreError = pcall(SetSetting, SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, tostring(currentMode))
     runtime.isRefreshing = false
 
-    if not ok and CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-        CHAT_SYSTEM:AddMessage("[ADCUI] Could not refresh platform styles: " .. tostring(err))
+    if (not changed or not restored) and CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
+        CHAT_SYSTEM:AddMessage("[ADCUI] Could not refresh platform styles: " .. tostring(changeError or restoreError))
     end
 end
 

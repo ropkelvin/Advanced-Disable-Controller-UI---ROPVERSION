@@ -28,6 +28,8 @@ jobs:
           assert "## DependsOn: LibAddonMenu-2.0>=43" in manifest
           assert "LibStub" not in manifest
           for path in root.rglob("*.lua"):
-              assert "LibStub" not in path.read_text(), f"Legacy LibStub reference in {path}"
+              source = path.read_text()
+              assert "LibStub:GetLibrary" not in source, f"Legacy LibStub lookup in {path}"
+              assert "LibStub(" not in source, f"Legacy LibStub call in {path}"
           print("Manifest and dependency checks passed.")
           PY

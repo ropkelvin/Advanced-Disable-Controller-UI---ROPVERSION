@@ -1,5 +1,5 @@
 -- Advanced Disable Controller UI
--- Modern Update 51 baseline. The original SavedVariables namespace is retained.
+-- ADCUI Update 51 baseline. This is a clean, independent addon configuration.
 
 ADCUI = ADCUI or {}
 
@@ -13,7 +13,7 @@ if ZO_CreateStringId then
 end
 
 ADCUI.ADDON_NAME = "ADCUI"
-ADCUI.SAVED_VARIABLES = "AdvancedDisableControllerUI_SavedPrefs"
+ADCUI.SAVED_VARIABLES = "ADCUI_SavedVariables"
 ADCUI.SAVED_VARIABLES_VERSION = 1
 ADCUI.VERSION = "2.1.0"
 

@@ -13,22 +13,6 @@ local function DeepCopy(source)
     return target
 end
 
-local function MatchesDefaults(saved, defaults)
-    for key, defaultValue in pairs(defaults) do
-        if key ~= "useAccountWideSettings" then
-            local savedValue = saved[key]
-            if type(defaultValue) == "table" then
-                if type(savedValue) ~= "table" or not MatchesDefaults(savedValue, defaultValue) then
-                    return false
-                end
-            elseif savedValue ~= defaultValue then
-                return false
-            end
-        end
-    end
-    return true
-end
-
 local function OriginalGamepadPreferredMode()
     local original = ADDON.runtime.originalIsInGamepadPreferredMode
     if type(original) == "function" then
@@ -177,19 +161,12 @@ function ADDON:SetUseAccountWideSettings(enabled)
     local account = self.savedVariablesAccountWide
 
     if enabled and not account._adcuiInitialized then
-        -- Preserve an older account-wide profile if it already contains
-        -- custom values; otherwise seed it from this character.
-        if MatchesDefaults(account, ADDON.defaults) then
-            local snapshot = DeepCopy(character)
-            snapshot.useAccountWideSettings = true
-            snapshot._adcuiInitialized = true
-            for key, value in pairs(snapshot) do
-                account[key] = value
-            end
-        end
-        if not account._adcuiV2Migrated then
-            account.useGamepadActionBar = false
-            account._adcuiV2Migrated = true
+        -- First-time account-wide setup: copy this character's clean ADCUI
+        -- profile into the new account-wide profile.
+        local snapshot = DeepCopy(character)
+        snapshot.useAccountWideSettings = true
+        for key, value in pairs(snapshot) do
+            account[key] = value
         end
         account._adcuiInitialized = true
     end
@@ -203,9 +180,6 @@ function ADDON:SetUseAccountWideSettings(enabled)
     end
 
     character.useAccountWideSettings = enabled == true
-    if enabled then
-        account._adcuiInitialized = true
-    end
     self:Refresh()
 end
 
@@ -258,18 +232,6 @@ local function InitializeSavedVariables()
         ADDON.defaults
     )
 
-    -- The legacy default forced the oversized gamepad action bar on. The
-    -- modern default is compact, matching the addon's primary purpose.
-    if not ADDON.savedVariables._adcuiV2Migrated then
-        ADDON.savedVariables.useGamepadActionBar = false
-        ADDON.savedVariables._adcuiV2Migrated = true
-    end
-    if ADDON.savedVariables.useAccountWideSettings
-        and not ADDON.savedVariablesAccountWide._adcuiV2Migrated then
-        ADDON.savedVariablesAccountWide.useGamepadActionBar = false
-        ADDON.savedVariablesAccountWide._adcuiV2Migrated = true
-        ADDON.savedVariablesAccountWide._adcuiInitialized = true
-    end
 end
 
 local function PrintStatus()

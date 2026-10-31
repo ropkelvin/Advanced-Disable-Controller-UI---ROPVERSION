@@ -5,7 +5,7 @@
 ## AddOnVersion: 20100
 ## APIVersion: 101051
 ## DependsOn: LibAddonMenu-2.0>=43
-## SavedVariables: AdvancedDisableControllerUI_SavedPrefs
+## SavedVariables: ADCUI_SavedVariables
 
 src/Defaults.lua
 src/Diagnostics.lua

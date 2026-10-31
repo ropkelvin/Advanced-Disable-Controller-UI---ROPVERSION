@@ -45,7 +45,7 @@ function ADDON:RegisterSettings()
         return
     end
 
-    local panelName = "AdvancedDisableControllerUI_Settings"
+    local panelName = "ADCUI_Settings"
     LibAddonMenu2:RegisterAddonPanel(panelName, {
         type = "panel",
         name = "Advanced Disable Controller UI",

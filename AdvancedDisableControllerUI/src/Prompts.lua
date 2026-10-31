@@ -75,11 +75,19 @@ local function HookStackAllMapping()
     end
 
     local function ProcessGroup(_, group)
+        if type(group) ~= "table" then return end
         local settings = ADDON:GetSettings()
-        if not settings.useGamepadButtons or settings.useControllerUI or not ADDON:IsNativeGamepadMode() then
+        local enabled = settings.useGamepadButtons and not settings.useControllerUI and ADDON:IsNativeGamepadMode()
+        if not enabled then
+            for _, descriptor in ipairs(group) do
+                local original = ADDON.runtime.stackAllOriginals[descriptor]
+                if original then
+                    descriptor.keybind = original
+                    ADDON.runtime.stackAllOriginals[descriptor] = nil
+                end
+            end
             return
         end
-        if type(group) ~= "table" then return end
 
         local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
         if sceneName ~= "store" and sceneName ~= "inventory" and sceneName ~= "fence_keyboard" then

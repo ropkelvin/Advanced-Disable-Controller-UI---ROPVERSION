@@ -131,7 +131,6 @@ function ADDON:DumpDiagnostics()
         "prompts=" .. tostring(self.runtime.promptHooksInstalled),
         "actionBar=" .. tostring(self.runtime.actionBarHooksInstalled),
         "resourceBars=" .. tostring(self.runtime.resourceBarHooksInstalled),
-        "compass=" .. tostring(self.runtime.compassHooksInstalled),
         "mainMenu=" .. tostring(self.runtime.mainMenuHooksInstalled),
         "worldMap=" .. tostring(self.runtime.worldMapHooksInstalled),
         "utilityWheel=" .. tostring(self.runtime.utilityWheelHooksInstalled))

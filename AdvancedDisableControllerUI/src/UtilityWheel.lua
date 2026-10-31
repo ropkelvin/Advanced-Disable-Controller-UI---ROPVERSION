@@ -6,8 +6,10 @@
 local ADDON = ADCUI
 local BRIDGE_LAYER = "ADCUI_UTILITY_WHEEL_BRIDGE"
 
-ZO_CreateStringId("SI_BINDING_NAME_ADCUI_UTILITY_WHEEL_CYCLE_LEFT", "Cycle utility wheel left (controller)")
-ZO_CreateStringId("SI_BINDING_NAME_ADCUI_UTILITY_WHEEL_CYCLE_RIGHT", "Cycle utility wheel right (controller)")
+if ZO_CreateStringId then
+    ZO_CreateStringId("SI_BINDING_NAME_ADCUI_UTILITY_WHEEL_CYCLE_LEFT", "Cycle utility wheel left (controller)")
+    ZO_CreateStringId("SI_BINDING_NAME_ADCUI_UTILITY_WHEEL_CYCLE_RIGHT", "Cycle utility wheel right (controller)")
+end
 
 function ADDON:ShouldBridgeUtilityWheelInput()
     return self.runtime.utilityWheelLayerActive == true

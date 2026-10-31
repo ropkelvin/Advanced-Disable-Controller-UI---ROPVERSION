@@ -1,6 +1,6 @@
 <Bindings>
     <Layer name="SI_KEYBINDINGS_CATEGORY_GENERAL">
-        <Category name="Advanced Disable Controller UI">
+        <Category name="SI_KEYBINDINGS_CATEGORY_ADCUI">
             <Action name="ADCUI_TOGGLE_UI">
                 <Down>ADCUI:ToggleUI()</Down>
             </Action>

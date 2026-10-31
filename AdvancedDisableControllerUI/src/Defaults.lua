@@ -3,6 +3,14 @@
 
 ADCUI = ADCUI or {}
 
+if ZO_CreateStringId then
+    ZO_CreateStringId("SI_KEYBINDINGS_CATEGORY_ADCUI", "Advanced Disable Controller UI")
+    ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_UI", "Toggle keyboard / gamepad UI")
+    ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_BUTTONS", "Toggle gamepad button prompts")
+    ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_ACTION_BAR", "Toggle gamepad action bar")
+    ZO_CreateStringId("SI_BINDING_NAME_ADCUI_TOGGLE_COMPASS_LOCK", "Lock / unlock compass")
+end
+
 ADCUI.ADDON_NAME = "AdvancedDisableControllerUI"
 ADCUI.SAVED_VARIABLES = "AdvancedDisableControllerUI_SavedPrefs"
 ADCUI.SAVED_VARIABLES_VERSION = 1

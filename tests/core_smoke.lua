@@ -1,6 +1,9 @@
 -- Lightweight smoke tests for Core.lua with ESO API stubs.
 -- This does not replace in-client integration testing.
 
+local createdStringIds = {}
+ZO_CreateStringId = function(id, value) createdStringIds[id] = value end
+
 TOP = 1
 BOTTOM = 2
 SETTING_TYPE_GAMEPAD = 1
@@ -96,6 +99,8 @@ for _, item in ipairs(events[EVENT_ADD_ON_LOADED]) do
     item.callback(EVENT_ADD_ON_LOADED, ADCUI.ADDON_NAME)
 end
 
+assert(createdStringIds.SI_KEYBINDINGS_CATEGORY_ADCUI == "Advanced Disable Controller UI", "keybind category string was not registered")
+assert(createdStringIds.SI_BINDING_NAME_ADCUI_TOGGLE_UI ~= nil, "UI toggle binding name was not registered")
 assert(ADCUI.runtime.initialized == true, "addon did not initialize")
 assert(ADCUI:GetSettings().useGamepadActionBar == false, "compact action bar should be default")
 assert(NativeIsGamepadPreferred() == true, "native controller preference unexpectedly changed")
@@ -408,7 +413,6 @@ CreateDefaultActionBind = function(name, key)
     createdBinds[#createdBinds + 1] = { name = name, key = key }
     return true
 end
-ZO_CreateStringId = function() end
 INTERACTIVE_WHEEL_MANAGER = {
     StartInteraction = function(self, wheelType)
         self.gamepad = IsInGamepadPreferredMode()

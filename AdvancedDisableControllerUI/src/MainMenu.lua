@@ -76,6 +76,7 @@ local keybindGroup = {
             return settings.enableMainMenuShoulderButtons
                 and not settings.useControllerUI
                 and ADDON:IsNativeGamepadMode()
+                and IsCategoryAvailable(GetCurrentCategory())
         end,
     },
     {

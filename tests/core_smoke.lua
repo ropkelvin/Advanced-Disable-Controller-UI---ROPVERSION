@@ -82,7 +82,23 @@ ZO_SavedVars = {
 SLASH_COMMANDS = {}
 CHAT_SYSTEM = { AddMessage = function() end }
 
+local diagnosticEntries = {}
+local mockLogger = {}
+for _, method in ipairs({ "Debug", "Info", "Warn", "Error" }) do
+    mockLogger[method] = function(_, ...)
+        diagnosticEntries[#diagnosticEntries + 1] = { level = method, message = table.concat({ ... }, " ") }
+    end
+end
+mockLogger.SetMinLevelOverride = function(_, level) mockLogger.minimumLevel = level end
+mockLogger.SetLogTracesOverride = function(_, enabled) mockLogger.logTraces = enabled end
+LibDebugLogger = function(tag)
+    assert(tag == "ADCUI", "diagnostic logger tag was incorrect")
+    return mockLogger
+end
+LibDebugLogger.LOG_LEVEL_DEBUG = 2
+
 dofile("AdvancedDisableControllerUI/src/Defaults.lua")
+dofile("AdvancedDisableControllerUI/src/Diagnostics.lua")
 dofile("AdvancedDisableControllerUI/src/Core.lua")
 
 for _, event in ipairs({
@@ -103,6 +119,10 @@ assert(createdStringIds.SI_KEYBINDINGS_CATEGORY_ADCUI == "Advanced Disable Contr
 assert(createdStringIds.SI_BINDING_NAME_ADCUI_TOGGLE_UI ~= nil, "UI toggle binding name was not registered")
 assert(createdStringIds.SI_BINDING_NAME_ADCUI_TOGGLE_RESOURCE_BARS ~= nil, "resource-bar binding name was not registered")
 assert(ADCUI.runtime.initialized == true, "addon did not initialize")
+assert(ADCUI.runtime.logger == mockLogger, "LibDebugLogger integration was not initialized")
+assert(ADCUI.runtime.debugLoggingEnabled == false, "debug logging should be off by default")
+assert(type(SLASH_COMMANDS["/adcui_debug"]) == "function", "debug logging command was not registered")
+assert(type(SLASH_COMMANDS["/adcui_dump"]) == "function", "diagnostic snapshot command was not registered")
 assert(ADCUI:GetSettings().useGamepadActionBar == false, "compact action bar should be default")
 assert(NativeIsGamepadPreferred() == true, "native controller preference unexpectedly changed")
 assert(IsInGamepadPreferredMode() == false, "keyboard UI override was not installed")
@@ -141,6 +161,25 @@ assert(characterSaved.useGamepadButtons == true, "account-wide settings were not
 
 nativeMode = INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
 assert(IsInGamepadPreferredMode() == false, "keyboard-preferred mode should remain keyboard")
+
+-- Diagnostic logging can be enabled at runtime and writes a useful state snapshot.
+SLASH_COMMANDS["/adcui_debug"]("on")
+assert(ADCUI.runtime.debugLoggingEnabled == true, "debug logging did not enable")
+assert(ADCUI:GetSettings().debugLoggingEnabled == true, "debug logging preference was not saved")
+assert(mockLogger.minimumLevel == LibDebugLogger.LOG_LEVEL_DEBUG, "debug log level override was not applied")
+assert(mockLogger.logTraces == true, "stack trace logging override was not enabled")
+SLASH_COMMANDS["/adcui_dump"]()
+local sawSnapshot = false
+for _, entry in ipairs(diagnosticEntries) do
+    if entry.message:find("DIAGNOSTIC SNAPSHOT BEGIN", 1, true) then
+        sawSnapshot = true
+        break
+    end
+end
+assert(sawSnapshot, "diagnostic snapshot was not written to LibDebugLogger")
+SLASH_COMMANDS["/adcui_debug"]("off")
+assert(ADCUI.runtime.debugLoggingEnabled == false, "debug logging did not disable")
+assert(mockLogger.minimumLevel == nil and mockLogger.logTraces == nil, "debug logger overrides were not cleared")
 
 
 -- Action-bar isolation smoke test: only the bar uses native gamepad styling.

@@ -36,7 +36,7 @@ Modernized replacement for the original 1.5.3 addon.
 
 ## First-run behavior
 
-The original addon's default enabled the large gamepad action bar. The modernized addon migrates that one setting to **off** on first load, so the default HUD is compact. You can turn it back on independently in the settings panel.
+The keyboard-style UI is enabled by default, gamepad button prompts are enabled, and both gamepad action-bar and resource-bar styling are disabled so the HUD stays compact. The original addon's large-action-bar default is migrated to **off** on first load. Gamepad lockpicking remains enabled. Each style can be changed independently in the settings panel.
 
 ## Commands
 

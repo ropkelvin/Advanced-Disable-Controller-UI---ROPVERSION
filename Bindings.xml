@@ -13,9 +13,6 @@
             <Action name="ADCUI_TOGGLE_RESOURCE_BARS">
                 <Down>ESOHybridUI:ToggleResourceBars()</Down>
             </Action>
-            <Action name="ADCUI_TOGGLE_COMPASS_LOCK">
-                <Down>ESOHybridUI:ToggleCompassLock()</Down>
-            </Action>
         </Category>
     </Layer>
 

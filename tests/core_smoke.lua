@@ -2,6 +2,7 @@
 -- This does not replace in-client integration testing.
 
 TOP = 1
+BOTTOM = 2
 SETTING_TYPE_GAMEPAD = 1
 GAMEPAD_SETTING_INPUT_PREFERRED_MODE = 2
 INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD = 0

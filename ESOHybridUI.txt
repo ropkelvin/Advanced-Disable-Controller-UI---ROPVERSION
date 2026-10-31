@@ -11,6 +11,7 @@ src/Defaults.lua
 src/Diagnostics.lua
 src/Core.lua
 src/Prompts.lua
+src/HybridInteractions.lua
 src/Dialogs.lua
 src/UtilityWheel.lua
 src/ActionBar.lua

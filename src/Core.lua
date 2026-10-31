@@ -167,6 +167,7 @@ end
 
 function ADDON:ApplyAll()
     if self.ApplyPrompts then self:LogDebug("Applying prompt styles."); self:ApplyPrompts() end
+    if self.ApplyHybridInteractions then self:LogDebug("Applying hybrid interaction fixes."); self:ApplyHybridInteractions() end
     if self.ApplyDialogs then self:LogDebug("Applying dialog styles."); self:ApplyDialogs() end
     if self.ApplyUtilityWheel then self:LogDebug("Applying utility-wheel bridge."); self:ApplyUtilityWheel() end
     if self.ApplyActionBar then self:LogDebug("Applying action-bar style."); self:ApplyActionBar() end

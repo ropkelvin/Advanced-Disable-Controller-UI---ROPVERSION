@@ -125,8 +125,20 @@ function ADDON:ApplyUtilityWheel()
             "ADCUI_UTILITY_WHEEL_CYCLE_RIGHT"
         )
 
-        if left or right then
+        if left and right then
             self.runtime.utilityWheelDefaultsCopied = true
         end
+    end
+
+    if not self.runtime.utilityWheelRetryHook and EVENT_MANAGER and EVENT_PLAYER_ACTIVATED
+        and (not self.runtime.utilityWheelHooksInstalled or not self.runtime.utilityWheelDefaultsCopied) then
+        EVENT_MANAGER:RegisterForEvent(self.ADDON_NAME .. "_UtilityWheelRetry", EVENT_PLAYER_ACTIVATED, function()
+            self:ApplyUtilityWheel()
+            if self.runtime.utilityWheelHooksInstalled and self.runtime.utilityWheelDefaultsCopied then
+                EVENT_MANAGER:UnregisterForEvent(self.ADDON_NAME .. "_UtilityWheelRetry", EVENT_PLAYER_ACTIVATED)
+                self.runtime.utilityWheelRetryHook = false
+            end
+        end)
+        self.runtime.utilityWheelRetryHook = true
     end
 end

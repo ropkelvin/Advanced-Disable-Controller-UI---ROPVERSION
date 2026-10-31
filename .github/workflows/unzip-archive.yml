@@ -1,0 +1,48 @@
+name: Extract addon archive
+on:
+  push:
+    paths:
+      - "UNZIP_NOW"
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Safely extract addon ZIP
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import shutil
+          archive = Path("AdvancedDisableControllerUI_1_5_3.zip")
+          target = Path("extracted/AdvancedDisableControllerUI_1_5_3")
+          if not archive.is_file():
+              raise SystemExit("Expected ZIP archive is missing")
+          target.mkdir(parents=True, exist_ok=True)
+          with ZipFile(archive) as z:
+              for info in z.infolist():
+                  name = info.filename.replace("\\", "/")
+                  if name.startswith("/") or any(p == ".." for p in Path(name).parts):
+                      raise SystemExit(f"Unsafe ZIP path: {info.filename}")
+                  if info.is_dir():
+                      (target / name).mkdir(parents=True, exist_ok=True)
+                      continue
+                  out = target / name
+                  out.parent.mkdir(parents=True, exist_ok=True)
+                  with z.open(info) as src, out.open("wb") as dst:
+                      shutil.copyfileobj(src, dst)
+          print("Extracted files:")
+          for p in sorted(target.rglob("*")):
+              if p.is_file():
+                  print(p)
+          PY
+      - name: Commit extracted files
+        run: |
+          rm -f UNZIP_NOW .github/workflows/unzip-archive.yml
+          git add -A
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Extract Advanced Disable Controller UI addon"
+          git push

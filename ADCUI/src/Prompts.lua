@@ -167,13 +167,6 @@ local function InstallGlobalPromptHooks()
         runtime.originalKeybindButtonSetKeybind = originalSetKeybind
         ZO_KeybindButtonMixin.SetKeybind = function(button, keybind, showUnbound, gamepadPreferredKeybind, alwaysPreferGamepadMode, ...)
             local force = ShouldForceControllerPrompts()
-            -- ESO's player-to-player prompt registers only PLAYER_TO_PLAYER_INTERACT,
-            -- unlike the reticle prompt it does not supply a gamepad alternate.
-            -- Reuse the controller's interact action so the player prompt does not
-            -- fall back to the keyboard-only F binding in Hybrid mode.
-            if force and keybind == "PLAYER_TO_PLAYER_INTERACT" and gamepadPreferredKeybind == nil then
-                gamepadPreferredKeybind = "GAMEPAD_JUMP_OR_INTERACT"
-            end
             button.adcuiPromptKeybind = {
                 keybind, showUnbound, gamepadPreferredKeybind, alwaysPreferGamepadMode, ...
             }
@@ -212,15 +205,10 @@ local function RefreshPlayerInteractionPrompt()
     if not PLAYER_TO_PLAYER or not PLAYER_TO_PLAYER.actionKeybindButton then return end
     local button = PLAYER_TO_PLAYER.actionKeybindButton
     if type(button.SetKeybind) == "function" then
-        -- This control is initialized before third-party addons load, so the
-        -- SetKeybind hook cannot update its original keyboard-only binding.
-        -- Explicitly re-register it with the controller interact alternate.
-        button:SetKeybind(
-            "PLAYER_TO_PLAYER_INTERACT",
-            false,
-            ShouldForceControllerPrompts() and "GAMEPAD_JUMP_OR_INTERACT" or nil,
-            ShouldForceControllerPrompts()
-        )
+        -- Keep the same action so ESO resolves the user's actual configured
+        -- gamepad binding (including hold/chord combinations) instead of
+        -- displaying the generic A-button glyph from GAMEPAD_JUMP_OR_INTERACT.
+        button:SetKeybind("PLAYER_TO_PLAYER_INTERACT", false, nil, ShouldForceControllerPrompts())
     end
 end
 

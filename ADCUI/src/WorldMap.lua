@@ -16,6 +16,32 @@ local function ResetWorldMapOffset()
     end
 end
 
+local function InstallHybridMapCategoryHook()
+    if ADDON.runtime.hybridMapCategoryHookInstalled or not ZO_PreHook then
+        return
+    end
+
+    local mainMenu = MAIN_MENU_KEYBOARD
+    if not mainMenu or type(mainMenu.ToggleCategory) ~= "function" then
+        return
+    end
+
+    ZO_PreHook(mainMenu, "ToggleCategory", function(_, category)
+        local settings = ADDON:GetSettings()
+        if settings.useHybridUI and ADDON:IsNativeGamepadMode() and category == MENU_CATEGORY_MAP then
+            -- The dedicated Map button is routed through the keyboard main-menu
+            -- object in Hybrid mode. Bypass its keyboard scene selection.
+            ADDON:WithNativeGamepadMode(function()
+                SCENE_MANAGER:Show("gamepad_worldMap")
+            end)
+            return true
+        end
+        return false
+    end)
+
+    ADDON.runtime.hybridMapCategoryHookInstalled = true
+end
+
 local function InstallHybridWorldMapSceneHook()
     if ADDON.runtime.hybridWorldMapHookInstalled or type(ZO_WorldMap_ShowWorldMap) ~= "function" then
         return
@@ -39,6 +65,7 @@ end
 
 function ADDON:ApplyWorldMap()
     InstallHybridWorldMapSceneHook()
+    InstallHybridMapCategoryHook()
     if self.runtime.worldMapHooksInstalled then return end
 
     if WORLD_MAP_SCENE and WORLD_MAP_SCENE.RegisterCallback then

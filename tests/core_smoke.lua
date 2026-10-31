@@ -382,4 +382,64 @@ ADCUI.savedVariables.enableMainMenuShoulderButtons = false
 ADCUI:ApplyMainMenu()
 assert(ADCUI.runtime.menuGroupActive == false, "main-menu shoulder group was not removed when disabled")
 
-print("ADCUI core, prompts, dialogs, action bar, compass, map and menu smoke tests passed.")
+
+-- Current utility-wheel bridge keeps the keyboard wheel but accepts gamepad
+-- shoulder-cycle inputs through a short-lived addon action layer.
+ZO_INTERACTIVE_WHEEL_TYPE_UTILITY = 1
+KEY_INVALID = 0
+local pushedLayers, removedLayers, createdBinds = {}, {}, {}
+PushActionLayerByName = function(name) pushedLayers[#pushedLayers + 1] = name end
+RemoveActionLayerByName = function(name) removedLayers[#removedLayers + 1] = name end
+GetActionIndicesFromName = function(name)
+    if name == "UTILITY_WHEEL_GAMEPAD_CYCLE_LEFT" then return 1, 1, 1 end
+    if name == "UTILITY_WHEEL_GAMEPAD_CYCLE_RIGHT" then return 1, 1, 2 end
+    if name == "ADCUI_UTILITY_WHEEL_CYCLE_LEFT" then return 2, 1, 1 end
+    if name == "ADCUI_UTILITY_WHEEL_CYCLE_RIGHT" then return 2, 1, 2 end
+end
+GetMaxBindingsPerAction = function() return 1 end
+GetActionBindingInfo = function(layer, category, action)
+    if action == 1 then return 101, KEY_INVALID, KEY_INVALID, KEY_INVALID, KEY_INVALID end
+    if action == 2 then return 102, KEY_INVALID, KEY_INVALID, KEY_INVALID, KEY_INVALID end
+    return KEY_INVALID
+end
+GetActionDefaultBindingInfo = function() return KEY_INVALID end
+IsKeyCodeGamepadKey = function() return true end
+CreateDefaultActionBind = function(name, key)
+    createdBinds[#createdBinds + 1] = { name = name, key = key }
+    return true
+end
+ZO_CreateStringId = function() end
+INTERACTIVE_WHEEL_MANAGER = {
+    StartInteraction = function(self, wheelType)
+        self.gamepad = IsInGamepadPreferredMode()
+        self.currentWheelType = wheelType
+        return true
+    end,
+    StopInteraction = function(self, wheelType)
+        self.currentWheelType = nil
+        return true
+    end,
+    CycleLeft = function(self)
+        self.lastCycle = "left"
+        return true
+    end,
+    CycleRight = function(self)
+        self.lastCycle = "right"
+        return true
+    end,
+}
+dofile("AdvancedDisableControllerUI/src/UtilityWheel.lua")
+ADCUI.savedVariables.useControllerUI = false
+nativeMode = INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
+ADCUI:ApplyUtilityWheel()
+assert(#createdBinds == 2, "gamepad wheel default bindings were not copied")
+assert(INTERACTIVE_WHEEL_MANAGER:StartInteraction(ZO_INTERACTIVE_WHEEL_TYPE_UTILITY) == true, "utility wheel did not start")
+assert(INTERACTIVE_WHEEL_MANAGER.gamepad == false, "keyboard utility wheel was not selected")
+assert(ADCUI.runtime.utilityWheelLayerActive == true and pushedLayers[1] == "ADCUI_UTILITY_WHEEL_BRIDGE", "controller bridge layer was not pushed")
+assert(ADCUI:ShouldBridgeUtilityWheelInput() == true, "utility wheel bridge did not become active")
+assert(ADCUI:CycleUtilityWheel(-1) == true and INTERACTIVE_WHEEL_MANAGER.lastCycle == "left", "left controller wheel cycle failed")
+assert(ADCUI:CycleUtilityWheel(1) == true and INTERACTIVE_WHEEL_MANAGER.lastCycle == "right", "right controller wheel cycle failed")
+INTERACTIVE_WHEEL_MANAGER:StopInteraction(ZO_INTERACTIVE_WHEEL_TYPE_UTILITY)
+assert(ADCUI.runtime.utilityWheelLayerActive == false and removedLayers[1] == "ADCUI_UTILITY_WHEEL_BRIDGE", "controller bridge layer was not removed")
+
+print("ADCUI core, prompts, dialogs, action bar, utility wheel, compass, map and menu smoke tests passed.")

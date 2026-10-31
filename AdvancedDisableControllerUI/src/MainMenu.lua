@@ -129,9 +129,13 @@ function ADDON:ApplyMainMenu()
     end
 
     local settings = self:GetSettings()
+    local currentSceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
+    local isMainMenuScene = currentSceneName
+        and MAIN_MENU_KEYBOARD and MAIN_MENU_KEYBOARD.sceneInfo
+        and MAIN_MENU_KEYBOARD.sceneInfo[currentSceneName] ~= nil
+
     if settings.enableMainMenuShoulderButtons and not settings.useControllerUI
-        and self:IsNativeGamepadMode() and MAIN_MENU_KEYBOARD and MAIN_MENU_KEYBOARD.IsShowing
-        and MAIN_MENU_KEYBOARD:IsShowing() then
+        and self:IsNativeGamepadMode() and isMainMenuScene then
         if KEYBIND_STRIP and not self.runtime.menuGroupActive then
             KEYBIND_STRIP:AddKeybindButtonGroup(keybindGroup)
             self.runtime.menuGroupActive = true

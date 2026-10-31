@@ -1,5 +1,7 @@
 # ESO Hybrid UI
 
+![ESO Hybrid UI logo](ESOHybridUI/logo.svg)
+
 **Keyboard HUD. Gamepad controls. Native controller menus.**
 
 ESO Hybrid UI lets you keep the compact keyboard-style gameplay HUD while using your controller, controller button prompts, and ESO's native gamepad menus.

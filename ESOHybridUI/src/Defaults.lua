@@ -1,5 +1,5 @@
 -- ESO Hybrid UI
--- ESOHybridUI Update 51 baseline. This is a clean, independent addon configuration.
+-- ESO Hybrid UI Update 51 baseline and maintained configuration.
 
 ESOHybridUI = ESOHybridUI or {}
 
@@ -15,7 +15,7 @@ end
 ESOHybridUI.ADDON_NAME = "ESOHybridUI"
 ESOHybridUI.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
 ESOHybridUI.SAVED_VARIABLES_VERSION = 1
-ESOHybridUI.VERSION = "2.1.0"
+ESOHybridUI.VERSION = "3.0.0"
 
 ESOHybridUI.defaults = {
     -- Main behavior

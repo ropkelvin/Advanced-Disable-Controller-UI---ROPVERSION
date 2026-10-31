@@ -44,6 +44,9 @@ jobs:
           assert not missing, f"Manifest files missing: {missing}"
 
           bindings = ET.parse(root / "Bindings.xml").getroot()
+          layer_names = [layer.attrib["name"] for layer in bindings.findall("Layer")]
+          assert "SI_KEYBINDINGS_LAYER_GENERAL" in layer_names, "General bindings layer must use the localized layer identifier"
+          assert "SI_KEYBINDINGS_CATEGORY_GENERAL" not in layer_names, "Category identifier cannot be used as a layer name"
           lua_sources = "\\n".join(path.read_text() for path in root.rglob("*.lua"))
           for action in bindings.findall(".//Action"):
               action_name = action.attrib["name"]

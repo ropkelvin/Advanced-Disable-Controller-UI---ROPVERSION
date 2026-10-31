@@ -189,7 +189,6 @@ function ADDON:ApplyAll()
     if self.ApplyUtilityWheel then self:LogDebug("Applying utility-wheel bridge."); self:ApplyUtilityWheel() end
     if self.ApplyActionBar then self:LogDebug("Applying action-bar style."); self:ApplyActionBar() end
     if self.ApplyResourceBars then self:LogDebug("Applying resource-bar style."); self:ApplyResourceBars() end
-    if self.ApplyCompass then self:LogDebug("Applying compass settings."); self:ApplyCompass() end
     if self.ApplyMainMenu then self:LogDebug("Applying main-menu navigation."); self:ApplyMainMenu() end
     if self.ApplyWorldMap then self:LogDebug("Applying world-map behavior."); self:ApplyWorldMap() end
 end
@@ -254,11 +253,6 @@ function ADDON:ToggleResourceBars()
     self:Refresh()
 end
 
-function ADDON:ToggleCompassLock()
-    local settings = GetSettings()
-    settings.lockEnabled = not settings.lockEnabled
-    self:ApplyCompass()
-end
 
 local function MergeMissing(target, source)
     if type(target) ~= "table" or type(source) ~= "table" then
@@ -335,17 +329,12 @@ local function RegisterSlashCommands()
         ADDON:ToggleResourceBars()
         PrintStatus()
     end
-    SLASH_COMMANDS["/esohybrid_compasslock"] = function()
-        ADDON:ToggleCompassLock()
-        PrintStatus()
-    end
     -- Backward-compatible aliases for existing chat macros.
     SLASH_COMMANDS["/adcui"] = SLASH_COMMANDS["/esohybrid"]
     SLASH_COMMANDS["/adcui_status"] = SLASH_COMMANDS["/esohybrid_status"]
     SLASH_COMMANDS["/adcui_buttons"] = SLASH_COMMANDS["/esohybrid_buttons"]
     SLASH_COMMANDS["/adcui_actionbar"] = SLASH_COMMANDS["/esohybrid_actionbar"]
     SLASH_COMMANDS["/adcui_resourcebars"] = SLASH_COMMANDS["/esohybrid_resourcebars"]
-    SLASH_COMMANDS["/adcui_compasslock"] = SLASH_COMMANDS["/esohybrid_compasslock"]
 end
 
 local function OnLockpickBegin()

@@ -467,4 +467,33 @@ assert(resourceBarMode == false, "keyboard resource-bar style was not restored")
 SLASH_COMMANDS["/adcui_resourcebars"]()
 assert(ADCUI.savedVariables.useGamepadResourceBars == true, "resource-bar slash toggle did not enable the feature")
 
-print("ADCUI core, prompts, dialogs, action bar, resource bars, utility wheel, compass, map and menu smoke tests passed.")
+
+-- Settings panel registration and slash-command separation.
+local registeredPanel
+local registeredOptions
+LibAddonMenu2 = {
+    RegisterAddonPanel = function(self, panelName, panel)
+        registeredPanel = { name = panelName, data = panel }
+    end,
+    RegisterOptionControls = function(self, panelName, options)
+        registeredOptions = options
+    end,
+}
+dofile("AdvancedDisableControllerUI/src/Settings.lua")
+ADCUI:RegisterSettings()
+assert(registeredPanel and registeredPanel.name == "AdvancedDisableControllerUI_Settings", "LAM settings panel was not registered")
+assert(registeredPanel.data.slashCommand == "/adcui_settings", "settings panel slash command collides with /adcui")
+local keyboardStyleOption
+local resourceStyleOption
+for _, option in ipairs(registeredOptions or {}) do
+    if option.name == "Use keyboard-style UI" then keyboardStyleOption = option end
+    if option.name == "Use gamepad-style resource bars" then resourceStyleOption = option end
+end
+assert(keyboardStyleOption and keyboardStyleOption.getFunc() == true, "keyboard-style UI should be enabled by default")
+assert(resourceStyleOption and resourceStyleOption.getFunc() == false, "resource bars should be compact by default")
+keyboardStyleOption.setFunc(false)
+assert(ADCUI.savedVariables.useControllerUI == true, "keyboard-style UI option did not switch to native gamepad UI")
+keyboardStyleOption.setFunc(true)
+assert(ADCUI.savedVariables.useControllerUI == false, "keyboard-style UI option did not restore keyboard UI")
+
+print("ADCUI core, settings, prompts, dialogs, action bar, resource bars, utility wheel, compass, map and menu smoke tests passed.")

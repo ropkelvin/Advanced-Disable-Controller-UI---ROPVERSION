@@ -13,6 +13,22 @@ local function DeepCopy(source)
     return target
 end
 
+local function MatchesDefaults(saved, defaults)
+    for key, defaultValue in pairs(defaults) do
+        if key ~= "useAccountWideSettings" then
+            local savedValue = saved[key]
+            if type(defaultValue) == "table" then
+                if type(savedValue) ~= "table" or not MatchesDefaults(savedValue, defaultValue) then
+                    return false
+                end
+            elseif savedValue ~= defaultValue then
+                return false
+            end
+        end
+    end
+    return true
+end
+
 local function OriginalGamepadPreferredMode()
     local original = ADDON.runtime.originalIsInGamepadPreferredMode
     if type(original) == "function" then
@@ -162,12 +178,21 @@ function ADDON:SetUseAccountWideSettings(enabled)
     local account = self.savedVariablesAccountWide
 
     if enabled and not account._adcuiInitialized then
-        local snapshot = DeepCopy(character)
-        snapshot.useAccountWideSettings = true
-        snapshot._adcuiInitialized = true
-        for key, value in pairs(snapshot) do
-            account[key] = value
+        -- Preserve an older account-wide profile if it already contains
+        -- custom values; otherwise seed it from this character.
+        if MatchesDefaults(account, ADDON.defaults) then
+            local snapshot = DeepCopy(character)
+            snapshot.useAccountWideSettings = true
+            snapshot._adcuiInitialized = true
+            for key, value in pairs(snapshot) do
+                account[key] = value
+            end
         end
+        if not account._adcuiV2Migrated then
+            account.useGamepadActionBar = false
+            account._adcuiV2Migrated = true
+        end
+        account._adcuiInitialized = true
     end
 
     if not enabled and character.useAccountWideSettings then
@@ -240,6 +265,7 @@ local function InitializeSavedVariables()
         and not ADDON.savedVariablesAccountWide._adcuiV2Migrated then
         ADDON.savedVariablesAccountWide.useGamepadActionBar = false
         ADDON.savedVariablesAccountWide._adcuiV2Migrated = true
+        ADDON.savedVariablesAccountWide._adcuiInitialized = true
     end
 end
 

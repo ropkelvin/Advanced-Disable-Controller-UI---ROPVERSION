@@ -16,6 +16,7 @@ Modernized replacement for the original 1.5.3 addon.
 - Optional native gamepad UI toggle.
 - Optional gamepad button glyphs on keyboard-style keybind strips and reticle prompts.
 - Optional native gamepad action-bar styling while the rest of the interface remains keyboard-style.
+- Optional native gamepad resource-bar styling, independently switchable from the action bar.
 - Compact keyboard action bar and resource bars by default.
 - Optional gamepad lockpicking interface.
 - Saved compass scale, dimensions, position and lock.

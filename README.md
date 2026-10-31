@@ -25,14 +25,26 @@ Modernized replacement for the original 1.5.3 addon.
 - Keyboard-style world-map pan reset.
 - Character-specific or account-wide settings.
 - In-game settings panel, slash commands and bindable actions.
+- Optional LibDebugLogger integration, persistent debug-mode toggle and diagnostic state snapshots.
 
 ## Install
 
 1. Install LibAddonMenu-2.0 r43 or newer separately through ESOUI/Minion.
-2. Copy the `AdvancedDisableControllerUI` folder into:
+2. For diagnostic logging, also install LibDebugLogger and DebugLogViewer from ESOUI. These are optional for normal addon use.
+3. Copy the `AdvancedDisableControllerUI` folder into:
    `Documents/Elder Scrolls Online/live/AddOns/`
-3. Keep the separate `LibAddonMenu-2.0` folder in AddOns. Do not install an old embedded LibStub copy for this addon.
-4. Enable the addon and load a character.
+4. Keep the separate `LibAddonMenu-2.0` folder in AddOns. Do not install an old embedded LibStub copy for this addon.
+5. Enable the addon and load a character.
+
+## Debugging
+
+1. Install **LibDebugLogger** and **DebugLogViewer** (LibDebugLogger is not a hard dependency).
+2. In chat, enter `/adcui_debug on` or enable **Settings → AddOns → Advanced Disable Controller UI → Enable diagnostic logging**.
+3. Reproduce the issue. Use `/adcui_dump` immediately after it happens to record a snapshot of UI mode, controller preference, settings and installed hooks.
+4. Open the log viewer with `/logviewer`. Filter for the `ADCUI` tag and inspect errors/warnings and the surrounding events.
+5. The log is stored in `Documents/Elder Scrolls Online/live/SavedVariables/LibDebugLogger.lua`. Log out normally or reload the UI to flush SavedVariables, then share the relevant ADCUI entries or the log file.
+
+Turn logging off with `/adcui_debug off` when finished. Debug logging is off by default; normal informational and warning events remain available at the logger's default level. Avoid sharing the entire log publicly without checking it for account/character information.
 
 ## First-run behavior
 
@@ -47,6 +59,8 @@ The keyboard-style UI is enabled by default, gamepad button prompts are enabled,
 - `/adcui_actionbar` — toggle gamepad-style action bar.
 - `/adcui_resourcebars` — toggle gamepad-style resource bars.
 - `/adcui_compasslock` — lock/unlock compass position.
+- `/adcui_debug on` / `/adcui_debug off` — enable/disable detailed addon logging.
+- `/adcui_dump` — write a diagnostic snapshot of addon settings, mode state and installed hooks.
 
 ## Current architecture notes
 

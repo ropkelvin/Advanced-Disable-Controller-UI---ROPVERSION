@@ -48,7 +48,7 @@ The original addon's default enabled the large gamepad action bar. The modernize
 
 The core overrides the UI-facing `IsInGamepadPreferredMode()` function while preserving the game's original function for input-mode checks. Action-bar styling is independently handled through the current `ZO_PlatformStyle`, `ZO_GetPlatformTemplate`, and `ActionButton` APIs. Other UI subsystems remain keyboard-style unless the native gamepad UI option is selected.
 
-The original broad crafting/transmute callback hack was intentionally not carried forward; it fired a global callback unrelated to this addon's input/UI purpose.
+The original broad crafting/transmute callback hack was intentionally not carried forward; it fired a global callback unrelated to this addon's input/UI purpose. The old `QUICKSLOT_RADIAL_MANAGER` hook was also replaced: current ESO uses `INTERACTIVE_WHEEL_MANAGER` with separate keyboard/gamepad utility-wheel classes, so the modern addon bridges the current gamepad cycle actions through a temporary addon action layer rather than referencing the removed legacy manager.
 
 ## Verification
 

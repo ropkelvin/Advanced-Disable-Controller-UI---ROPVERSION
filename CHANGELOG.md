@@ -2,6 +2,7 @@
 
 ## 2.1.0 — full feature pass
 - Added independently configurable gamepad prompt styling and safe descriptor remapping.
+- Added a controller-input bridge for the current keyboard utility wheel, copying the user's gamepad cycle bindings into a temporary addon action layer.
 - Added gamepad action-bar styling through current platform-style and ActionButton hooks.
 - Kept resource bars and all unrelated HUD elements in keyboard style by default.
 - Added compass sizing, scale, pin-label scale, drag positioning and lock.

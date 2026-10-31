@@ -90,12 +90,12 @@ function ADDON:RegisterSettings()
         },
         {
             type = "checkbox",
-            name = "Use native gamepad UI",
-            tooltip = "Turn on ESO's full gamepad interface. Disable this to keep the keyboard interface while using a controller.",
-            default = false,
-            getFunc = function() return ADDON:GetSettings().useControllerUI end,
+            name = "Use keyboard-style UI",
+            tooltip = "Enabled: keep ESO's keyboard-style interface while using a controller. Disabled: use ESO's full native gamepad interface.",
+            default = true,
+            getFunc = function() return not ADDON:GetSettings().useControllerUI end,
             setFunc = function(value)
-                ADDON:GetSettings().useControllerUI = value
+                ADDON:GetSettings().useControllerUI = not value
                 ADDON:Refresh()
             end,
         },

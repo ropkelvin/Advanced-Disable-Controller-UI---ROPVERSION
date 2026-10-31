@@ -135,4 +135,53 @@ assert(characterSaved.useGamepadButtons == true, "account-wide settings were not
 nativeMode = INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
 assert(IsInGamepadPreferredMode() == false, "keyboard-preferred mode should remain keyboard")
 
-print("ADCUI core smoke tests passed.")
+
+-- Action-bar isolation smoke test: only the bar uses native gamepad styling.
+local originalTemplate = function(base)
+    return base .. (IsInGamepadPreferredMode() and "_Gamepad_Template" or "_Keyboard_Template")
+end
+ZO_GetPlatformTemplate = originalTemplate
+ZO_PlatformStyle = {
+    Apply = function(self)
+        return self.applyFunction(self:GetStyle())
+    end,
+}
+ActionButton = {
+    ApplyStyle = function(self, template)
+        self.template = template
+        self.nativeModeDuringApply = IsInGamepadPreferredMode()
+    end,
+}
+
+local actionButton = {}
+local actionBarStyle = {
+    keyboardStyle = { width = 483, showWeaponSwapButton = true },
+    gamepadStyle = { width = 606, showWeaponSwapButton = false },
+    GetStyle = function(self)
+        return IsInGamepadPreferredMode() and self.gamepadStyle or self.keyboardStyle
+    end,
+}
+actionBarStyle.applyFunction = function(style)
+    actionBarStyle.appliedStyle = style
+    local template = ZO_GetPlatformTemplate("ZO_ActionButton")
+    actionButton:ApplyStyle(template)
+end
+
+dofile("AdvancedDisableControllerUI/src/ActionBar.lua")
+ADCUI.savedVariables.useControllerUI = false
+ADCUI.savedVariables.useGamepadActionBar = true
+nativeMode = INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
+ADCUI:ApplyActionBar()
+ZO_PlatformStyle.Apply(actionBarStyle)
+assert(actionBarStyle.appliedStyle == actionBarStyle.gamepadStyle, "gamepad action bar style was not selected")
+assert(actionButton.template == "ZO_ActionButton_Gamepad_Template", "gamepad action button template was not selected")
+assert(actionButton.nativeModeDuringApply == true, "action bar did not temporarily use native gamepad mode")
+assert(ADCUI.runtime.forceNativeModeDepth == 0, "native mode scope was not restored")
+
+ADCUI.savedVariables.useGamepadActionBar = false
+ZO_PlatformStyle.Apply(actionBarStyle)
+assert(actionBarStyle.appliedStyle == actionBarStyle.keyboardStyle, "keyboard action bar style was not restored")
+assert(actionButton.template == "ZO_ActionButton_Keyboard_Template", "keyboard action button template was not restored")
+assert(actionButton.nativeModeDuringApply == false, "keyboard action bar unexpectedly used gamepad mode")
+
+print("ADCUI core and action-bar smoke tests passed.")

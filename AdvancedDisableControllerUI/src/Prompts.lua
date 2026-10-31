@@ -74,6 +74,13 @@ local function RemapKnownDescriptors(enabled)
     end
 end
 
+local function RestoreStackAllMappings()
+    for descriptor, original in pairs(ADDON.runtime.stackAllOriginals) do
+        descriptor.keybind = original
+        ADDON.runtime.stackAllOriginals[descriptor] = nil
+    end
+end
+
 local function HookStackAllMapping()
     if ADDON.runtime.promptHooksInstalled or not KEYBIND_STRIP then
         return
@@ -154,6 +161,9 @@ function ADDON:ApplyPrompts()
         and self:IsNativeGamepadMode()
 
     KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = forceGamepadPrompts
+    if not forceGamepadPrompts then
+        RestoreStackAllMappings()
+    end
     RemapKnownDescriptors(forceGamepadPrompts)
     HookStackAllMapping()
     ApplyReticleFonts(settings, forceGamepadPrompts)

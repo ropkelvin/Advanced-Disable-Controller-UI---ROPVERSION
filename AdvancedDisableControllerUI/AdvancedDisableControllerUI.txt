@@ -13,6 +13,7 @@ src/Prompts.lua
 src/Dialogs.lua
 src/UtilityWheel.lua
 src/ActionBar.lua
+src/ResourceBars.lua
 src/Compass.lua
 src/MainMenu.lua
 src/WorldMap.lua

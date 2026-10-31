@@ -101,6 +101,7 @@ function ADDON:RegisterSettings()
         },
         SettingCheckbox("Show gamepad button prompts", "Show controller button glyphs on the keyboard-style interface and keybind strip.", "useGamepadButtons"),
         SettingCheckbox("Use gamepad-style action bar", "Use the larger native gamepad action bar while keeping the rest of the interface keyboard-style. Disabled by default for a compact HUD.", "useGamepadActionBar"),
+        SettingCheckbox("Use gamepad-style resource bars", "Use native gamepad resource-bar styling while keeping the rest of the interface keyboard-style. Disabled by default for compact resource bars.", "useGamepadResourceBars"),
         SettingCheckbox("Use gamepad lockpicking UI", "Temporarily show the native gamepad lockpicking interface while lockpicking.", "useGamepadLockpicking"),
         SettingCheckbox("Shoulder buttons change main-menu categories", "Use LB/RB to move between keyboard main-menu categories.", "enableMainMenuShoulderButtons"),
         SettingCheckbox("Center world map when opened", "Apply the keyboard map's default pan origin when the map opens.", "centerWorldMap"),

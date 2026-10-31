@@ -47,6 +47,13 @@ function ADDON:ShouldUseGamepadActionBar()
         and OriginalGamepadPreferredMode()
 end
 
+function ADDON:ShouldUseGamepadResourceBars()
+    local settings = GetSettings()
+    return settings.useGamepadResourceBars == true
+        and settings.useControllerUI ~= true
+        and OriginalGamepadPreferredMode()
+end
+
 function ADDON:WithNativeGamepadMode(callback, ...)
     local runtime = ADDON.runtime
     runtime.forceNativeModeDepth = runtime.forceNativeModeDepth + 1
@@ -146,6 +153,7 @@ function ADDON:ApplyAll()
     if self.ApplyDialogs then self:ApplyDialogs() end
     if self.ApplyUtilityWheel then self:ApplyUtilityWheel() end
     if self.ApplyActionBar then self:ApplyActionBar() end
+    if self.ApplyResourceBars then self:ApplyResourceBars() end
     if self.ApplyCompass then self:ApplyCompass() end
     if self.ApplyMainMenu then self:ApplyMainMenu() end
     if self.ApplyWorldMap then self:ApplyWorldMap() end

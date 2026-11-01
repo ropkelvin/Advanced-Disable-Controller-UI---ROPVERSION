@@ -1,5 +1,5 @@
 ## Title: ESO Hybrid UI
-## Description: Controller-first UI with native Gamepad and compact Hybrid modes. Requires LibAddonMenu-2.0 >=43. AI-assisted development; maintainer-reviewed.
+## Description: Controller-first UI with native Gamepad and compact Hybrid modes. Requires LibAddonMenu-2.0 >=43. AI-assisted development; maintainer responsible for review and in-game testing.
 ## Author: ZOSPlsFix
 ## Version: 3.1.0
 ## AddOnVersion: 30100

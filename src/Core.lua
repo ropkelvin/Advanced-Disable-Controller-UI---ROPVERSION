@@ -222,9 +222,11 @@ function ADDON:SetUseAccountWideSettings(enabled)
         return
     end
 
-    if enabled then
-        -- Seed the shared account profile from this character's current
-        -- settings the first time account-wide mode is enabled.
+    if enabled and account._esoHybridUseAccountWideSettings == nil then
+        -- Seed the account profile only on its first-ever activation. If the
+        -- player temporarily disables account-wide settings and later enables
+        -- them again, preserve the shared profile instead of overwriting it
+        -- with this character's local settings.
         CopyProfileSettings(character, account)
     end
 
@@ -291,24 +293,8 @@ local function InitializeSavedVariables()
         ADDON.defaults
     )
 
-    local raw = _G[ADDON.SAVED_VARIABLES]
-    local profileRoot = type(raw) == "table" and raw.Default
-    local accountRoot = type(profileRoot) == "table" and profileRoot[GetDisplayName()]
-    local accountData = type(accountRoot) == "table" and accountRoot["$AccountWide"]
-
-    if accountData and accountData._esoHybridUseAccountWideSettings == nil
-        and type(accountRoot) == "table" then
-        for characterKey, characterData in pairs(accountRoot) do
-            if characterKey ~= "$AccountWide"
-                and type(characterData) == "table"
-                and characterData.useAccountWideSettings == true then
-                CopyProfileSettings(characterData, ADDON.savedVariablesAccountWide)
-                ADDON.savedVariablesAccountWide._esoHybridProfileVersion = 3
-                ADDON.savedVariablesAccountWide._esoHybridUseAccountWideSettings = true
-                break
-            end
-        end
-    end
+    -- This addon starts with its own SavedVariables schema. Do not scan or
+    -- import profiles from the retired ADCUI addon or perform legacy migrations.
 
     local raw = _G[ADDON.SAVED_VARIABLES]
     if type(raw) ~= "table" then

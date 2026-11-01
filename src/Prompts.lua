@@ -88,10 +88,7 @@ local function HookStackAllMapping()
 
     local function ProcessGroup(_, group)
         if type(group) ~= "table" then return end
-        local settings = ADDON:GetSettings()
-        local enabled = (settings.useHybridUI or settings.useGamepadButtons)
-            and not settings.useControllerUI
-            and ADDON:IsNativeGamepadMode()
+        local enabled = ADDON:ShouldShowControllerPrompts()
         if not enabled then
             for _, descriptor in ipairs(group) do
                 local original = ADDON.runtime.stackAllOriginals[descriptor]
@@ -130,6 +127,10 @@ local function ShouldForceControllerPrompts()
     return (settings.useHybridUI == true or settings.useGamepadButtons == true)
         and settings.useControllerUI ~= true
         and ADDON:IsNativeGamepadMode()
+end
+
+function ADDON:ShouldShowControllerPrompts()
+    return ShouldForceControllerPrompts()
 end
 
 local function InstallGlobalPromptHooks()
@@ -205,7 +206,7 @@ local function RefreshReticlePrompt()
     if not RETICLE or not RETICLE.interactKeybindButton then return end
     local button = RETICLE.interactKeybindButton
     if type(button.SetKeybind) == "function" then
-        button:SetKeybind("GAME_CAMERA_INTERACT", false, "GAMEPAD_JUMP_OR_INTERACT", ShouldForceControllerPrompts())
+        button:SetKeybind("GAME_CAMERA_INTERACT", false, "GAMEPAD_JUMP_OR_INTERACT")
     end
 end
 
@@ -222,7 +223,7 @@ local function RefreshSynergyPrompt()
         "USE_SYNERGY",
         KEYBIND_TEXT_OPTIONS_FULL_NAME,
         KEYBIND_TEXTURE_OPTIONS_EMBED_MARKUP,
-        true
+        false
     )
     if bindingText then
         SYNERGY.action:SetText(bindingText)
@@ -246,7 +247,7 @@ local function RefreshPlayerInteractionPrompt()
         -- Keep the same action so ESO resolves the user's actual configured
         -- gamepad binding (including hold/chord combinations) instead of
         -- displaying the generic A-button glyph from GAMEPAD_JUMP_OR_INTERACT.
-        button:SetKeybind("PLAYER_TO_PLAYER_INTERACT", false, nil, ShouldForceControllerPrompts())
+        button:SetKeybind("PLAYER_TO_PLAYER_INTERACT", false, nil)
     end
 end
 
@@ -286,9 +287,7 @@ function ADDON:ApplyPrompts()
     -- Hybrid's defining contract is a keyboard HUD with controller glyphs.
     -- The standalone prompt toggle must not accidentally turn those glyphs
     -- back into keyboard labels while Hybrid is active.
-    local forceGamepadPrompts = (settings.useHybridUI or settings.useGamepadButtons)
-        and not settings.useControllerUI
-        and self:IsNativeGamepadMode()
+    local forceGamepadPrompts = self:ShouldShowControllerPrompts()
 
     InstallGlobalPromptHooks()
     KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = forceGamepadPrompts

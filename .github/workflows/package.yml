@@ -20,7 +20,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist/ESOHybridUI
-          cp ESOHybridUI.txt Bindings.xml NOTICE.md dist/ESOHybridUI/
+          cp ESOHybridUI.txt Bindings.xml dist/ESOHybridUI/
           cp -R src dist/ESOHybridUI/
           cd dist
           zip -r ESOHybridUI.zip ESOHybridUI

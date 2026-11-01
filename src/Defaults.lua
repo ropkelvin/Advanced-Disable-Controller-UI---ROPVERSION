@@ -40,6 +40,7 @@ ESOHybridUI.defaults = {
 
 ESOHybridUI.runtime = {
     originalIsInGamepadPreferredMode = nil,
+    modeOverrideInstalled = false,
     forceNativeModeDepth = 0,
     isLockpicking = false,
     isRefreshing = false,

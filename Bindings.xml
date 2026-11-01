@@ -4,9 +4,6 @@
             <Action name="ESOHYBRIDUI_TOGGLE_UI">
                 <Down>ESOHybridUI:ToggleUI()</Down>
             </Action>
-            <Action name="ESOHYBRIDUI_TOGGLE_BUTTONS">
-                <Down>ESOHybridUI:ToggleButtons()</Down>
-            </Action>
         </Category>
     </Layer>
 

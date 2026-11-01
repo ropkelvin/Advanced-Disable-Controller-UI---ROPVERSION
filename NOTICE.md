@@ -1,12 +1,14 @@
-# NOTICE — historical project attribution
+# NOTICE — inspiration and attribution
 
-ESO Hybrid UI is an independently maintained, substantially reworked controller-interface addon. Its project history and feature direction acknowledge **Advanced Disable Controller UI**, originally created by **Lionas**, with contributions credited to **jc28735250** and subsequent maintenance by **DoriKyll**.
+ESO Hybrid UI is an independently developed controller-interface addon. The maintainer acknowledges **Advanced Disable Controller UI** as inspiration for the project's feature direction and controller-interface ideas.
+
+Credit for that project belongs to its original author, **Lionas**, with contributions credited to **jc28735250** and subsequent maintenance by **DoriKyll**.
 
 Original project references:
 
 - ESOUI: https://www.esoui.com/downloads/info1433-AdvancedDisableControllerUI.html
 - Source repository: https://github.com/Lionas/Advanced-Disable-Controller-UI
 
-This notice records historical lineage and attribution. It does not claim ownership of the original project's code or assets, nor does it grant permission to redistribute them. The public source repository inspected for this release did not contain a top-level license file. Any direct reuse of original code or assets must be reviewed against the rights holder's applicable terms and credited accordingly.
+**No source code or assets from Advanced Disable Controller UI are included in ESO Hybrid UI.** This is an acknowledgement of inspiration, not a claim of code ownership, a fork, or a derivative-code license. ESO Hybrid UI does not rely on or claim rights under a license for that project.
 
 ESO Hybrid UI is an independent community project and is not affiliated with, endorsed by, or sponsored by ZeniMax Online Studios.

@@ -259,19 +259,6 @@ function ADDON:ToggleUI()
     self:Refresh()
 end
 
-function ADDON:ToggleButtons()
-    local settings = GetSettings()
-    if settings.useHybridUI then
-        -- Hybrid is explicitly controller-first outside the gameplay HUD.
-        settings.useGamepadButtons = true
-    else
-        settings.useGamepadButtons = not settings.useGamepadButtons
-    end
-    self:LogInfo("Gamepad button prompts:", tostring(settings.useGamepadButtons))
-    self:Refresh()
-end
-
-
 local function InitializeSavedVariables()
     ADDON.savedVariablesAccountWide = ZO_SavedVars:NewAccountWide(
         ADDON.SAVED_VARIABLES,
@@ -308,9 +295,8 @@ end
 local function PrintStatus()
     local settings = GetSettings()
     local uiMode = settings.useHybridUI and "hybrid UI" or "native gamepad UI"
-    local promptMode = (settings.useHybridUI or settings.useGamepadButtons) and "controller prompts enabled" or "keyboard prompts"
     if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] " .. uiMode .. " | " .. promptMode)
+        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] " .. uiMode .. " | controller prompts enabled")
     end
 end
 
@@ -335,10 +321,6 @@ local function RegisterSlashCommands()
         if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then CHAT_SYSTEM:AddMessage(message) end
         ADDON:LogInfo(message)
     end
-    SLASH_COMMANDS["/esohybrid_buttons"] = function()
-        ADDON:ToggleButtons()
-        PrintStatus()
-    end
 end
 
 local function ShowFirstInstallWelcome()
@@ -354,6 +336,7 @@ local function ShowFirstInstallWelcome()
     if type(ZO_Dialogs_RegisterCustomDialog) == "function"
         and type(ZO_Dialogs_ShowDialog) == "function" then
         ZO_Dialogs_RegisterCustomDialog(dialogName, {
+            gamepadInfo = { dialogType = GAMEPAD_DIALOGS.BASIC },
             title = { text = "Welcome to ESO Hybrid UI" },
             mainText = {
                 text = "Before using the addon, open ESO Settings > Gameplay > Gamepad Mode and set it to On (not Auto). Then open ESO Hybrid UI settings and choose Gamepad or Hybrid. This addon is designed for controller users; Keyboard mode is not available.",

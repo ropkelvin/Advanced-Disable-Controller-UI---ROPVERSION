@@ -10,7 +10,6 @@ local function FontDropdown(name, tooltip, key, choices, values)
         choices = choices,
         choicesValues = values,
         default = ADDON.defaults.fonts[key],
-        scrollable = true,
         getFunc = function() return ADDON:GetSettings().fonts[key] end,
         setFunc = function(value)
             ADDON:GetSettings().fonts[key] = value
@@ -38,25 +37,11 @@ function ADDON:RegisterSettings()
         registerForDefaults = true,
     })
 
+    local fontChoices = { "Small", "Default", "Large", "Extra large" }
     local fontValues = {
-        "ZoFontCallout3", "ZoFontCallout2", "ZoFontCenterScreenAnnounceLarge",
-        "ZoFontCallout", "ZoFontCenterScreenAnnounceSmall", "ZoFontConversationName",
-        "ZoFontHeader4", "ZoFontKeybindStripDescription", "ZoInteractionPrompt",
-        "ZoFontConversationOption", "ZoFontDialogKeybindDescription",
-        "ZoFontWindowSubtitle", "ZoFontWinH5", "ZoFontGamepad61", "ZoFontGamepad54",
-        "ZoFontGamepad45", "ZoFontGamepad42", "ZoFontGamepad36", "ZoFontGamepad34",
-        "ZoFontGamepad27", "ZoFontGamepad25", "ZoFontGamepad22", "ZoFontGamepad20",
-        "ZoFontGamepad18",
-    }
-    local fontNames = {
-        "Keyboard size 54", "Keyboard size 48", "Keyboard size 40",
-        "Keyboard size 36", "Keyboard size 30", "Keyboard size 28",
-        "Keyboard size 26", "Keyboard size 25", "Keyboard size 24",
-        "Keyboard size 22", "Keyboard size 20", "Keyboard size 18",
-        "Keyboard size 16", "Gamepad size 61", "Gamepad size 54",
-        "Gamepad size 45", "Gamepad size 42", "Gamepad size 36",
-        "Gamepad size 34", "Gamepad size 27", "Gamepad size 25",
-        "Gamepad size 22", "Gamepad size 20", "Gamepad size 18",
+        reticle = { "ZoFontWinH5", "ZoFontKeybindStripDescription", "ZoFontCallout", "ZoFontCallout2" },
+        reticleContext = { "ZoFontWinH5", "ZoInteractionPrompt", "ZoFontCallout", "ZoFontCallout2" },
+        stealthIcon = { "ZoFontWinH5", "ZoInteractionPrompt", "ZoFontCallout", "ZoFontCallout2" },
     }
 
     local options = {
@@ -111,9 +96,9 @@ function ADDON:RegisterSettings()
             end,
             setFunc = function(value) ADDON:SetUseAccountWideSettings(value) end,
         },
-        FontDropdown("Interaction button font", "Size of the button label beside the reticle.", "reticle", fontNames, fontValues),
-        FontDropdown("Interaction context font", "Size of the interaction description beside the reticle.", "reticleContext", fontNames, fontValues),
-        FontDropdown("Stealth icon font", "Size of stealth and lockpicking prompt icons.", "stealthIcon", fontNames, fontValues),
+        FontDropdown("Interaction button font", "Size of the button label beside the reticle.", "reticle", fontChoices, fontValues.reticle),
+        FontDropdown("Interaction context font", "Size of the interaction description beside the reticle.", "reticleContext", fontChoices, fontValues.reticleContext),
+        FontDropdown("Stealth icon font", "Size of stealth and lockpicking prompt icons.", "stealthIcon", fontChoices, fontValues.stealthIcon),
         {
             type = "submenu",
             name = "Advanced",

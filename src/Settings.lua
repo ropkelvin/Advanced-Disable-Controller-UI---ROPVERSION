@@ -10,7 +10,15 @@ local function FontDropdown(name, tooltip, key, choices, values)
         choices = choices,
         choicesValues = values,
         default = ADDON.defaults.fonts[key],
-        getFunc = function() return ADDON:GetSettings().fonts[key] end,
+        getFunc = function()
+            local current = ADDON:GetSettings().fonts[key]
+            for _, value in ipairs(values) do
+                if current == value then return current end
+            end
+            -- Older versions offered many more font sizes. Show the default
+            -- choice for legacy values without changing the saved value.
+            return ADDON.defaults.fonts[key]
+        end,
         setFunc = function(value)
             ADDON:GetSettings().fonts[key] = value
             ADDON:ApplyPrompts()

@@ -7,10 +7,30 @@ local function DeepCopy(source)
         return source
     end
     local target = {}
+    -- DeepCopy is only used for ordinary nested settings tables and raw
+    -- legacy SavedVariables tables. Never pass a ZO_SavedVars profile proxy
+    -- here: its fields are exposed through __index and are not enumerable.
     for key, value in pairs(source) do
         target[key] = DeepCopy(value)
     end
     return target
+end
+
+local function CopyProfileSettings(source, target)
+    if type(source) ~= "table" or type(target) ~= "table" then
+        return false
+    end
+
+    -- ZO_SavedVars returns a proxy. pairs(source) does not enumerate the
+    -- saved profile behind that proxy, so copy only keys from our plain
+    -- defaults table and read each value through the proxy's __index.
+    for key in pairs(ADDON.defaults) do
+        local value = source[key]
+        if value ~= nil then
+            target[key] = DeepCopy(value)
+        end
+    end
+    return true
 end
 
 local function OriginalGamepadPreferredMode()
@@ -197,23 +217,24 @@ function ADDON:SetUseAccountWideSettings(enabled)
     local character = self.savedVariables
     local account = self.savedVariablesAccountWide
 
-    if enabled and not account._esoHybridInitialized then
-        -- First-time account-wide setup: copy this character's clean ESOHybridUI
-        -- profile into the new account-wide profile.
-        local snapshot = DeepCopy(character)
-        snapshot.useAccountWideSettings = true
-        for key, value in pairs(snapshot) do
-            account[key] = value
-        end
-        account._esoHybridInitialized = true
+    if not character or not account then
+        self:LogError("Cannot change settings scope: ESO SavedVariables profiles are not initialized.")
+        return
+    end
+
+    if enabled and account._esoHybridProfileVersion ~= 2 then
+        -- Migrate profiles created by earlier versions. The old implementation
+        -- copied the ZO_SavedVars proxy with pairs(), which copied proxy members
+        -- instead of the character's actual settings. Re-seed the account
+        -- profile from this character once using the safe defaults-key list.
+        CopyProfileSettings(character, account)
+        account._esoHybridProfileVersion = 2
     end
 
     if not enabled and character.useAccountWideSettings then
-        for key, value in pairs(account) do
-            if key ~= "_esoHybridInitialized" then
-                character[key] = DeepCopy(value)
-            end
-        end
+        -- Copy the active account profile back to this character before
+        -- switching scopes. Do not enumerate the ZO_SavedVars proxy.
+        CopyProfileSettings(account, character)
     end
 
     character.useAccountWideSettings = enabled == true

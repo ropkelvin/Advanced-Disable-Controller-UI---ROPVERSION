@@ -258,7 +258,12 @@ end
 
 function ADDON:ToggleButtons()
     local settings = GetSettings()
-    settings.useGamepadButtons = not settings.useGamepadButtons
+    if settings.useHybridUI then
+        -- Hybrid is explicitly controller-first outside the gameplay HUD.
+        settings.useGamepadButtons = true
+    else
+        settings.useGamepadButtons = not settings.useGamepadButtons
+    end
     self:LogInfo("Gamepad button prompts:", tostring(settings.useGamepadButtons))
     self:Refresh()
 end

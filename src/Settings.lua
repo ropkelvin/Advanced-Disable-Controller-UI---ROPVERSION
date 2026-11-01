@@ -45,6 +45,19 @@ function ADDON:RegisterSettings()
         stealthIcon = { "ZoFontWinH5", "ZoInteractionPrompt", "ZoFontCallout", "ZoFontCallout2" },
     }
 
+    local function OpenDonationMail()
+        if not MAIL_SEND or not MAIL_SEND.ComposeMailTo then
+            if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
+                CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] The mail composer is not available.")
+            end
+            return
+        end
+
+        -- Only open a addressed draft. The player manually chooses whether
+        -- to attach gold and the amount; this addon never changes mail gold.
+        MAIL_SEND:ComposeMailTo("@ZOSPlsFix")
+    end
+
     local options = {
         {
             type = "description",
@@ -109,6 +122,22 @@ function ADDON:RegisterSettings()
                     text = "Troubleshooting commands: /esohybrid_debug on|off and /esohybrid_dump.",
                 },
             },
+        },
+        {
+            type = "header",
+            name = "Support the addon",
+        },
+        {
+            type = "description",
+            text = "Optional gold donations are appreciated. This opens a mail addressed to @ZOSPlsFix; you choose whether to attach gold and the amount.",
+        },
+        {
+            type = "button",
+            name = "Donation mail",
+            tooltip = "Opens a mail draft only. ESO Hybrid UI does not attach or modify gold.",
+            buttonText = "Open mail",
+            func = OpenDonationMail,
+            width = "half",
         },
     }
 

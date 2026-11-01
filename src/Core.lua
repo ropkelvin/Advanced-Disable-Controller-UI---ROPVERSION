@@ -132,8 +132,6 @@ local function IsGamepadUIAllowed()
     -- keyboard presentation. Preserve the native controller loot workflow.
     if (settings.useHybridUI or settings.useGamepadButtons)
         and OriginalGamepadPreferredMode()
-        and type(GetInteractionType) == "function"
-        and INTERACTION_LOOT ~= nil
         and GetInteractionType() == INTERACTION_LOOT then
         return true
     end
@@ -183,11 +181,6 @@ local function InstallModeOverride()
         return true
     end
 
-    if type(IsInGamepadPreferredMode) ~= "function" then
-        ADDON:LogWarn("IsInGamepadPreferredMode is unavailable; UI mode override was not installed.")
-        return false
-    end
-
     runtime.originalIsInGamepadPreferredMode = IsInGamepadPreferredMode
     _G.IsInGamepadPreferredMode = IsGamepadUIAllowed
     runtime.modeOverrideInstalled = true
@@ -204,19 +197,7 @@ local function RefreshPlatformMode()
         return
     end
 
-    if type(SetSetting) ~= "function"
-        or type(GetSetting) ~= "function"
-        or type(SETTING_TYPE_GAMEPAD) ~= "number"
-        or type(GAMEPAD_SETTING_INPUT_PREFERRED_MODE) ~= "number"
-        or type(INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD) ~= "number"
-        or type(INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD) ~= "number" then
-        return
-    end
-
     local currentMode = GetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE)
-    if currentMode == nil then
-        return
-    end
 
     local currentNumeric = tonumber(currentMode)
     local keyboardMode = INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD

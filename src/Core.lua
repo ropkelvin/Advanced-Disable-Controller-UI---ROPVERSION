@@ -250,13 +250,12 @@ end
 
 function ADDON:ToggleUI()
     local settings = GetSettings()
-    if settings.useHybridUI then
-        settings.useHybridUI = false
-        settings.useControllerUI = false
-    else
-        settings.useControllerUI = not settings.useControllerUI
-    end
-    self:LogInfo("UI mode toggled. Native gamepad UI:", tostring(settings.useControllerUI))
+    -- Keyboard mode is intentionally not offered: this addon is for
+    -- controller users. The toggle switches between native Gamepad and Hybrid.
+    settings.useHybridUI = not settings.useHybridUI
+    settings.useControllerUI = not settings.useHybridUI
+    settings.useGamepadButtons = true
+    self:LogInfo("UI mode toggled:", settings.useHybridUI and "Hybrid" or "Gamepad")
     self:Refresh()
 end
 
@@ -288,8 +287,15 @@ local function InitializeSavedVariables()
         ADDON.defaults
     )
 
-    -- Use only the current ESOHybridUI SavedVariables schema; no profile
-    -- scanning or legacy migration is performed.
+    -- This addon now supports controller UI modes only. Convert old Keyboard
+    -- profiles to native Gamepad mode while preserving existing Hybrid choices.
+    local function NormalizeControllerMode(profile)
+        if type(profile) ~= "table" then return end
+        profile.useControllerUI = profile.useHybridUI ~= true
+        profile.useGamepadButtons = true
+    end
+    NormalizeControllerMode(ADDON.savedVariables)
+    NormalizeControllerMode(ADDON.savedVariablesAccountWide)
 
     local raw = _G[ADDON.SAVED_VARIABLES]
     if type(raw) ~= "table" then
@@ -301,7 +307,7 @@ end
 
 local function PrintStatus()
     local settings = GetSettings()
-    local uiMode = settings.useHybridUI and "hybrid UI" or (settings.useControllerUI and "native gamepad UI" or "keyboard-style UI")
+    local uiMode = settings.useHybridUI and "hybrid UI" or "native gamepad UI"
     local promptMode = (settings.useHybridUI or settings.useGamepadButtons) and "controller prompts enabled" or "keyboard prompts"
     if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
         CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] " .. uiMode .. " | " .. promptMode)
@@ -332,6 +338,33 @@ local function RegisterSlashCommands()
     SLASH_COMMANDS["/esohybrid_buttons"] = function()
         ADDON:ToggleButtons()
         PrintStatus()
+    end
+end
+
+local function ShowFirstInstallWelcome()
+    local account = ADDON.savedVariablesAccountWide
+    if not account or account._esoHybridWelcomeShown then
+        return
+    end
+
+    -- Save the flag before showing the dialog so reloads cannot show it twice.
+    account._esoHybridWelcomeShown = true
+
+    local dialogName = "ESOHYBRIDUI_FIRST_INSTALL"
+    if type(ZO_Dialogs_RegisterCustomDialog) == "function"
+        and type(ZO_Dialogs_ShowDialog) == "function" then
+        ZO_Dialogs_RegisterCustomDialog(dialogName, {
+            title = { text = "Welcome to ESO Hybrid UI" },
+            mainText = {
+                text = "Before using the addon, open ESO Settings > Gameplay > Gamepad Mode and set it to On (not Auto). Then open ESO Hybrid UI settings and choose Gamepad or Hybrid. This addon is designed for controller users; Keyboard mode is not available.",
+            },
+            buttons = {
+                { text = "Got it" },
+            },
+        })
+        ZO_Dialogs_ShowDialog(dialogName)
+    elseif CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
+        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] Set ESO Settings > Gameplay > Gamepad Mode to On (not Auto), then choose Gamepad or Hybrid in addon settings.")
     end
 end
 
@@ -406,8 +439,10 @@ local function OnAddonLoaded(_, addonName)
     ADDON.runtime.initialized = true
     ADDON:Refresh()
 
+    ShowFirstInstallWelcome()
+
     if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] " .. ADDON.VERSION .. " loaded. Controller input remains enabled; use /esohybrid for the UI toggle. Debug: /esohybrid_debug on, snapshot: /esohybrid_dump.")
+        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] " .. ADDON.VERSION .. " loaded. Use /esohybrid to switch between Gamepad and Hybrid. Debug: /esohybrid_debug on, snapshot: /esohybrid_dump.")
     end
     EVENT_MANAGER:UnregisterForEvent(ADDON.ADDON_NAME, EVENT_ADD_ON_LOADED)
 end

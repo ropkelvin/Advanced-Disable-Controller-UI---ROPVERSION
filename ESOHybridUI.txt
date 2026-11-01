@@ -1,5 +1,5 @@
 ## Title: ESO Hybrid UI
-## Description: AI-assisted development. Controller-first UI with native Gamepad and compact Hybrid modes. Requires LibAddonMenu-2.0 >=43.
+## Description: AI-assisted development. Controller-first Gamepad/Hybrid UI. Requires LibAddonMenu-2.0 >=43. Historical lineage: Advanced Disable Controller UI by Lionas, with contributions from jc28735250 and DoriKyll.
 ## Author: ZOSPlsFix
 ## Version: 3.2.0
 ## AddOnVersion: 30200

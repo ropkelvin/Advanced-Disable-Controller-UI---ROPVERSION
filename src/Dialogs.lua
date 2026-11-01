@@ -4,7 +4,7 @@
 local ADDON = ESOHybridUI
 
 function ADDON:ApplyDialogs()
-    if self.runtime.dialogHooksInstalled or type(ZO_Dialogs_ShowDialog) ~= "function" then
+    if self.runtime.dialogHooksInstalled then
         return
     end
 

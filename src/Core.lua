@@ -67,20 +67,6 @@ function ADDON:IsNativeGamepadMode()
     return OriginalGamepadPreferredMode()
 end
 
-function ADDON:ShouldUseGamepadActionBar()
-    local settings = GetSettings()
-    return settings.useGamepadActionBar == true
-        and settings.useControllerUI ~= true
-        and OriginalGamepadPreferredMode()
-end
-
-function ADDON:ShouldUseGamepadResourceBars()
-    local settings = GetSettings()
-    return settings.useGamepadResourceBars == true
-        and settings.useControllerUI ~= true
-        and OriginalGamepadPreferredMode()
-end
-
 function ADDON:WithNativeGamepadMode(callback, ...)
     local runtime = ADDON.runtime
     runtime.forceNativeModeDepth = runtime.forceNativeModeDepth + 1
@@ -228,7 +214,6 @@ function ADDON:ApplyAll()
     if self.ApplyDialogs then self:LogDebug("Applying dialog styles."); self:ApplyDialogs() end
     if self.ApplyUtilityWheel then self:LogDebug("Applying utility-wheel bridge."); self:ApplyUtilityWheel() end
     if self.ApplyActionBar then self:LogDebug("Applying action-bar style."); self:ApplyActionBar() end
-    if self.ApplyResourceBars then self:LogDebug("Applying resource-bar style."); self:ApplyResourceBars() end
     if self.ApplyWorldMap then self:LogDebug("Applying world-map behavior."); self:ApplyWorldMap() end
 end
 
@@ -287,20 +272,6 @@ function ADDON:ToggleButtons()
     self:Refresh()
 end
 
-function ADDON:ToggleActionBar()
-    local settings = GetSettings()
-    settings.useGamepadActionBar = not settings.useGamepadActionBar
-    self:LogInfo("Gamepad action bar:", tostring(settings.useGamepadActionBar))
-    self:Refresh()
-end
-
-function ADDON:ToggleResourceBars()
-    local settings = GetSettings()
-    settings.useGamepadResourceBars = not settings.useGamepadResourceBars
-    self:LogInfo("Gamepad resource bars:", tostring(settings.useGamepadResourceBars))
-    self:Refresh()
-end
-
 
 local function InitializeSavedVariables()
     ADDON.savedVariablesAccountWide = ZO_SavedVars:NewAccountWide(
@@ -331,11 +302,9 @@ end
 local function PrintStatus()
     local settings = GetSettings()
     local uiMode = settings.useHybridUI and "hybrid UI" or (settings.useControllerUI and "native gamepad UI" or "keyboard-style UI")
-    local barMode = settings.useGamepadActionBar and "gamepad action bar" or "compact keyboard action bar"
-    local resourceMode = settings.useGamepadResourceBars and "gamepad resource bars" or "compact keyboard resource bars"
     local promptMode = (settings.useHybridUI or settings.useGamepadButtons) and "controller prompts enabled" or "keyboard prompts"
     if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] " .. uiMode .. " | " .. barMode .. " | " .. resourceMode .. " | " .. promptMode)
+        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] " .. uiMode .. " | " .. promptMode)
     end
 end
 
@@ -362,14 +331,6 @@ local function RegisterSlashCommands()
     end
     SLASH_COMMANDS["/esohybrid_buttons"] = function()
         ADDON:ToggleButtons()
-        PrintStatus()
-    end
-    SLASH_COMMANDS["/esohybrid_actionbar"] = function()
-        ADDON:ToggleActionBar()
-        PrintStatus()
-    end
-    SLASH_COMMANDS["/esohybrid_resourcebars"] = function()
-        ADDON:ToggleResourceBars()
         PrintStatus()
     end
 end

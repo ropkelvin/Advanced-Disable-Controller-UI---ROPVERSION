@@ -371,22 +371,17 @@ local function ShowFirstInstallWelcome()
     account._esoHybridWelcomeShown = true
 
     local dialogName = "ESOHYBRIDUI_FIRST_INSTALL"
-    if type(ZO_Dialogs_RegisterCustomDialog) == "function"
-        and type(ZO_Dialogs_ShowDialog) == "function" then
-        ZO_Dialogs_RegisterCustomDialog(dialogName, {
-            gamepadInfo = { dialogType = GAMEPAD_DIALOGS.BASIC },
-            title = { text = "Welcome to ESO Hybrid UI" },
-            mainText = {
-                text = "Open ESO Hybrid UI settings and click Apply Recommended ESO Settings once. This configures Gamepad Mode On, Gamepad keybind display, Keyboard Chat, and the mouse cursor when chat receives focus. Then choose Gamepad or Hybrid. You can apply the settings again later if needed.",
-            },
-            buttons = {
-                { text = "Got it" },
-            },
-        })
-        ZO_Dialogs_ShowDialog(dialogName)
-    elseif CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] Set ESO Settings > Gameplay > Gamepad Mode to On (not Auto), then choose Gamepad or Hybrid in addon settings.")
-    end
+    ZO_Dialogs_RegisterCustomDialog(dialogName, {
+        gamepadInfo = { dialogType = GAMEPAD_DIALOGS.BASIC },
+        title = { text = "Welcome to ESO Hybrid UI" },
+        mainText = {
+            text = "Open ESO Hybrid UI settings and click Apply Recommended ESO Settings once. This configures Gamepad Mode On, Gamepad keybind display, Keyboard Chat, and the mouse cursor when chat receives focus. Then choose Gamepad or Hybrid. You can apply the settings again later if needed.",
+        },
+        buttons = {
+            { text = "Got it" },
+        },
+    })
+    ZO_Dialogs_ShowDialog(dialogName)
 end
 
 local function OnLockpickBegin()

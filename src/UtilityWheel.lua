@@ -35,13 +35,6 @@ function ADDON:CycleUtilityWheel(direction)
 end
 
 local function CopyGamepadDefaultBindings(sourceActionName, targetActionName)
-    if type(GetActionIndicesFromName) ~= "function"
-        or type(GetActionBindingInfo) ~= "function"
-        or type(CreateDefaultActionBind) ~= "function"
-        or type(GetMaxBindingsPerAction) ~= "function" then
-        return false
-    end
-
     local sourceLayer, sourceCategory, sourceAction = GetActionIndicesFromName(sourceActionName)
     local targetLayer, targetCategory, targetAction = GetActionIndicesFromName(targetActionName)
     if not sourceLayer or not targetLayer then
@@ -53,14 +46,14 @@ local function CopyGamepadDefaultBindings(sourceActionName, targetActionName)
         local key, mod1, mod2, mod3, mod4 =
             GetActionBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
 
-        if (not key or key == KEY_INVALID) and type(GetActionDefaultBindingInfo) == "function" then
+        if not key or key == KEY_INVALID then
             key, mod1, mod2, mod3, mod4 =
                 GetActionDefaultBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
         end
 
-        if key and key ~= KEY_INVALID and (not IsKeyCodeGamepadKey or IsKeyCodeGamepadKey(key)) then
-            local ok, result = pcall(CreateDefaultActionBind, targetActionName, key, mod1, mod2, mod3, mod4)
-            if ok and result ~= false then copiedAny = true end
+        if key and key ~= KEY_INVALID and IsKeyCodeGamepadKey(key) then
+            CreateDefaultActionBind(targetActionName, key, mod1, mod2, mod3, mod4)
+            copiedAny = true
         end
     end
 

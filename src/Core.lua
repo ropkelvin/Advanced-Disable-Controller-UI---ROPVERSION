@@ -293,8 +293,8 @@ local function InitializeSavedVariables()
         ADDON.defaults
     )
 
-    -- This addon starts with its own SavedVariables schema. Do not scan or
-    -- import profiles from the retired ADCUI addon or perform legacy migrations.
+    -- Use only the current ESOHybridUI SavedVariables schema; no profile
+    -- scanning or legacy migration is performed.
 
     local raw = _G[ADDON.SAVED_VARIABLES]
     if type(raw) ~= "table" then

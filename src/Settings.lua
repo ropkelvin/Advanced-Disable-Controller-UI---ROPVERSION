@@ -44,6 +44,14 @@ local function FontDropdown(name, tooltip, key, choices, values)
     }
 end
 
+local function Header(name)
+    return { type = "header", name = name }
+end
+
+local function Description(text)
+    return { type = "description", text = text }
+end
+
 function ADDON:RegisterSettings()
     if not LibAddonMenu2 then
         if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
@@ -85,24 +93,12 @@ function ADDON:RegisterSettings()
     }
 
     local options = {
-        { type = "description", text = "Hybrid is designed for controller play with the compact keyboard-style gameplay HUD: controller button glyphs and native gamepad menus remain available for navigation and actions." },
-        { type = "header", name = "General" },
-        {
-            type = "checkbox",
-            name = "Use account-wide settings",
-            tooltip = "Use one shared settings profile across every character on this ESO account. Enabling it copies this character's current settings into the account profile the first time.",
-            default = false,
-            getFunc = function()
-                return ADDON.savedVariablesAccountWide
-                    and ADDON.savedVariablesAccountWide._esoHybridUseAccountWideSettings == true
-                    or false
-            end,
-            setFunc = function(value) ADDON:SetUseAccountWideSettings(value) end,
-        },
+        Description("A controller-first interface with a compact gameplay HUD. Choose how ESO displays menus, button prompts and interaction text below."),
+        Header("Interface"),
         {
             type = "dropdown",
             name = "Interface mode",
-            tooltip = "Keyboard keeps the compact keyboard interface everywhere. Gamepad uses ESO's full native controller interface. Hybrid keeps the compact keyboard-style gameplay HUD, forces controller button glyphs, and uses native gamepad menus for navigation and actions.",
+            tooltip = "KEYBOARD: compact keyboard-style interface. GAMEPAD: ESO's full native controller interface. HYBRID: compact keyboard-style gameplay HUD with controller button glyphs and native gamepad menus for navigation and actions.",
             choices = { "Keyboard", "Gamepad", "Hybrid" },
             choicesValues = { "keyboard", "gamepad", "hybrid" },
             default = "keyboard",
@@ -118,23 +114,42 @@ function ADDON:RegisterSettings()
                 ADDON:Refresh()
             end,
         },
-        SettingCheckbox("Show gamepad button prompts", "Show controller button glyphs on the keyboard-style interface and keybind strip. Hybrid mode always uses controller glyphs; this option controls Keyboard mode.", "useGamepadButtons"),
+        {
+            type = "checkbox",
+            name = "Use account-wide settings",
+            tooltip = "Share one settings profile across every character on this ESO account. The first time you enable this, your current character's settings are copied into the shared profile. Turning it off copies the shared settings back to this character.",
+            default = false,
+            getFunc = function()
+                return ADDON.savedVariablesAccountWide
+                    and ADDON.savedVariablesAccountWide._esoHybridUseAccountWideSettings == true
+                    or false
+            end,
+            setFunc = function(value) ADDON:SetUseAccountWideSettings(value) end,
+        },
+
+        Header("Controller prompts"),
+        Description("Show controller button glyphs while keeping the compact keyboard-style gameplay HUD. Hybrid mode always enables controller prompts; this switch affects Keyboard mode."),
+        SettingCheckbox("Show gamepad button prompts", "Display controller glyphs on supported prompts, keybind strips and action buttons. This setting is automatically enabled while Hybrid mode is active.", "useGamepadButtons"),
+
+        Header("Prompt appearance"),
+        Description("Adjust the text styles used by interaction prompts. These options change prompt fonts only; they do not enlarge the HUD or change the overall interface mode."),
+        FontDropdown("Interaction button font", "Font used for the button label shown beside the reticle.", "reticle", fontNames, fontValues),
+        FontDropdown("Interaction context font", "Font used for the interaction description beside the reticle.", "reticleContext", fontNames, fontValues),
+        FontDropdown("Stealth and lockpicking icon font", "Font used by stealth and lockpicking prompt icons.", "stealthIcon", fontNames, fontValues),
+
+        Header("Diagnostics"),
+        Description("Only enable detailed logging when troubleshooting. For saved logs and stack traces, install LibDebugLogger and DebugLogViewer. You can also use /esohybrid_debug on|off and /esohybrid_dump."),
         {
             type = "checkbox",
             name = "Enable diagnostic logging",
-            tooltip = "Record detailed ESOHybridUI debug messages and stack traces through LibDebugLogger. Use /esohybrid_debug on or /esohybrid_debug off. Install LibDebugLogger and DebugLogViewer to inspect and share logs.",
+            tooltip = "Record detailed ESO Hybrid UI debug messages and stack traces through LibDebugLogger. Logging takes effect immediately and the setting is saved. Without LibDebugLogger, messages fall back to ESO's debug output and are not collected into a persistent addon log.",
             default = false,
             getFunc = function() return ADDON.runtime.debugLoggingEnabled end,
             setFunc = function(value) ADDON:SetDebugLogging(value) end,
         },
 
-        { type = "header", name = "Prompt fonts" },
-        FontDropdown("Reticle button font", "Font used for the interaction button label.", "reticle", fontNames, fontValues),
-        FontDropdown("Reticle context font", "Font used for the interaction context text.", "reticleContext", fontNames, fontValues),
-        FontDropdown("Stealth icon font", "Font used for stealth and lockpicking prompts.", "stealthIcon", fontNames, fontValues),
-
-        { type = "header", name = "Support the addon" },
-        { type = "description", text = "Enjoying ESO Hybrid UI? If you would like to support its continued development, optional in-game gold donations are greatly appreciated." },
+        Header("Support"),
+        Description("If this addon has been useful, optional in-game gold donations help support continued development."),
         {
             type = "button",
             name = "Send an in-game gold donation",
@@ -149,8 +164,7 @@ function ADDON:RegisterSettings()
             end,
             width = "half",
         },
-
-        { type = "description", text = "Quick commands: /esohybrid, /esohybrid_status, /esohybrid_sv, /esohybrid_buttons, /esohybrid_debug on|off, /esohybrid_dump." },
+        Description("Slash commands: /esohybrid · /esohybrid_status · /esohybrid_sv · /esohybrid_buttons · /esohybrid_debug on|off · /esohybrid_dump"),
     }
 
     LibAddonMenu2:RegisterOptionControls(panelName, options)

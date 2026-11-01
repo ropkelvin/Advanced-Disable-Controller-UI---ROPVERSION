@@ -3,10 +3,6 @@
 local ADDON = ESOHybridUI
 local NIL_VALUE = {}
 
-local function Pack(...)
-    return { n = select("#", ...), ... }
-end
-
 local function SaveAndSet(object, key, value)
     if type(object) ~= "table" then
         return
@@ -140,67 +136,39 @@ local function InstallGlobalPromptHooks()
     local runtime = ADDON.runtime
     if runtime.globalPromptHooksInstalled then return end
 
-    runtime.promptBindingRegistrations = runtime.promptBindingRegistrations or setmetatable({}, { __mode = "k" })
-
-    local originalRegister = ZO_Keybindings_RegisterLabelForBindingUpdate
-    if type(originalRegister) == "function" then
-        runtime.originalRegisterPromptLabel = originalRegister
-        ZO_Keybindings_RegisterLabelForBindingUpdate = function(label, actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ...)
-            local force = ShouldForceControllerPrompts()
-            if label then
-                runtime.promptBindingRegistrations[label] = {
-                    register = originalRegister,
-                    args = Pack(actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ...),
-                }
-            end
-            return originalRegister(label, actionName, showUnbound, gamepadActionName, callback, force or alwaysPreferGamepadMode, ...)
+    -- ESO's shared keybinding helpers decide which input device's binding to
+    -- resolve and whether controller glyphs should be displayed. Override
+    -- those decisions centrally while Hybrid is active.
+    local originalShouldUseGamepadAction = ZO_Keybindings_ShouldUseGamepadAction
+    if type(originalShouldUseGamepadAction) == "function" then
+        runtime.originalShouldUseGamepadAction = originalShouldUseGamepadAction
+        _G.ZO_Keybindings_ShouldUseGamepadAction = function(alwaysPreferGamepadMode, ...)
+            if ShouldForceControllerPrompts() then return true end
+            return originalShouldUseGamepadAction(alwaysPreferGamepadMode, ...)
         end
     end
 
-    local originalInline = ZO_Keybindings_RegisterLabelForInLineBindingUpdate
-    if type(originalInline) == "function" then
-        runtime.originalRegisterInlinePromptLabel = originalInline
-        ZO_Keybindings_RegisterLabelForInLineBindingUpdate = function(label, actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ...)
-            local force = ShouldForceControllerPrompts()
-            if label then
-                runtime.promptBindingRegistrations[label] = {
-                    register = originalInline,
-                    args = Pack(actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ...),
-                }
+    local originalGetPreferredKeyType = ZO_Keybindings_GetPreferredKeyType
+    if type(originalGetPreferredKeyType) == "function" then
+        runtime.originalGetPreferredKeyType = originalGetPreferredKeyType
+        _G.ZO_Keybindings_GetPreferredKeyType = function(alwaysPreferGamepadMode, ...)
+            if ShouldForceControllerPrompts() then
+                return PREFERRED_INPUT_DEVICE_TYPE_GAMEPAD
             end
-            return originalInline(label, actionName, showUnbound, gamepadActionName, callback, force or alwaysPreferGamepadMode, ...)
+            return originalGetPreferredKeyType(alwaysPreferGamepadMode, ...)
         end
     end
 
-    if ZO_KeybindButtonMixin and type(ZO_KeybindButtonMixin.SetKeybind) == "function" then
-        local originalSetKeybind = ZO_KeybindButtonMixin.SetKeybind
-        runtime.originalKeybindButtonSetKeybind = originalSetKeybind
-        ZO_KeybindButtonMixin.SetKeybind = function(button, keybind, showUnbound, gamepadPreferredKeybind, alwaysPreferGamepadMode, ...)
-            local force = ShouldForceControllerPrompts()
-            button.esoHybridPromptKeybind = {
-                keybind, showUnbound, gamepadPreferredKeybind, alwaysPreferGamepadMode, ...
-            }
-            return originalSetKeybind(button, keybind, showUnbound, gamepadPreferredKeybind, force or alwaysPreferGamepadMode, ...)
+    local originalShouldShowGamepadKeybind = ZO_Keybindings_ShouldShowGamepadKeybind
+    if type(originalShouldShowGamepadKeybind) == "function" then
+        runtime.originalShouldShowGamepadKeybind = originalShouldShowGamepadKeybind
+        _G.ZO_Keybindings_ShouldShowGamepadKeybind = function(alwaysPreferGamepadMode, ...)
+            if ShouldForceControllerPrompts() then return true end
+            return originalShouldShowGamepadKeybind(alwaysPreferGamepadMode, ...)
         end
     end
 
     runtime.globalPromptHooksInstalled = true
-end
-
-local function RefreshRegisteredPromptLabels()
-    local runtime = ADDON.runtime
-    local registrations = runtime.promptBindingRegistrations
-    local unregister = ZO_Keybindings_UnregisterLabelForBindingUpdate
-    if not registrations or type(unregister) ~= "function" then return end
-
-    local force = ShouldForceControllerPrompts()
-    for label, registration in pairs(registrations) do
-        if label and registration and registration.register then
-            unregister(label)
-            local args = registration.args
-            registration.register(label, args[1], args[2], args[3], args[4], force or args[5], unpack(args, 6, args.n))
-        end
-    end
 end
 
 local function InstallDeathPromptHook()
@@ -332,7 +300,6 @@ function ADDON:ApplyPrompts()
     ApplyReticleFonts(settings, forceGamepadPrompts)
     InstallSynergyPromptHook()
     InstallDeathPromptHook()
-    RefreshRegisteredPromptLabels()
     RefreshReticlePrompt()
     RefreshPlayerInteractionPrompt()
     RefreshSynergyPrompt()
@@ -347,7 +314,6 @@ function ADDON:RestorePromptStyles()
         KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = self.runtime.promptStyleOriginal
     end
     RestoreSavedValues()
-    RefreshRegisteredPromptLabels()
     RefreshReticlePrompt()
     RefreshPlayerInteractionPrompt()
 end

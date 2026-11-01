@@ -63,6 +63,42 @@ function ADDON:GetSettings()
     return GetSettings()
 end
 
+function ADDON:ApplyRecommendedESOSettings()
+    local saveOption = SETTINGS_SET_OPTION_SAVE_TO_PERSISTED_DATA
+
+    SetSetting(
+        SETTING_TYPE_GAMEPAD,
+        GAMEPAD_SETTING_INPUT_PREFERRED_MODE,
+        tostring(INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD),
+        saveOption
+    )
+    SetSetting(
+        SETTING_TYPE_GAMEPAD,
+        GAMEPAD_SETTING_KEYBIND_DISPLAY_MODE,
+        tostring(KEYBIND_DISPLAY_MODE_ALWAYS_GAMEPAD),
+        saveOption
+    )
+    SetSetting(
+        SETTING_TYPE_GAMEPAD,
+        GAMEPAD_SETTING_USE_KEYBOARD_CHAT,
+        "1",
+        saveOption
+    )
+    SetSetting(
+        SETTING_TYPE_UI,
+        UI_SETTING_RETURN_CURSOR_ON_CHAT_FOCUS,
+        "1",
+        saveOption
+    )
+
+    self.savedVariablesAccountWide._esoHybridRecommendedSettingsApplied = true
+    self:LogInfo("Recommended ESO controller and keyboard-chat settings applied and saved.")
+
+    if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
+        CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] Recommended ESO settings applied and saved. Gamepad Mode, Gamepad keybinds, Keyboard Chat, and cursor-on-chat-focus are enabled.")
+    end
+end
+
 function ADDON:IsNativeGamepadMode()
     return OriginalGamepadPreferredMode()
 end
@@ -260,10 +296,20 @@ function ADDON:ToggleUI()
 end
 
 local function InitializeSavedVariables()
-    ADDON.savedVariablesAccountWide = ZO_SavedVars:NewAccountWide(
+    -- Character IDs already include a server prefix. Account-wide profiles do
+    -- not, so namespace them by megaserver to keep EU, NA, and PTS settings
+    -- separate while preserving the old un-namespaced profile for migration.
+    local legacyAccountProfile = ZO_SavedVars:NewAccountWide(
         ADDON.SAVED_VARIABLES,
         ADDON.SAVED_VARIABLES_VERSION,
         nil,
+        ADDON.defaults
+    )
+
+    ADDON.savedVariablesAccountWide = ZO_SavedVars:NewAccountWide(
+        ADDON.SAVED_VARIABLES,
+        ADDON.SAVED_VARIABLES_VERSION,
+        GetWorldName(),
         ADDON.defaults
     )
 
@@ -273,6 +319,17 @@ local function InitializeSavedVariables()
         nil,
         ADDON.defaults
     )
+
+    -- Migrate the old shared account profile into this megaserver's profile
+    -- once. Keep the legacy data intact so this update is non-destructive.
+    local account = ADDON.savedVariablesAccountWide
+    if not account._esoHybridServerProfileMigrated then
+        CopyProfileSettings(legacyAccountProfile, account)
+        account._esoHybridUseAccountWideSettings = legacyAccountProfile._esoHybridUseAccountWideSettings
+        account._esoHybridWelcomeShown = legacyAccountProfile._esoHybridWelcomeShown
+        account._esoHybridRecommendedSettingsApplied = legacyAccountProfile._esoHybridRecommendedSettingsApplied
+        account._esoHybridServerProfileMigrated = true
+    end
 
     -- This addon now supports controller UI modes only. Convert old Keyboard
     -- profiles to native Gamepad mode while preserving existing Hybrid choices.
@@ -339,7 +396,7 @@ local function ShowFirstInstallWelcome()
             gamepadInfo = { dialogType = GAMEPAD_DIALOGS.BASIC },
             title = { text = "Welcome to ESO Hybrid UI" },
             mainText = {
-                text = "Before using the addon, open ESO Settings > Gameplay > Gamepad Mode and set it to On (not Auto). Then open ESO Hybrid UI settings and choose Gamepad or Hybrid. This addon is designed for controller users; Keyboard mode is not available.",
+                text = "Open ESO Hybrid UI settings and click Apply Recommended ESO Settings once. This configures Gamepad Mode On, Gamepad keybind display, Keyboard Chat, and the mouse cursor when chat receives focus. Then choose Gamepad or Hybrid. You can apply the settings again later if needed.",
             },
             buttons = {
                 { text = "Got it" },

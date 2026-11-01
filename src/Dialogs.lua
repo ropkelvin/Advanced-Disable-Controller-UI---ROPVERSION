@@ -13,7 +13,7 @@ function ADDON:ApplyDialogs()
 
     local wrapper = function(...)
         local settings = ADDON:GetSettings()
-        local shouldUseControllerGlyphs = settings.useGamepadButtons
+        local shouldUseControllerGlyphs = (settings.useHybridUI or settings.useGamepadButtons)
             and not settings.useControllerUI
             and ADDON:IsNativeGamepadMode()
 

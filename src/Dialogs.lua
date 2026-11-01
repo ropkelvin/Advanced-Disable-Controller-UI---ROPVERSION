@@ -11,6 +11,9 @@ function ADDON:ApplyDialogs()
     local original = ZO_Dialogs_ShowDialog
     self.runtime.originalShowDialog = original
 
+    -- Keep the full original signature and return tuple intact. This wrapper
+    -- temporarily supplies native gamepad context only during construction;
+    -- a pre-hook that suppresses the original would discard its return values.
     local wrapper = function(...)
         local shouldUseControllerGlyphs = ADDON:ShouldShowControllerPrompts()
 

@@ -92,7 +92,9 @@ local function InstallManagerHooks()
     ADDON.runtime.originalUtilityWheelStop = originalStop
 
     manager.StartInteraction = function(self, wheelType, ...)
-        local started = originalStart(self, wheelType, ...)
+        local function Pack(...) return { n = select("#", ...), ... } end
+        local results = Pack(originalStart(self, wheelType, ...))
+        local started = results[1]
         if started
             and wheelType == ZO_INTERACTIVE_WHEEL_TYPE_UTILITY
             and self.gamepad == false
@@ -102,7 +104,7 @@ local function InstallManagerHooks()
             PushActionLayerByName(BRIDGE_LAYER)
             ADDON.runtime.utilityWheelLayerActive = true
         end
-        return started
+        return unpack(results, 1, results.n)
     end
 
     if type(ZO_PreHook) == "function" then

@@ -1,8 +1,8 @@
 ## Title: ESO Hybrid UI
 ## Description: Keep the compact keyboard HUD, controller input and native gamepad menus together in ESO.
 ## Author: ZOSPlsFix
-## Version: 3.0.2
-## AddOnVersion: 30002
+## Version: 3.0.3
+## AddOnVersion: 30003
 ## APIVersion: 101051
 ## DependsOn: LibAddonMenu-2.0>=43
 ## SavedVariables: ESOHybridUI_SavedVariables
@@ -15,7 +15,6 @@ src/Dialogs.lua
 src/UtilityWheel.lua
 src/ActionBar.lua
 src/ResourceBars.lua
-src/MainMenu.lua
 src/WorldMap.lua
 src/Settings.lua
 Bindings.xml

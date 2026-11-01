@@ -170,6 +170,10 @@ end
 
 local function InstallModeOverride()
     local runtime = ADDON.runtime
+    -- Hybrid must replace the boolean result returned to every ESO caller.
+    -- A normal ZO_PreHook cannot supply a replacement return value while
+    -- suppressing the original, so preserve and wrap the original function.
+    -- The identity check below avoids silently overwriting a later addon hook.
     if runtime.modeOverrideInstalled then
         -- Do not repeatedly overwrite another addon's later wrapper whenever
         -- ESO emits a gamepad-mode event. Direct return-value control is

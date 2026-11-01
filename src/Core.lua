@@ -323,6 +323,13 @@ local function InitializeSavedVariables()
         ADDON.defaults
     )
 
+    -- Migrate the old per-character opt-in into the new account-wide
+    -- selector so characters that previously enabled sharing keep using it.
+    if ADDON.savedVariablesAccountWide._esoHybridUseAccountWideSettings == nil
+        and ADDON.savedVariables.useAccountWideSettings == true then
+        ADDON.savedVariablesAccountWide._esoHybridUseAccountWideSettings = true
+    end
+
     local raw = _G[ADDON.SAVED_VARIABLES]
     if type(raw) ~= "table" then
         ADDON:LogError("ESO did not create the declared SavedVariables root table.")

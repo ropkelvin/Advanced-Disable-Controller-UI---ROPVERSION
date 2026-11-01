@@ -116,6 +116,15 @@ local function IsGamepadUIAllowed()
         return true
     end
 
+    -- Lockpicking is a dedicated interaction flow and must take priority
+    -- over Hybrid's general gameplay-HUD decision. Otherwise the Hybrid branch
+    -- below can prevent the configured native gamepad lockpick scene.
+    if settings.useGamepadLockpicking
+        and ADDON.runtime.isLockpicking
+        and OriginalGamepadPreferredMode() then
+        return true
+    end
+
     -- In Hybrid mode, ESO's own UI-mode state selects native gamepad menus,
     -- while the base gameplay HUD remains on the compact keyboard platform.
     if settings.useHybridUI then

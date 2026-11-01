@@ -1,8 +1,7 @@
 -- Optional LibDebugLogger integration and in-game diagnostics.
 -- LibDebugLogger is deliberately optional: the addon remains usable without it.
 
-local ADDON = _G.ESOHybridUI or {}
-_G.ESOHybridUI = ADDON
+local ADDON = ESOHybridUI
 local SM = SCENE_MANAGER
 
 local function SafeCall(object, method, ...)

@@ -7,8 +7,8 @@ local ADDON = ESOHybridUI
 local BRIDGE_LAYER = "ESOHybridUI_UTILITY_WHEEL_BRIDGE"
 
 if ZO_CreateStringId then
-    ZO_CreateStringId("SI_BINDING_NAME_ADCUI_UTILITY_WHEEL_CYCLE_LEFT", "Cycle utility wheel left (controller)")
-    ZO_CreateStringId("SI_BINDING_NAME_ADCUI_UTILITY_WHEEL_CYCLE_RIGHT", "Cycle utility wheel right (controller)")
+    ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_LEFT", "Cycle utility wheel left (controller)")
+    ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_RIGHT", "Cycle utility wheel right (controller)")
 end
 
 function ADDON:ShouldBridgeUtilityWheelInput()
@@ -124,13 +124,13 @@ function ADDON:ApplyUtilityWheel()
     if not self.runtime.utilityWheelLeftCopied then
         self.runtime.utilityWheelLeftCopied = CopyGamepadDefaultBindings(
             "UTILITY_WHEEL_GAMEPAD_CYCLE_LEFT",
-            "ADCUI_UTILITY_WHEEL_CYCLE_LEFT"
+            "ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_LEFT"
         )
     end
     if not self.runtime.utilityWheelRightCopied then
         self.runtime.utilityWheelRightCopied = CopyGamepadDefaultBindings(
             "UTILITY_WHEEL_GAMEPAD_CYCLE_RIGHT",
-            "ADCUI_UTILITY_WHEEL_CYCLE_RIGHT"
+            "ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_RIGHT"
         )
     end
     self.runtime.utilityWheelDefaultsCopied =

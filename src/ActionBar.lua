@@ -51,15 +51,26 @@ local function InstallPlatformStyleHook()
     if type(original) ~= "function" then return end
     ADDON.runtime.originalPlatformStyleApply = original
 
-    local wrapper = function(self)
-        if IsActionBarPlatformStyle(self) and ADDON:ShouldUseGamepadActionBar() then
-            return ADDON:WithNativeGamepadMode(self.applyFunction, self.gamepadStyle)
+    if type(ZO_PreHook) == "function" then
+        -- Apply has no meaningful return value. Intercept only the action-bar
+        -- style object and let every other platform style use ESO's own method.
+        ZO_PreHook(ZO_PlatformStyle, "Apply", function(self)
+            if IsActionBarPlatformStyle(self) and ADDON:ShouldUseGamepadActionBar() then
+                ADDON:WithNativeGamepadMode(self.applyFunction, self.gamepadStyle)
+                return true
+            end
+            return false
+        end)
+    else
+        local wrapper = function(self)
+            if IsActionBarPlatformStyle(self) and ADDON:ShouldUseGamepadActionBar() then
+                return ADDON:WithNativeGamepadMode(self.applyFunction, self.gamepadStyle)
+            end
+            return original(self)
         end
-        return original(self)
+        ADDON.runtime.platformStyleApplyWrapper = wrapper
+        ZO_PlatformStyle.Apply = wrapper
     end
-
-    ADDON.runtime.platformStyleApplyWrapper = wrapper
-    ZO_PlatformStyle.Apply = wrapper
     ADDON.runtime.actionBarPlatformHookInstalled = true
 end
 

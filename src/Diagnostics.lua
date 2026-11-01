@@ -105,8 +105,12 @@ end
 
 function ADDON:DumpDiagnostics()
     local settings = self:GetSettings()
+    local runtime = self.runtime
     local physicalGamepad = "unknown"
-    local uiGamepad = "unknown"
+    local effectiveGamepadUI = "unknown"
+    local inUIMode = "unknown"
+    local worldMapShowing = "unknown"
+    local currentScene = "unknown"
 
     if type(self.IsNativeGamepadMode) == "function" then
         local ok, value = pcall(self.IsNativeGamepadMode, self)
@@ -114,28 +118,61 @@ function ADDON:DumpDiagnostics()
     end
     if type(IsInGamepadPreferredMode) == "function" then
         local ok, value = pcall(IsInGamepadPreferredMode)
-        if ok then uiGamepad = tostring(value) end
+        if ok then effectiveGamepadUI = tostring(value) end
     end
+    if SCENE_MANAGER and type(SCENE_MANAGER.IsInUIMode) == "function" then
+        local ok, value = pcall(SCENE_MANAGER.IsInUIMode, SCENE_MANAGER)
+        if ok then inUIMode = tostring(value) end
+    end
+    if WORLD_MAP_SCENE and type(WORLD_MAP_SCENE.IsShowing) == "function" then
+        local ok, value = pcall(WORLD_MAP_SCENE.IsShowing, WORLD_MAP_SCENE)
+        if ok then worldMapShowing = tostring(value) end
+    end
+    if SCENE_MANAGER and type(SCENE_MANAGER.GetCurrentSceneName) == "function" then
+        local ok, value = pcall(SCENE_MANAGER.GetCurrentSceneName, SCENE_MANAGER)
+        if ok and value ~= nil then currentScene = tostring(value) end
+    end
+
+    local accountWide = self.savedVariablesAccountWide
+        and self.savedVariablesAccountWide._esoHybridUseAccountWideSettings == true
+        or false
+    local uiMode = settings.useHybridUI and "hybrid"
+        or (settings.useControllerUI and "gamepad" or "keyboard")
 
     self:LogInfo("========== DIAGNOSTIC SNAPSHOT BEGIN ==========")
     self:LogInfo("Addon version:", self.VERSION, "API:", tostring(GetAPIVersion and GetAPIVersion() or "unknown"))
-    self:LogInfo("Physical gamepad preference:", physicalGamepad, "UI gamepad preference:", uiGamepad)
-    self:LogInfo("Keyboard UI:", tostring(not settings.useControllerUI),
-        "Button prompts:", tostring(settings.useGamepadButtons),
-        "Action bar:", tostring(settings.useGamepadActionBar),
-        "Resource bars:", tostring(settings.useGamepadResourceBars))
-    self:LogInfo("Lockpick UI:", tostring(settings.useGamepadLockpicking),
-        "Currently lockpicking:", tostring(self.runtime.isLockpicking),
-        "Account-wide settings:", tostring(settings.useAccountWideSettings))
+    self:LogInfo("UI mode:", uiMode,
+        "Controller prompts:", tostring(settings.useHybridUI or settings.useGamepadButtons == true),
+        "Account-wide profile:", tostring(accountWide))
+    self:LogInfo("Physical gamepad preference:", physicalGamepad,
+        "Effective gamepad UI:", effectiveGamepadUI,
+        "Scene manager UI mode:", inUIMode)
+    self:LogInfo("Current scene:", currentScene,
+        "World map showing:", worldMapShowing,
+        "Native-mode override depth:", tostring(runtime.forceNativeModeDepth or 0))
+    self:LogInfo("Runtime:", "initialized=" .. tostring(runtime.initialized),
+        "modeOverride=" .. tostring(runtime.modeOverrideInstalled),
+        "lockpicking=" .. tostring(runtime.isLockpicking))
     self:LogInfo("Hooks installed:",
-        "prompts=" .. tostring(self.runtime.promptHooksInstalled),
-        "actionBar=" .. tostring(self.runtime.actionBarHooksInstalled),
-        "resourceBars=" .. tostring(self.runtime.resourceBarHooksInstalled),
-        "mainMenu=" .. tostring(self.runtime.mainMenuHooksInstalled),
-        "worldMap=" .. tostring(self.runtime.worldMapHooksInstalled),
-        "utilityWheel=" .. tostring(self.runtime.utilityWheelHooksInstalled))
-    self:LogInfo("LibAddonMenu2:", tostring(type(LibAddonMenu2)),
-        "LibDebugLogger:", tostring(type(LibDebugLogger)))
+        "globalPrompts=" .. tostring(runtime.globalPromptHooksInstalled),
+        "promptDescriptors=" .. tostring(runtime.promptHooksInstalled),
+        "deathPrompt=" .. tostring(runtime.deathPromptHookInstalled),
+        "synergyPrompt=" .. tostring(runtime.synergyPromptHookInstalled),
+        "actionButtons=" .. tostring(runtime.actionButtonHooksInstalled),
+        "dialogs=" .. tostring(runtime.dialogHooksInstalled),
+        "worldMap=" .. tostring(runtime.worldMapHooksInstalled),
+        "mapScene=" .. tostring(runtime.hybridWorldMapHookInstalled),
+        "mapCategory=" .. tostring(runtime.hybridMapCategoryHookInstalled),
+        "utilityWheel=" .. tostring(runtime.utilityWheelHooksInstalled))
+    self:LogInfo("Utility wheel:",
+        "bridgeActive=" .. tostring(runtime.utilityWheelLayerActive),
+        "defaultBindingsCopied=" .. tostring(runtime.utilityWheelDefaultsCopied),
+        "retryHook=" .. tostring(runtime.utilityWheelRetryHook))
+    self:LogInfo("Diagnostics:",
+        "enabled=" .. tostring(runtime.debugLoggingEnabled),
+        "LibDebugLoggerGlobal=" .. tostring(type(LibDebugLogger)),
+        "loggerInstance=" .. tostring(type(runtime.logger)),
+        "LibAddonMenu2=" .. tostring(type(LibAddonMenu2)))
     self:LogInfo("========== DIAGNOSTIC SNAPSHOT END ============")
 end
 

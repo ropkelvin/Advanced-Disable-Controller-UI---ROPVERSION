@@ -26,6 +26,34 @@ local function FontDropdown(name, tooltip, key, choices, values)
     }
 end
 
+local function OpenDonationMail(amount)
+    if not (MAIL_SEND and MAIL_SEND.ComposeMailTo and QueueMoneyAttachment) then
+        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
+            CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] The mail composer or gold attachment function is not available.")
+        end
+        return
+    end
+
+    -- ESO requires the player to review and send the mail manually.
+    MAIL_SEND:ComposeMailTo("@ZOSPlsFix")
+    QueueMoneyAttachment(amount)
+end
+
+local function DonationButton(amount)
+    local formatted = amount == 5000 and "5,000"
+        or amount == 10000 and "10,000"
+        or "50,000"
+
+    return {
+        type = "button",
+        name = formatted .. " gold",
+        tooltip = "Open a mail to @ZOSPlsFix with " .. formatted .. " gold attached. Review and send it yourself.",
+        buttonText = "Donate " .. formatted,
+        func = function() OpenDonationMail(amount) end,
+        width = "half",
+    }
+end
+
 function ADDON:RegisterSettings()
     if not LibAddonMenu2 then
         if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
@@ -110,7 +138,7 @@ function ADDON:RegisterSettings()
         {
             type = "submenu",
             name = "Advanced",
-            tooltip = "Troubleshooting and support options.",
+            tooltip = "Troubleshooting options.",
             controls = {
                 {
                     type = "checkbox",
@@ -121,25 +149,22 @@ function ADDON:RegisterSettings()
                     setFunc = function(value) ADDON:SetDebugLogging(value) end,
                 },
                 {
-                    type = "button",
-                    name = "Support the addon",
-                    tooltip = "Open an ESO mail addressed to @ZOSPlsFix.",
-                    buttonText = "Open mail",
-                    func = function()
-                        if MAIL_SEND and MAIL_SEND.ComposeMailTo then
-                            MAIL_SEND:ComposeMailTo("@ZOSPlsFix")
-                        elseif CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-                            CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] The mail composer is not available right now.")
-                        end
-                    end,
-                    width = "half",
-                },
-                {
                     type = "description",
                     text = "Troubleshooting commands: /esohybrid_debug on|off and /esohybrid_dump.",
                 },
             },
         },
+        {
+            type = "header",
+            name = "Support the addon",
+        },
+        {
+            type = "description",
+            text = "Optional in-game gold donations are appreciated. Choose an amount to open a pre-filled mail. You must send it yourself.",
+        },
+        DonationButton(5000),
+        DonationButton(10000),
+        DonationButton(50000),
     }
 
     LibAddonMenu2:RegisterOptionControls(panelName, options)

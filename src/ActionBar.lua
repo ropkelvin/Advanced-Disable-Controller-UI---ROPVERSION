@@ -1,78 +1,6 @@
--- Action bar presentation is independently selectable from the rest of the UI.
--- Uses current ZO_PlatformStyle and ActionButton entry points instead of copying
--- the old 2019 ActionButton implementation.
+-- Keep the compact keyboard-style action bar while displaying controller glyphs.
 
 local ADDON = ESOHybridUI
-
-local ACTION_BAR_TEMPLATES = {
-    ZO_ActionButton = true,
-    ZO_UltimateActionButton = true,
-    ZO_ActionBarTimer_BackBarSlot = true,
-    ZO_ActionBarTimer_BackBarSlot_Ultimate = true,
-}
-
-local function IsActionBarPlatformStyle(style)
-    -- Identify the action-bar platform style by its action-bar-specific
-    -- swap-button property, not pixel dimensions. Dimensions vary with UI
-    -- scale, resolution and future ESO patches.
-    return type(style) == "table"
-        and type(style.keyboardStyle) == "table"
-        and type(style.gamepadStyle) == "table"
-        and style.keyboardStyle.showWeaponSwapButton ~= nil
-        and style.gamepadStyle.showWeaponSwapButton ~= nil
-end
-
-local function InstallTemplateHook()
-    if ADDON.runtime.actionBarTemplateHookInstalled or type(ZO_GetPlatformTemplate) ~= "function" then
-        return
-    end
-
-    local original = ZO_GetPlatformTemplate
-    ADDON.runtime.originalGetPlatformTemplate = original
-
-    local wrapper = function(baseTemplate, ...)
-        if ACTION_BAR_TEMPLATES[baseTemplate] and ADDON:ShouldUseGamepadActionBar() then
-            return baseTemplate .. "_Gamepad_Template"
-        end
-        return original(baseTemplate, ...)
-    end
-
-    ADDON.runtime.getPlatformTemplateWrapper = wrapper
-    _G.ZO_GetPlatformTemplate = wrapper
-    ADDON.runtime.actionBarTemplateHookInstalled = true
-end
-
-local function InstallPlatformStyleHook()
-    if ADDON.runtime.actionBarPlatformHookInstalled or not ZO_PlatformStyle then
-        return
-    end
-
-    local original = ZO_PlatformStyle.Apply
-    if type(original) ~= "function" then return end
-    ADDON.runtime.originalPlatformStyleApply = original
-
-    if type(ZO_PreHook) == "function" then
-        -- Apply has no meaningful return value. Intercept only the action-bar
-        -- style object and let every other platform style use ESO's own method.
-        ZO_PreHook(ZO_PlatformStyle, "Apply", function(self)
-            if IsActionBarPlatformStyle(self) and ADDON:ShouldUseGamepadActionBar() then
-                ADDON:WithNativeGamepadMode(self.applyFunction, self.gamepadStyle)
-                return true
-            end
-            return false
-        end)
-    else
-        local wrapper = function(self)
-            if IsActionBarPlatformStyle(self) and ADDON:ShouldUseGamepadActionBar() then
-                return ADDON:WithNativeGamepadMode(self.applyFunction, self.gamepadStyle)
-            end
-            return original(self)
-        end
-        ADDON.runtime.platformStyleApplyWrapper = wrapper
-        ZO_PlatformStyle.Apply = wrapper
-    end
-    ADDON.runtime.actionBarPlatformHookInstalled = true
-end
 
 local function ShouldUseControllerActionGlyphs()
     return ADDON:ShouldShowControllerPrompts()
@@ -156,44 +84,10 @@ local function InstallActionButtonHooks()
         end
     end
 
-    local methods = {
-        "ApplyStyle",
-        "HandleSlotChanged",
-        "UpdateState",
-        "UpdateCooldown",
-        "UpdateUsable",
-        "Clear",
-        "SetCooldownEdgeState",
-        "RefreshCooldown",
-        "SetupSwapAnimation",
-        "ApplySwapAnimationStyle",
-        "UpdateUltimateMeter",
-    }
-
-    ADDON.runtime.actionButtonOriginals = {}
-    for _, methodName in ipairs(methods) do
-        local method = methodName
-        local original = ActionButton[method]
-        if type(original) == "function" then
-            ADDON.runtime.actionButtonOriginals[method] = original
-            ActionButton[method] = function(self, ...)
-                local callback = ADDON.runtime.actionButtonOriginals[method]
-                if ADDON:ShouldUseGamepadActionBar() then
-                    return ADDON:WithNativeGamepadMode(callback, self, ...)
-                end
-                return callback(self, ...)
-            end
-        end
-    end
-
     ADDON.runtime.actionButtonHooksInstalled = true
 end
 
 function ADDON:ApplyActionBar()
-    InstallTemplateHook()
-    InstallPlatformStyleHook()
     InstallActionButtonHooks()
     RefreshExistingActionGlyphs()
-    -- The core refreshes EVENT_GAMEPAD_PREFERRED_MODE_CHANGED after hooks are
-    -- installed. ESO's own platform-style manager then reapplies the bar layout.
 end

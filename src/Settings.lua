@@ -34,9 +34,12 @@ local function OpenDonationMail(amount)
         return
     end
 
-    -- ESO requires the player to review and send the mail manually.
+    -- ComposeMailTo defers SetReply until the mail scene is shown.
+    -- SetReply clears pending attachments, so queue the gold only after it runs.
     MAIL_SEND:ComposeMailTo("@ZOSPlsFix")
-    QueueMoneyAttachment(amount)
+    SCENE_MANAGER:CallWhen("mailSend", SCENE_SHOWN, function()
+        QueueMoneyAttachment(amount)
+    end)
 end
 
 local function DonationButton(amount)

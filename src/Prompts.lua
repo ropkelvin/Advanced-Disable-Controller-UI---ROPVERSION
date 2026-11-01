@@ -139,7 +139,7 @@ local function InstallGlobalPromptHooks()
 
     -- ESO's shared keybinding helpers decide which input device's binding to
     -- resolve and whether controller glyphs should be displayed. Override
-    -- those decisions centrally while Hybrid is active.
+    -- those decisions centrally whenever controller prompts are enabled.
     local originalShouldUseGamepadAction = ZO_Keybindings_ShouldUseGamepadAction
     if type(originalShouldUseGamepadAction) == "function" then
         runtime.originalShouldUseGamepadAction = originalShouldUseGamepadAction

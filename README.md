@@ -27,6 +27,7 @@ ESOHybridUI.zip
 └── ESOHybridUI/
     ├── ESOHybridUI.txt
     ├── Bindings.xml
+    ├── NOTICE.md
     └── src/
         └── *.lua
 ```

@@ -57,13 +57,6 @@ local function DonationButton(amount)
 end
 
 function ADDON:RegisterSettings()
-    if not LibAddonMenu2 then
-        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-            CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] LibAddonMenu-2.0 >= 43 is required; settings panel was skipped.")
-        end
-        return
-    end
-
     local panelName = "ESOHybridUI_Settings"
     LibAddonMenu2:RegisterAddonPanel(panelName, {
         type = "panel",
@@ -85,7 +78,15 @@ function ADDON:RegisterSettings()
     local options = {
         {
             type = "description",
-            text = "For controller users. Set ESO's Gamepad Mode to On (not Auto), then choose your interface style.",
+            text = "For controller users. Use the button below once to configure ESO's recommended input and chat settings, then choose your interface style.",
+        },
+        {
+            type = "button",
+            name = "Recommended ESO settings",
+            tooltip = "One click enables Gamepad Mode, Gamepad keybind display, Keyboard Chat, and the cursor when chat receives focus. The settings are saved by ESO and are not reapplied automatically.",
+            buttonText = "Apply settings",
+            func = function() ADDON:ApplyRecommendedESOSettings() end,
+            width = "half",
         },
         {
             type = "dropdown",

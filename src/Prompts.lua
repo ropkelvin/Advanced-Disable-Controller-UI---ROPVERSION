@@ -211,15 +211,24 @@ local function InstallDeathPromptHook()
 
     local originalApplyStyle = DEATH.ApplyStyle
     runtime.originalDeathApplyStyle = originalApplyStyle
-    DEATH.ApplyStyle = function(death, ...)
-        if ShouldForceControllerPrompts() then
-            -- ESO's death screen selects its keyboard button templates because
-            -- Hybrid mode intentionally reports keyboard UI during gameplay.
-            -- Temporarily expose the real native Gamepad preference while
-            -- the death screen applies its own platform templates.
-            return ADDON:WithNativeGamepadMode(originalApplyStyle, death, ...)
+    if type(ZO_PreHook) == "function" then
+        ZO_PreHook(DEATH, "ApplyStyle", function(death, ...)
+            if ShouldForceControllerPrompts() then
+                -- The death-style refresh has no meaningful return value.
+                -- Preserve its native gamepad template selection without
+                -- replacing the shared DEATH method.
+                ADDON:WithNativeGamepadMode(originalApplyStyle, death, ...)
+                return true
+            end
+            return false
+        end)
+    else
+        DEATH.ApplyStyle = function(death, ...)
+            if ShouldForceControllerPrompts() then
+                return ADDON:WithNativeGamepadMode(originalApplyStyle, death, ...)
+            end
+            return originalApplyStyle(death, ...)
         end
-        return originalApplyStyle(death, ...)
     end
     runtime.deathPromptHookInstalled = true
 end

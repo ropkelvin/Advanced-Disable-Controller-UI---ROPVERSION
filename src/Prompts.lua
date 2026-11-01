@@ -115,10 +115,8 @@ local function HookStackAllMapping()
         end
     end
 
-    if ZO_PreHook then
-        ZO_PreHook(KEYBIND_STRIP, "AddKeybindButtonGroup", ProcessGroup)
-        ZO_PreHook(KEYBIND_STRIP, "UpdateKeybindButtonGroup", ProcessGroup)
-    end
+    ZO_PreHook(KEYBIND_STRIP, "AddKeybindButtonGroup", ProcessGroup)
+    ZO_PreHook(KEYBIND_STRIP, "UpdateKeybindButtonGroup", ProcessGroup)
     ADDON.runtime.promptHooksInstalled = true
 end
 
@@ -180,25 +178,16 @@ local function InstallDeathPromptHook()
 
     local originalApplyStyle = DEATH.ApplyStyle
     runtime.originalDeathApplyStyle = originalApplyStyle
-    if type(ZO_PreHook) == "function" then
-        ZO_PreHook(DEATH, "ApplyStyle", function(death, ...)
-            if ShouldForceControllerPrompts() then
-                -- The death-style refresh has no meaningful return value.
-                -- Preserve its native gamepad template selection without
-                -- replacing the shared DEATH method.
-                ADDON:WithNativeGamepadMode(originalApplyStyle, death, ...)
-                return true
-            end
-            return false
-        end)
-    else
-        DEATH.ApplyStyle = function(death, ...)
-            if ShouldForceControllerPrompts() then
-                return ADDON:WithNativeGamepadMode(originalApplyStyle, death, ...)
-            end
-            return originalApplyStyle(death, ...)
+    ZO_PreHook(DEATH, "ApplyStyle", function(death, ...)
+        if ShouldForceControllerPrompts() then
+            -- The death-style refresh has no meaningful return value.
+            -- Preserve its native gamepad template selection without
+            -- replacing the shared DEATH method.
+            ADDON:WithNativeGamepadMode(originalApplyStyle, death, ...)
+            return true
         end
-    end
+        return false
+    end)
     runtime.deathPromptHookInstalled = true
 end
 

@@ -323,11 +323,26 @@ local function InitializeSavedVariables()
         ADDON.defaults
     )
 
-    -- Migrate the old per-character opt-in into the new account-wide
-    -- selector so characters that previously enabled sharing keep using it.
-    if ADDON.savedVariablesAccountWide._esoHybridUseAccountWideSettings == nil
-        and ADDON.savedVariables.useAccountWideSettings == true then
-        ADDON.savedVariablesAccountWide._esoHybridUseAccountWideSettings = true
+    -- Migrate the old per-character opt-in across the whole account. This
+    -- matters when the player logs directly into a different character after
+    -- installing the fix: that character's own opt-in may still be false.
+    local raw = _G[ADDON.SAVED_VARIABLES]
+    local profileRoot = type(raw) == "table" and raw.Default
+    local accountRoot = type(profileRoot) == "table" and profileRoot[GetDisplayName()]
+    local accountData = type(accountRoot) == "table" and accountRoot["$AccountWide"]
+
+    if accountData and accountData._esoHybridUseAccountWideSettings == nil
+        and type(accountRoot) == "table" then
+        for characterKey, characterData in pairs(accountRoot) do
+            if characterKey ~= "$AccountWide"
+                and type(characterData) == "table"
+                and characterData.useAccountWideSettings == true then
+                CopyProfileSettings(characterData, ADDON.savedVariablesAccountWide)
+                ADDON.savedVariablesAccountWide._esoHybridProfileVersion = 3
+                ADDON.savedVariablesAccountWide._esoHybridUseAccountWideSettings = true
+                break
+            end
+        end
     end
 
     local raw = _G[ADDON.SAVED_VARIABLES]

@@ -41,13 +41,14 @@ Character-specific settings use ESO character IDs, which are unique across megas
 
 - **The Elder Scrolls Online / ZeniMax Online Studios:** game, UI framework, and addon API.
 - **LibAddonMenu-2.0:** required third-party settings-library dependency; it is distributed and maintained separately by its ESOUI authors.
+- **Advanced Disable Controller UI:** historical project lineage, originally by Lionas, with contributions from jc28735250 and subsequent maintenance by DoriKyll. See [NOTICE.md](NOTICE.md) for attribution context.
 - **AI-assisted development:** AI tools contributed to portions of the code and documentation. The maintainer is responsible for reviewing, testing, and maintaining this addon.
 
-This repository does not bundle LibAddonMenu-2.0. Install it separately through ESOUI. Any future third-party code, assets, or substantial derived work must be identified here with its original author and license before inclusion.
+This repository does not bundle LibAddonMenu-2.0. Install it separately through ESOUI. Any directly reused third-party code or assets must retain the original license and attribution.
 
 ## In-game actions and donations
 
-The addon does not automate sending mail, attaching gold, trading, combat, or other player actions. It does not modify mail attachments or gold amounts.
+The optional donation shortcut only opens a mail draft addressed to @ZOSPlsFix. The player must manually choose whether to attach gold and the amount. The addon never attaches or modifies mail gold, sends mail, trades, automates combat, or performs other player actions.
 
 ## AI disclosure
 

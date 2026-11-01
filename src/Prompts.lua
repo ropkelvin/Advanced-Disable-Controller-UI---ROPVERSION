@@ -3,6 +3,10 @@
 local ADDON = ESOHybridUI
 local NIL_VALUE = {}
 
+local function Pack(...)
+    return { n = select("#", ...), ... }
+end
+
 local function SaveAndSet(object, key, value)
     if type(object) ~= "table" then
         return
@@ -141,10 +145,12 @@ local function InstallGlobalPromptHooks()
         runtime.originalRegisterPromptLabel = originalRegister
         ZO_Keybindings_RegisterLabelForBindingUpdate = function(label, actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ...)
             local force = ShouldForceControllerPrompts()
-            runtime.promptBindingRegistrations[label] = {
-                register = originalRegister,
-                args = { actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ... },
-            }
+            if label then
+                runtime.promptBindingRegistrations[label] = {
+                    register = originalRegister,
+                    args = Pack(actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ...),
+                }
+            end
             return originalRegister(label, actionName, showUnbound, gamepadActionName, callback, force or alwaysPreferGamepadMode, ...)
         end
     end
@@ -154,10 +160,12 @@ local function InstallGlobalPromptHooks()
         runtime.originalRegisterInlinePromptLabel = originalInline
         ZO_Keybindings_RegisterLabelForInLineBindingUpdate = function(label, actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ...)
             local force = ShouldForceControllerPrompts()
-            runtime.promptBindingRegistrations[label] = {
-                register = originalInline,
-                args = { actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ... },
-            }
+            if label then
+                runtime.promptBindingRegistrations[label] = {
+                    register = originalInline,
+                    args = Pack(actionName, showUnbound, gamepadActionName, callback, alwaysPreferGamepadMode, ...),
+                }
+            end
             return originalInline(label, actionName, showUnbound, gamepadActionName, callback, force or alwaysPreferGamepadMode, ...)
         end
     end
@@ -188,7 +196,7 @@ local function RefreshRegisteredPromptLabels()
         if label and registration and registration.register then
             unregister(label)
             local args = registration.args
-            registration.register(label, args[1], args[2], args[3], args[4], force or args[5], unpack(args, 6))
+            registration.register(label, args[1], args[2], args[3], args[4], force or args[5], unpack(args, 6, args.n))
         end
     end
 end

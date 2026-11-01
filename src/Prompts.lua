@@ -220,8 +220,7 @@ local function RefreshSynergyPrompt()
 end
 
 local function InstallSynergyPromptHook()
-    if ADDON.runtime.synergyPromptHookInstalled or not SYNERGY
-        or type(SYNERGY.OnSynergyAbilityChanged) ~= "function" or type(ZO_PostHook) ~= "function" then
+    if ADDON.runtime.synergyPromptHookInstalled or not SYNERGY then
         return
     end
 

@@ -46,8 +46,8 @@ local function GetSettings()
     -- profile failed to initialize. That would make settings appear to work
     -- for the session while every change was written only to the defaults
     -- table and lost at logout.
-    if ADDON.savedVariables and ADDON.savedVariables.useAccountWideSettings
-        and ADDON.savedVariablesAccountWide then
+    if ADDON.savedVariablesAccountWide
+        and ADDON.savedVariablesAccountWide._esoHybridUseAccountWideSettings == true then
         return ADDON.savedVariablesAccountWide
     end
     if ADDON.savedVariables then
@@ -222,21 +222,24 @@ function ADDON:SetUseAccountWideSettings(enabled)
         return
     end
 
-    if enabled and account._esoHybridProfileVersion ~= 2 then
-        -- Migrate profiles created by earlier versions. The old implementation
-        -- copied the ZO_SavedVars proxy with pairs(), which copied proxy members
-        -- instead of the character's actual settings. Re-seed the account
-        -- profile from this character once using the safe defaults-key list.
+    if enabled and account._esoHybridProfileVersion ~= 3 then
+        -- One-time migration: seed the account profile from the current
+        -- character's settings. Version 3 also repairs profiles touched by
+        -- the earlier broken proxy-copy implementation.
         CopyProfileSettings(character, account)
-        account._esoHybridProfileVersion = 2
+        account._esoHybridProfileVersion = 3
     end
 
-    if not enabled and character.useAccountWideSettings then
-        -- Copy the active account profile back to this character before
-        -- switching scopes. Do not enumerate the ZO_SavedVars proxy.
+    if not enabled then
+        -- Preserve the account profile on this character before switching
+        -- back to character-specific settings.
         CopyProfileSettings(account, character)
     end
 
+    -- The scope selector is account-wide, not character-specific. Once one
+    -- character enables it, every character on this ESO account uses the
+    -- same account profile without requiring a separate opt-in.
+    account._esoHybridUseAccountWideSettings = enabled == true
     character.useAccountWideSettings = enabled == true
     self:Refresh()
 end
@@ -319,6 +322,13 @@ local function InitializeSavedVariables()
         nil,
         ADDON.defaults
     )
+
+    local raw = _G[ADDON.SAVED_VARIABLES]
+    if type(raw) ~= "table" then
+        ADDON:LogError("ESO did not create the declared SavedVariables root table.")
+    else
+        ADDON:LogInfo("SavedVariables initialized. Account and character profiles are available.")
+    end
 end
 
 local function PrintStatus()
@@ -338,6 +348,21 @@ local function RegisterSlashCommands()
         PrintStatus()
     end
     SLASH_COMMANDS["/esohybrid_status"] = PrintStatus
+    SLASH_COMMANDS["/esohybrid_sv"] = function()
+        local raw = _G[ADDON.SAVED_VARIABLES]
+        local account = ADDON.savedVariablesAccountWide
+        local character = ADDON.savedVariables
+        local accountWide = account and account._esoHybridUseAccountWideSettings == true
+        local message = string.format(
+            "[ESO Hybrid UI] SV root=%s | account profile=%s | character profile=%s | account-wide=%s",
+            type(raw),
+            type(account),
+            type(character),
+            tostring(accountWide)
+        )
+        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then CHAT_SYSTEM:AddMessage(message) end
+        ADDON:LogInfo(message)
+    end
     SLASH_COMMANDS["/esohybrid_buttons"] = function()
         ADDON:ToggleButtons()
         PrintStatus()

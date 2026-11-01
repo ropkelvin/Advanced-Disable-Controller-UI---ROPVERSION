@@ -1,0 +1,33 @@
+name: Package ESO Hybrid UI
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Build ESO addon archive
+        shell: bash
+        run: |
+          mkdir -p dist/ESOHybridUI
+          cp ESOHybridUI.txt Bindings.xml dist/ESOHybridUI/
+          cp -R src dist/ESOHybridUI/
+          cd dist
+          zip -r ESOHybridUI.zip ESOHybridUI
+
+      - name: Upload installable archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ESOHybridUI
+          path: dist/ESOHybridUI.zip
+          if-no-files-found: error

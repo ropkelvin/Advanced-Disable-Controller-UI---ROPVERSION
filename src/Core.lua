@@ -177,6 +177,10 @@ end
 
 local function RefreshPlatformMode()
     local runtime = ADDON.runtime
+    -- ESO keeps PLATFORM_STYLE_MANAGER local to its platform-style library;
+    -- it exposes no public "reapply all styles" method. Changing the preferred
+    -- mode is what emits the native event that refreshes those styles. We
+    -- therefore restore the exact saved setting immediately after the event.
     if runtime.isRefreshing then
         return
     end

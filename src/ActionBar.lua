@@ -129,11 +129,18 @@ local function InstallActionButtonHooks()
     local originalInitialize = ActionButton.Initialize
     if type(originalInitialize) == "function" then
         ADDON.runtime.originalActionButtonInitialize = originalInitialize
-        ActionButton.Initialize = function(self, ...)
-            local function Pack(...) return { n = select("#", ...), ... } end
-            local results = Pack(originalInitialize(self, ...))
-            RegisterControllerActionGlyph(self)
-            return unpack(results, 1, results.n)
+        if type(ZO_PostHook) == "function" then
+            -- This is a pure after-initialize task; use ESO's hook system
+            -- rather than replacing the shared ActionButton method.
+            ZO_PostHook(ActionButton, "Initialize", RegisterControllerActionGlyph)
+        else
+            -- Defensive fallback for clients without the hook helper.
+            ActionButton.Initialize = function(self, ...)
+                local function Pack(...) return { n = select("#", ...), ... } end
+                local results = Pack(originalInitialize(self, ...))
+                RegisterControllerActionGlyph(self)
+                return unpack(results, 1, results.n)
+            end
         end
     end
 

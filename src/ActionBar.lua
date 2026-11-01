@@ -65,7 +65,7 @@ end
 
 local function ShouldUseControllerActionGlyphs()
     local settings = ADDON:GetSettings()
-    return settings.useGamepadButtons == true
+    return (settings.useHybridUI == true or settings.useGamepadButtons == true)
         and settings.useControllerUI ~= true
         and ADDON:IsNativeGamepadMode()
 end

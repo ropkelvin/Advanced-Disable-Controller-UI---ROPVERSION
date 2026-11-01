@@ -27,7 +27,6 @@ ESOHybridUI.zip
 └── ESOHybridUI/
     ├── ESOHybridUI.txt
     ├── Bindings.xml
-    ├── NOTICE.md
     └── src/
         └── *.lua
 ```
@@ -42,7 +41,7 @@ Character-specific settings use ESO character IDs, which are unique across megas
 
 - **The Elder Scrolls Online / ZeniMax Online Studios:** game, UI framework, and addon API.
 - **LibAddonMenu-2.0:** required third-party settings-library dependency; it is distributed and maintained separately by its ESOUI authors.
-- **Advanced Disable Controller UI:** historical project lineage, originally by Lionas, with contributions from jc28735250 and subsequent maintenance by DoriKyll. See [NOTICE.md](NOTICE.md) for attribution context.
+- **Advanced Disable Controller UI:** acknowledged as inspiration; originally by Lionas, with contributions from jc28735250 and subsequent maintenance by DoriKyll. ESO Hybrid UI does not include that project's source code or assets. See [NOTICE.md](NOTICE.md) for the attribution clarification.
 - **AI-assisted development:** AI tools contributed to portions of the code and documentation. The maintainer is responsible for reviewing, testing, and maintaining this addon.
 
 This repository does not bundle LibAddonMenu-2.0. Install it separately through ESOUI. Any directly reused third-party code or assets must retain the original license and attribution.

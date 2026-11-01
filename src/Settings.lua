@@ -85,40 +85,23 @@ function ADDON:RegisterSettings()
     local options = {
         {
             type = "description",
-            text = "Choose your interface style and adjust prompt text.",
+            text = "For controller users. Set ESO's Gamepad Mode to On (not Auto), then choose your interface style.",
         },
         {
             type = "dropdown",
-            name = "UI mode",
-            tooltip = "Keyboard keeps the compact keyboard interface. Gamepad uses ESO's full controller interface. Hybrid keeps the compact gameplay HUD with controller prompts and gamepad menus.",
-            choices = { "Keyboard", "Gamepad", "Hybrid" },
-            choicesValues = { "keyboard", "gamepad", "hybrid" },
-            default = "keyboard",
+            name = "Interface mode",
+            tooltip = "Gamepad uses ESO's full controller interface. Hybrid keeps the compact keyboard-style gameplay HUD with controller prompts and native gamepad menus. ESO's Gamepad Mode must be set to On, not Auto.",
+            choices = { "Gamepad", "Hybrid" },
+            choicesValues = { "gamepad", "hybrid" },
+            default = "gamepad",
             getFunc = function()
-                local settings = ADDON:GetSettings()
-                if settings.useHybridUI then return "hybrid" end
-                return settings.useControllerUI and "gamepad" or "keyboard"
+                return ADDON:GetSettings().useHybridUI and "hybrid" or "gamepad"
             end,
             setFunc = function(value)
                 local settings = ADDON:GetSettings()
                 settings.useHybridUI = value == "hybrid"
                 settings.useControllerUI = value == "gamepad"
-                ADDON:Refresh()
-            end,
-        },
-        {
-            type = "checkbox",
-            name = "Controller button prompts",
-            tooltip = "Show controller button icons on supported prompts and action buttons. Hybrid mode always enables this.",
-            default = ADDON.defaults.useGamepadButtons,
-            getFunc = function()
-                local settings = ADDON:GetSettings()
-                if settings.useHybridUI then return true end
-                return settings.useGamepadButtons
-            end,
-            setFunc = function(value)
-                local settings = ADDON:GetSettings()
-                settings.useGamepadButtons = settings.useHybridUI and true or value
+                settings.useGamepadButtons = true
                 ADDON:Refresh()
             end,
         },

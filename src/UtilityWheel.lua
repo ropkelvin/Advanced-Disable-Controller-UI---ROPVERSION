@@ -75,6 +75,10 @@ local function InstallManagerHooks()
         return
     end
 
+    -- INTERACTIVE_WHEEL_MANAGER is ESO's live singleton manager. Wrap its
+    -- StartInteraction method so the original boolean result (and any other
+    -- return values) are preserved for the input binding while we observe
+    -- whether the utility wheel actually started.
     local originalStart = manager.StartInteraction
     local originalStop = manager.StopInteraction
     if type(originalStart) ~= "function" or type(originalStop) ~= "function" then

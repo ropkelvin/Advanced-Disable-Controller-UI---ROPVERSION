@@ -37,6 +37,18 @@ Do not zip the repository root directly. The GitHub Actions workflow packages th
 
 Character-specific settings use ESO character IDs, which are unique across megaservers. Account-wide settings are namespaced by `GetWorldName()` so EU, NA, and PTS profiles do not overwrite each other. On first load after this change, the addon copies the previous un-namespaced account-wide profile into the current megaserver profile and leaves the legacy data intact.
 
+## Credits and attribution
+
+- **The Elder Scrolls Online / ZeniMax Online Studios:** game, UI framework, and addon API.
+- **LibAddonMenu-2.0:** required third-party settings-library dependency; it is distributed and maintained separately by its ESOUI authors.
+- **AI-assisted development:** AI tools contributed to portions of the code and documentation. The maintainer is responsible for reviewing, testing, and maintaining this addon.
+
+This repository does not bundle LibAddonMenu-2.0. Install it separately through ESOUI. Any future third-party code, assets, or substantial derived work must be identified here with its original author and license before inclusion.
+
+## In-game actions and donations
+
+The addon does not automate sending mail, attaching gold, trading, combat, or other player actions. It does not modify mail attachments or gold amounts.
+
 ## AI disclosure
 
 AI-assisted development: AI tools have contributed to portions of this addon's code and documentation. The maintainer is responsible for reviewing changes, validating behavior in ESO, and maintaining the addon.

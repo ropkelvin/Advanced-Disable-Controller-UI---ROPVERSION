@@ -154,6 +154,4 @@ function ADDON:RegisterDiagnosticCommands()
     SLASH_COMMANDS["/esohybrid_dump"] = function()
         ADDON:DumpDiagnostics()
     end
-    SLASH_COMMANDS["/adcui_debug"] = SLASH_COMMANDS["/esohybrid_debug"]
-    SLASH_COMMANDS["/adcui_dump"] = SLASH_COMMANDS["/esohybrid_dump"]
 end

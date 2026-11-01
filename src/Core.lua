@@ -7,9 +7,9 @@ local function DeepCopy(source)
         return source
     end
     local target = {}
-    -- DeepCopy is only used for ordinary nested settings tables and raw
-    -- legacy SavedVariables tables. Never pass a ZO_SavedVars profile proxy
-    -- here: its fields are exposed through __index and are not enumerable.
+    -- DeepCopy is used for ordinary nested settings tables. Never pass a
+    -- ZO_SavedVars profile proxy here: its fields are exposed through __index
+    -- and are not enumerable.
     for key, value in pairs(source) do
         target[key] = DeepCopy(value)
     end
@@ -222,12 +222,10 @@ function ADDON:SetUseAccountWideSettings(enabled)
         return
     end
 
-    if enabled and account._esoHybridProfileVersion ~= 3 then
-        -- One-time migration: seed the account profile from the current
-        -- character's settings. Version 3 also repairs profiles touched by
-        -- the earlier broken proxy-copy implementation.
+    if enabled then
+        -- Seed the shared account profile from this character's current
+        -- settings the first time account-wide mode is enabled.
         CopyProfileSettings(character, account)
-        account._esoHybridProfileVersion = 3
     end
 
     if not enabled then
@@ -278,36 +276,6 @@ function ADDON:ToggleResourceBars()
 end
 
 
-local function MergeMissing(target, source)
-    if type(target) ~= "table" or type(source) ~= "table" then
-        return
-    end
-    for key, value in pairs(source) do
-        if target[key] == nil then
-            target[key] = DeepCopy(value)
-        elseif type(target[key]) == "table" and type(value) == "table" then
-            MergeMissing(target[key], value)
-        end
-    end
-end
-
-local function MigrateLegacySavedVariables()
-    local legacy = _G.ADCUI_SavedVariables
-    if type(legacy) ~= "table" then
-        return
-    end
-
-    local current = _G.ESOHybridUI_SavedVariables
-    if type(current) ~= "table" then
-        _G.ESOHybridUI_SavedVariables = DeepCopy(legacy)
-    else
-        -- The game may already have created an empty ESOHybridUI table.
-        -- Merge legacy data into missing keys instead of checking only whether
-        -- the new top-level table exists. Never overwrite newer user choices.
-        MergeMissing(current, legacy)
-    end
-end
-
 local function InitializeSavedVariables()
     ADDON.savedVariablesAccountWide = ZO_SavedVars:NewAccountWide(
         ADDON.SAVED_VARIABLES,
@@ -323,9 +291,6 @@ local function InitializeSavedVariables()
         ADDON.defaults
     )
 
-    -- Migrate the old per-character opt-in across the whole account. This
-    -- matters when the player logs directly into a different character after
-    -- installing the fix: that character's own opt-in may still be false.
     local raw = _G[ADDON.SAVED_VARIABLES]
     local profileRoot = type(raw) == "table" and raw.Default
     local accountRoot = type(profileRoot) == "table" and profileRoot[GetDisplayName()]
@@ -397,12 +362,6 @@ local function RegisterSlashCommands()
         ADDON:ToggleResourceBars()
         PrintStatus()
     end
-    -- Backward-compatible aliases for existing chat macros.
-    SLASH_COMMANDS["/adcui"] = SLASH_COMMANDS["/esohybrid"]
-    SLASH_COMMANDS["/adcui_status"] = SLASH_COMMANDS["/esohybrid_status"]
-    SLASH_COMMANDS["/adcui_buttons"] = SLASH_COMMANDS["/esohybrid_buttons"]
-    SLASH_COMMANDS["/adcui_actionbar"] = SLASH_COMMANDS["/esohybrid_actionbar"]
-    SLASH_COMMANDS["/adcui_resourcebars"] = SLASH_COMMANDS["/esohybrid_resourcebars"]
 end
 
 local function OnLockpickBegin()
@@ -433,9 +392,6 @@ local function OnAddonLoaded(_, addonName)
         return
     end
 
-    -- Preserve settings from the previous ADCUI name, including when ESO
-    -- has already created an empty table for the new saved-variable name.
-    MigrateLegacySavedVariables()
     InitializeSavedVariables()
     if ADDON.InitializeDiagnostics then
         ADDON:InitializeDiagnostics()

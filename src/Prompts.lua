@@ -82,7 +82,7 @@ local function RestoreStackAllMappings()
 end
 
 local function HookStackAllMapping()
-    if ADDON.runtime.promptHooksInstalled or not KEYBIND_STRIP then
+    if ADDON.runtime.promptHooksInstalled or not ZO_KeybindStrip then
         return
     end
 
@@ -115,8 +115,10 @@ local function HookStackAllMapping()
         end
     end
 
-    ZO_PreHook(KEYBIND_STRIP, "AddKeybindButtonGroup", ProcessGroup)
-    ZO_PreHook(KEYBIND_STRIP, "UpdateKeybindButtonGroup", ProcessGroup)
+    -- Hook the shared class so existing and future keybind-strip instances
+    -- receive the same descriptor remapping without shadowing one instance.
+    ZO_PreHook(ZO_KeybindStrip, "AddKeybindButtonGroup", ProcessGroup)
+    ZO_PreHook(ZO_KeybindStrip, "UpdateKeybindButtonGroup", ProcessGroup)
     ADDON.runtime.promptHooksInstalled = true
 end
 
@@ -223,11 +225,13 @@ local function RefreshSynergyPrompt()
 end
 
 local function InstallSynergyPromptHook()
-    if ADDON.runtime.synergyPromptHookInstalled or not SYNERGY then
+    if ADDON.runtime.synergyPromptHookInstalled or not ZO_Synergy then
         return
     end
 
-    ZO_PostHook(SYNERGY, "OnSynergyAbilityChanged", RefreshSynergyPrompt)
+    -- Synergy is a ZO_Synergy instance; hook its class rather than only the
+    -- current singleton so the hook follows ESO's shared object method.
+    ZO_PostHook(ZO_Synergy, "OnSynergyAbilityChanged", RefreshSynergyPrompt)
     ADDON.runtime.synergyPromptHookInstalled = true
 end
 

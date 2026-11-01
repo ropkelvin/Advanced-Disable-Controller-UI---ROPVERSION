@@ -111,7 +111,7 @@ function ADDON:RegisterSettings()
                 ADDON:Refresh()
             end,
         },
-        SettingCheckbox("Show gamepad button prompts", "Show controller button glyphs on the keyboard-style interface and keybind strip.", "useGamepadButtons"),
+        SettingCheckbox("Show gamepad button prompts", "Show controller button glyphs on the keyboard-style interface and keybind strip. Hybrid mode always uses controller glyphs; this option controls Keyboard mode.", "useGamepadButtons"),
         SettingCheckbox("Use gamepad-style action bar", "Use the larger native gamepad action bar while keeping the rest of the interface keyboard-style. Disabled by default for a compact HUD.", "useGamepadActionBar"),
         SettingCheckbox("Use gamepad-style resource bars", "Use native gamepad resource-bar styling while keeping the rest of the interface keyboard-style. Disabled by default for compact resource bars.", "useGamepadResourceBars"),
         SettingCheckbox("Use gamepad lockpicking UI", "Temporarily show the native gamepad lockpicking interface while lockpicking.", "useGamepadLockpicking"),

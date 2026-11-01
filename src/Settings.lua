@@ -78,7 +78,7 @@ function ADDON:RegisterSettings()
     }
 
     local options = {
-        { type = "description", text = "Keep controller input while displaying ESO's keyboard-style interface. Each visual feature can be configured independently." },
+        { type = "description", text = "Hybrid is designed for controller play with the compact keyboard-style gameplay HUD: controller button glyphs and native gamepad menus remain available for navigation and actions." },
         { type = "header", name = "General" },
         {
             type = "checkbox",
@@ -95,7 +95,7 @@ function ADDON:RegisterSettings()
         {
             type = "dropdown",
             name = "Interface mode",
-            tooltip = "Keyboard keeps the compact keyboard interface everywhere. Gamepad uses ESO's full native controller interface. Hybrid keeps the compact gameplay HUD but uses native gamepad menus.",
+            tooltip = "Keyboard keeps the compact keyboard interface everywhere. Gamepad uses ESO's full native controller interface. Hybrid keeps the compact keyboard-style gameplay HUD, forces controller button glyphs, and uses native gamepad menus for navigation and actions.",
             choices = { "Keyboard", "Gamepad", "Hybrid" },
             choicesValues = { "keyboard", "gamepad", "hybrid" },
             default = "keyboard",

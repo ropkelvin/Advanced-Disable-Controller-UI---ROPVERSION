@@ -70,17 +70,17 @@ local function RemoveBridgeLayer()
 end
 
 local function InstallManagerHooks()
-    local manager = INTERACTIVE_WHEEL_MANAGER
-    if not manager or ADDON.runtime.utilityWheelHooksInstalled then
+    local managerClass = ZO_InteractiveWheel_Manager
+    if not managerClass or not INTERACTIVE_WHEEL_MANAGER
+        or ADDON.runtime.utilityWheelHooksInstalled then
         return
     end
 
-    -- INTERACTIVE_WHEEL_MANAGER is ESO's live singleton manager. Wrap its
-    -- StartInteraction method so the original boolean result (and any other
-    -- return values) are preserved for the input binding while we observe
-    -- whether the utility wheel actually started.
-    local originalStart = manager.StartInteraction
-    local originalStop = manager.StopInteraction
+    -- Hook the manager class rather than assigning an override to the live
+    -- singleton. Preserve StartInteraction's complete return tuple because
+    -- ESO's input binding consumes its boolean result.
+    local originalStart = managerClass.StartInteraction
+    local originalStop = managerClass.StopInteraction
     if type(originalStart) ~= "function" or type(originalStop) ~= "function" then
         return
     end
@@ -88,7 +88,7 @@ local function InstallManagerHooks()
     ADDON.runtime.originalUtilityWheelStart = originalStart
     ADDON.runtime.originalUtilityWheelStop = originalStop
 
-    manager.StartInteraction = function(self, wheelType, ...)
+    managerClass.StartInteraction = function(self, wheelType, ...)
         local function Pack(...) return { n = select("#", ...), ... } end
         local results = Pack(originalStart(self, wheelType, ...))
         local started = results[1]
@@ -104,7 +104,7 @@ local function InstallManagerHooks()
         return unpack(results, 1, results.n)
     end
 
-    ZO_PreHook(manager, "StopInteraction", function(self, wheelType)
+    ZO_PreHook(managerClass, "StopInteraction", function(self, wheelType)
         -- Only the utility wheel owns this temporary bridge layer. Other
         -- wheels can stop while it is still open (or during nested UI flows).
         if wheelType == ZO_INTERACTIVE_WHEEL_TYPE_UTILITY then

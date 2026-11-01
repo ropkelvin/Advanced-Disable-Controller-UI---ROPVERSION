@@ -2,6 +2,7 @@
 -- LibDebugLogger is deliberately optional: the addon remains usable without it.
 
 local ADDON = ESOHybridUI
+local SM = SCENE_MANAGER
 
 local function SafeCall(object, method, ...)
     if object and type(object[method]) == "function" then
@@ -106,32 +107,11 @@ end
 function ADDON:DumpDiagnostics()
     local settings = self:GetSettings()
     local runtime = self.runtime
-    local physicalGamepad = "unknown"
-    local effectiveGamepadUI = "unknown"
-    local inUIMode = "unknown"
-    local worldMapShowing = "unknown"
-    local currentScene = "unknown"
-
-    if type(self.IsNativeGamepadMode) == "function" then
-        local ok, value = pcall(self.IsNativeGamepadMode, self)
-        if ok then physicalGamepad = tostring(value) end
-    end
-    if type(IsInGamepadPreferredMode) == "function" then
-        local ok, value = pcall(IsInGamepadPreferredMode)
-        if ok then effectiveGamepadUI = tostring(value) end
-    end
-    if SCENE_MANAGER and type(SCENE_MANAGER.IsInUIMode) == "function" then
-        local ok, value = pcall(SCENE_MANAGER.IsInUIMode, SCENE_MANAGER)
-        if ok then inUIMode = tostring(value) end
-    end
-    if WORLD_MAP_SCENE and type(WORLD_MAP_SCENE.IsShowing) == "function" then
-        local ok, value = pcall(WORLD_MAP_SCENE.IsShowing, WORLD_MAP_SCENE)
-        if ok then worldMapShowing = tostring(value) end
-    end
-    if SCENE_MANAGER and type(SCENE_MANAGER.GetCurrentSceneName) == "function" then
-        local ok, value = pcall(SCENE_MANAGER.GetCurrentSceneName, SCENE_MANAGER)
-        if ok and value ~= nil then currentScene = tostring(value) end
-    end
+    local physicalGamepad = tostring(self:IsNativeGamepadMode())
+    local effectiveGamepadUI = tostring(IsInGamepadPreferredMode())
+    local inUIMode = tostring(SM:IsInUIMode())
+    local worldMapShowing = tostring(WORLD_MAP_SCENE:IsShowing())
+    local currentScene = tostring(SM:GetCurrentSceneName())
 
     local accountWide = self.savedVariablesAccountWide
         and self.savedVariablesAccountWide._esoHybridUseAccountWideSettings == true
@@ -140,7 +120,7 @@ function ADDON:DumpDiagnostics()
         or (settings.useControllerUI and "gamepad" or "keyboard")
 
     self:LogInfo("========== DIAGNOSTIC SNAPSHOT BEGIN ==========")
-    self:LogInfo("Addon version:", self.VERSION, "API:", tostring(GetAPIVersion and GetAPIVersion() or "unknown"))
+    self:LogInfo("Addon version:", self.VERSION, "API:", tostring(GetAPIVersion()))
     self:LogInfo("UI mode:", uiMode,
         "Controller prompts:", tostring(settings.useHybridUI or settings.useGamepadButtons == true),
         "Account-wide profile:", tostring(accountWide))

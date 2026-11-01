@@ -309,7 +309,7 @@ local function PrintStatus()
     local uiMode = settings.useHybridUI and "hybrid UI" or (settings.useControllerUI and "native gamepad UI" or "keyboard-style UI")
     local barMode = settings.useGamepadActionBar and "gamepad action bar" or "compact keyboard action bar"
     local resourceMode = settings.useGamepadResourceBars and "gamepad resource bars" or "compact keyboard resource bars"
-    local promptMode = settings.useGamepadButtons and "controller prompts enabled" or "keyboard prompts"
+    local promptMode = (settings.useHybridUI or settings.useGamepadButtons) and "controller prompts enabled" or "keyboard prompts"
     if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
         CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] " .. uiMode .. " | " .. barMode .. " | " .. resourceMode .. " | " .. promptMode)
     end

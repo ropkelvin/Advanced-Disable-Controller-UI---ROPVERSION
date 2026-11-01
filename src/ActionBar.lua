@@ -7,10 +7,7 @@ local function ShouldUseControllerActionGlyphs()
 end
 
 local function RegisterControllerActionGlyph(button)
-    if not button or not button.buttonText
-        or type(button.GetSlot) ~= "function"
-        or type(button.GetHotbarCategory) ~= "function"
-        or type(ZO_Keybindings_RegisterLabelForBindingUpdate) ~= "function" then
+    if not button or not button.buttonText then
         return
     end
 
@@ -30,9 +27,7 @@ local function RegisterControllerActionGlyph(button)
         gamepadActionName = "GAMEPAD_ACTION_BUTTON_" .. tostring(slotNum)
     end
 
-    if type(ZO_Keybindings_UnregisterLabelForBindingUpdate) == "function" then
-        ZO_Keybindings_UnregisterLabelForBindingUpdate(button.buttonText)
-    end
+    ZO_Keybindings_UnregisterLabelForBindingUpdate(button.buttonText)
     local HIDE_UNBOUND = false
     -- Force only the action label to resolve its gamepad binding; the button
     -- control and all action-bar dimensions retain their keyboard style.
@@ -47,8 +42,6 @@ local function RegisterControllerActionGlyph(button)
 end
 
 local function RefreshExistingActionGlyphs()
-    if type(ZO_ActionBar_GetButton) ~= "function" then return end
-
     for _, hotbarCategory in ipairs({ HOTBAR_CATEGORY_PRIMARY, HOTBAR_CATEGORY_BACKUP }) do
         for slotNum = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1,
             ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + ACTION_BAR_SLOTS_PER_PAGE - 1 do
@@ -62,18 +55,13 @@ local function RefreshExistingActionGlyphs()
 end
 
 local function InstallActionButtonHooks()
-    if ADDON.runtime.actionButtonHooksInstalled or type(ActionButton) ~= "table" then
+    if ADDON.runtime.actionButtonHooksInstalled then
         return
     end
 
-    local originalInitialize = ActionButton.Initialize
-    if type(originalInitialize) == "function" then
-        ADDON.runtime.originalActionButtonInitialize = originalInitialize
-        -- This is a pure after-initialize task; use ESO's hook system
-        -- rather than replacing the shared ActionButton method.
-        ZO_PostHook(ActionButton, "Initialize", RegisterControllerActionGlyph)
-    end
-
+    -- This is a pure after-initialize task; use ESO's hook system
+    -- rather than replacing the shared ActionButton method.
+    ZO_PostHook(ActionButton, "Initialize", RegisterControllerActionGlyph)
     ADDON.runtime.actionButtonHooksInstalled = true
 end
 

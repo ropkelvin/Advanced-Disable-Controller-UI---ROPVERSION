@@ -14,7 +14,7 @@ end
 ESOHybridUI.ADDON_NAME = "ESOHybridUI"
 ESOHybridUI.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
 ESOHybridUI.SAVED_VARIABLES_VERSION = 1
-ESOHybridUI.VERSION = "3.0.2"
+ESOHybridUI.VERSION = "3.0.3"
 
 ESOHybridUI.defaults = {
     -- Main behavior
@@ -23,9 +23,6 @@ ESOHybridUI.defaults = {
     useGamepadButtons = true,
     useGamepadActionBar = false,
     useGamepadResourceBars = false,
-    useGamepadLockpicking = true,
-    enableMainMenuShoulderButtons = true,
-    centerWorldMap = true,
 
     -- Reticle / stealth prompt fonts
     fonts = {
@@ -48,14 +45,12 @@ ESOHybridUI.runtime = {
     actionBarHooksInstalled = false,
     resourceBarHooksInstalled = false,
     promptHooksInstalled = false,
-    mainMenuHooksInstalled = false,
     worldMapHooksInstalled = false,
     utilityWheelHooksInstalled = false,
     utilityWheelDefaultsCopied = false,
     utilityWheelLeftCopied = false,
     utilityWheelRightCopied = false,
     utilityWheelLayerActive = false,
-    menuGroupActive = false,
     promptOriginals = {},
     stackAllOriginals = setmetatable({}, { __mode = "k" }),
     logger = nil,

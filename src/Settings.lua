@@ -83,9 +83,13 @@ function ADDON:RegisterSettings()
         {
             type = "checkbox",
             name = "Use account-wide settings",
-            tooltip = "Copy this character's current settings to the account profile the first time it is enabled, then share that profile across characters.",
+            tooltip = "Use one shared settings profile across every character on this ESO account. Enabling it copies this character's current settings into the account profile the first time.",
             default = false,
-            getFunc = function() return ADDON.savedVariables.useAccountWideSettings end,
+            getFunc = function()
+                return ADDON.savedVariablesAccountWide
+                    and ADDON.savedVariablesAccountWide._esoHybridUseAccountWideSettings == true
+                    or false
+            end,
             setFunc = function(value) ADDON:SetUseAccountWideSettings(value) end,
         },
         {
@@ -144,7 +148,7 @@ function ADDON:RegisterSettings()
             width = "half",
         },
 
-        { type = "description", text = "Quick commands: /esohybrid, /esohybrid_status, /esohybrid_buttons, /esohybrid_actionbar, /esohybrid_debug on|off, /esohybrid_dump." },
+        { type = "description", text = "Quick commands: /esohybrid, /esohybrid_status, /esohybrid_sv, /esohybrid_buttons, /esohybrid_actionbar, /esohybrid_debug on|off, /esohybrid_dump." },
     }
 
     LibAddonMenu2:RegisterOptionControls(panelName, options)

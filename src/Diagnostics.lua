@@ -137,7 +137,6 @@ function ADDON:DumpDiagnostics()
         "globalPrompts=" .. tostring(runtime.globalPromptHooksInstalled),
         "promptDescriptors=" .. tostring(runtime.promptHooksInstalled),
         "deathPrompt=" .. tostring(runtime.deathPromptHookInstalled),
-        "synergyPrompt=" .. tostring(runtime.synergyPromptHookInstalled),
         "actionButtons=" .. tostring(runtime.actionButtonHooksInstalled),
         "dialogs=" .. tostring(runtime.dialogHooksInstalled),
         "worldMap=" .. tostring(runtime.worldMapHooksInstalled),

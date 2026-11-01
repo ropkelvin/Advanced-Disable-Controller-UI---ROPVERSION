@@ -8,9 +8,16 @@ local function SettingCheckbox(name, tooltip, key, refresh)
         name = name,
         tooltip = tooltip,
         default = ADDON.defaults[key],
-        getFunc = function() return ADDON:GetSettings()[key] end,
+        getFunc = function()
+            local settings = ADDON:GetSettings()
+            if key == "useGamepadButtons" and settings.useHybridUI then
+                return true
+            end
+            return settings[key]
+        end,
         setFunc = function(value)
-            ADDON:GetSettings()[key] = value
+            local settings = ADDON:GetSettings()
+            settings[key] = key == "useGamepadButtons" and settings.useHybridUI and true or value
             if refresh == false then
                 if ADDON.ApplyAll then ADDON:ApplyAll() end
             else

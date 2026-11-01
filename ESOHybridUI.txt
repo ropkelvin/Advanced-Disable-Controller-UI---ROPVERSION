@@ -5,7 +5,7 @@
 ## AddOnVersion: 30000
 ## APIVersion: 101051
 ## DependsOn: LibAddonMenu-2.0>=43
-## SavedVariables: ESOHybridUI_SavedVariables, ADCUI_SavedVariables
+## SavedVariables: ESOHybridUI_SavedVariables
 
 src/Defaults.lua
 src/Diagnostics.lua

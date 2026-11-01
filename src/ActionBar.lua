@@ -30,11 +30,11 @@ local function InstallTemplateHook()
     local original = ZO_GetPlatformTemplate
     ADDON.runtime.originalGetPlatformTemplate = original
 
-    local wrapper = function(baseTemplate)
+    local wrapper = function(baseTemplate, ...)
         if ACTION_BAR_TEMPLATES[baseTemplate] and ADDON:ShouldUseGamepadActionBar() then
             return baseTemplate .. "_Gamepad_Template"
         end
-        return original(baseTemplate)
+        return original(baseTemplate, ...)
     end
 
     ADDON.runtime.getPlatformTemplateWrapper = wrapper
@@ -83,6 +83,8 @@ end
 
 local function RegisterControllerActionGlyph(button)
     if not button or not button.buttonText
+        or type(button.GetSlot) ~= "function"
+        or type(button.GetHotbarCategory) ~= "function"
         or type(ZO_Keybindings_RegisterLabelForBindingUpdate) ~= "function" then
         return
     end
@@ -103,7 +105,9 @@ local function RegisterControllerActionGlyph(button)
         gamepadActionName = "GAMEPAD_ACTION_BUTTON_" .. tostring(slotNum)
     end
 
-    ZO_Keybindings_UnregisterLabelForBindingUpdate(button.buttonText)
+    if type(ZO_Keybindings_UnregisterLabelForBindingUpdate) == "function" then
+        ZO_Keybindings_UnregisterLabelForBindingUpdate(button.buttonText)
+    end
     local HIDE_UNBOUND = false
     -- Force only the action label to resolve its gamepad binding; the button
     -- control and all action-bar dimensions retain their keyboard style.

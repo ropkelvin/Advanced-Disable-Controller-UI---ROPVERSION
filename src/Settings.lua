@@ -119,8 +119,6 @@ function ADDON:RegisterSettings()
             end,
         },
         SettingCheckbox("Show gamepad button prompts", "Show controller button glyphs on the keyboard-style interface and keybind strip. Hybrid mode always uses controller glyphs; this option controls Keyboard mode.", "useGamepadButtons"),
-        SettingCheckbox("Use gamepad-style action bar", "Use the larger native gamepad action bar while keeping the rest of the interface keyboard-style. Disabled by default for a compact HUD.", "useGamepadActionBar"),
-        SettingCheckbox("Use gamepad-style resource bars", "Use native gamepad resource-bar styling while keeping the rest of the interface keyboard-style. Disabled by default for compact resource bars.", "useGamepadResourceBars"),
         {
             type = "checkbox",
             name = "Enable diagnostic logging",
@@ -152,7 +150,7 @@ function ADDON:RegisterSettings()
             width = "half",
         },
 
-        { type = "description", text = "Quick commands: /esohybrid, /esohybrid_status, /esohybrid_sv, /esohybrid_buttons, /esohybrid_actionbar, /esohybrid_debug on|off, /esohybrid_dump." },
+        { type = "description", text = "Quick commands: /esohybrid, /esohybrid_status, /esohybrid_sv, /esohybrid_buttons, /esohybrid_debug on|off, /esohybrid_dump." },
     }
 
     LibAddonMenu2:RegisterOptionControls(panelName, options)

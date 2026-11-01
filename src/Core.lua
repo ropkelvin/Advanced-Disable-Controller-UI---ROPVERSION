@@ -143,16 +143,26 @@ local function IsGamepadUIAllowed()
 end
 
 local function InstallModeOverride()
+    local runtime = ADDON.runtime
+    if runtime.modeOverrideInstalled then
+        -- Do not repeatedly overwrite another addon's later wrapper whenever
+        -- ESO emits a gamepad-mode event. Direct return-value control is
+        -- required for Hybrid, so this one global interception is intentional.
+        if _G.IsInGamepadPreferredMode ~= IsGamepadUIAllowed then
+            ADDON:LogWarn("IsInGamepadPreferredMode was replaced after Hybrid UI installed; another addon may be overriding the platform mode.")
+            return false
+        end
+        return true
+    end
+
     if type(IsInGamepadPreferredMode) ~= "function" then
         ADDON:LogWarn("IsInGamepadPreferredMode is unavailable; UI mode override was not installed.")
         return false
     end
 
-    if not ADDON.runtime.originalIsInGamepadPreferredMode then
-        ADDON.runtime.originalIsInGamepadPreferredMode = IsInGamepadPreferredMode
-    end
-
+    runtime.originalIsInGamepadPreferredMode = IsInGamepadPreferredMode
     _G.IsInGamepadPreferredMode = IsGamepadUIAllowed
+    runtime.modeOverrideInstalled = true
     return true
 end
 
@@ -371,6 +381,14 @@ local function OnLockpickEnd()
 end
 
 local function OnGamepadPreferredModeChanged()
+    -- RefreshPlatformMode deliberately emits two native mode-change events
+    -- to make ESO reapply its private platform-style manager. The addon's own
+    -- modules were already refreshed before that operation, so avoid applying
+    -- them twice (and avoid re-registering keybind labels during the flip).
+    if ADDON.runtime.isRefreshing then
+        return
+    end
+
     ADDON:LogDebug("ESO gamepad-preferred-mode event received. Physical gamepad preference:", tostring(OriginalGamepadPreferredMode()))
     InstallModeOverride()
     if ADDON.ApplyAll then

@@ -49,15 +49,25 @@ local function InstallHybridWorldMapSceneHook()
 
     local originalShowWorldMap = ZO_WorldMap_ShowWorldMap
     ADDON.runtime.originalShowWorldMap = originalShowWorldMap
-    ZO_WorldMap_ShowWorldMap = function(...)
-        local settings = ADDON:GetSettings()
-        if settings.useHybridUI and ADDON:IsNativeGamepadMode() then
-            -- ESO chooses between "worldMap" and "gamepad_worldMap" inside
-            -- this function. Force the native platform only for that choice;
-            -- gameplay immediately returns to the compact keyboard HUD.
-            return ADDON:WithNativeGamepadMode(originalShowWorldMap, ...)
+    if type(ZO_PreHook) == "function" then
+        -- ESO's function only selects/shows a scene and has no return value,
+        -- so a native pre-hook can safely run it under the gamepad context.
+        ZO_PreHook("ZO_WorldMap_ShowWorldMap", function(...)
+            local settings = ADDON:GetSettings()
+            if settings.useHybridUI and ADDON:IsNativeGamepadMode() then
+                ADDON:WithNativeGamepadMode(originalShowWorldMap, ...)
+                return true
+            end
+            return false
+        end)
+    else
+        ZO_WorldMap_ShowWorldMap = function(...)
+            local settings = ADDON:GetSettings()
+            if settings.useHybridUI and ADDON:IsNativeGamepadMode() then
+                return ADDON:WithNativeGamepadMode(originalShowWorldMap, ...)
+            end
+            return originalShowWorldMap(...)
         end
-        return originalShowWorldMap(...)
     end
 
     ADDON.runtime.hybridWorldMapHookInstalled = true

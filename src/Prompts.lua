@@ -93,7 +93,9 @@ local function HookStackAllMapping()
     local function ProcessGroup(_, group)
         if type(group) ~= "table" then return end
         local settings = ADDON:GetSettings()
-        local enabled = settings.useGamepadButtons and not settings.useControllerUI and ADDON:IsNativeGamepadMode()
+        local enabled = (settings.useHybridUI or settings.useGamepadButtons)
+            and not settings.useControllerUI
+            and ADDON:IsNativeGamepadMode()
         if not enabled then
             for _, descriptor in ipairs(group) do
                 local original = ADDON.runtime.stackAllOriginals[descriptor]

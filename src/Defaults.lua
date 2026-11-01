@@ -12,7 +12,7 @@ end
 ESOHybridUI.ADDON_NAME = "ESOHybridUI"
 ESOHybridUI.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
 ESOHybridUI.SAVED_VARIABLES_VERSION = 1
-ESOHybridUI.VERSION = "3.0.4"
+ESOHybridUI.VERSION = "3.0.5"
 
 ESOHybridUI.defaults = {
     -- Main behavior

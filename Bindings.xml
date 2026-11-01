@@ -7,12 +7,6 @@
             <Action name="ESOHYBRIDUI_TOGGLE_BUTTONS">
                 <Down>ESOHybridUI:ToggleButtons()</Down>
             </Action>
-            <Action name="ESOHYBRIDUI_TOGGLE_ACTION_BAR">
-                <Down>ESOHybridUI:ToggleActionBar()</Down>
-            </Action>
-            <Action name="ESOHYBRIDUI_TOGGLE_RESOURCE_BARS">
-                <Down>ESOHybridUI:ToggleResourceBars()</Down>
-            </Action>
         </Category>
     </Layer>
 

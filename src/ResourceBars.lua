@@ -24,11 +24,24 @@ function ADDON:ApplyResourceBars()
     local original = target.OnGamepadPreferredModeChanged
     self.runtime.originalResourceBarsModeChanged = original
 
-    target.OnGamepadPreferredModeChanged = function(control, ...)
-        if ADDON:ShouldUseGamepadResourceBars() then
-            return ADDON:WithNativeGamepadMode(original, control, ...)
+    if type(ZO_PreHook) == "function" then
+        -- The ESO callback is a style refresh with no meaningful return value.
+        -- Re-run it under the native platform context and suppress the normal
+        -- keyboard-style pass only when the optional gamepad bars are enabled.
+        ZO_PreHook(target, "OnGamepadPreferredModeChanged", function(control, ...)
+            if ADDON:ShouldUseGamepadResourceBars() then
+                ADDON:WithNativeGamepadMode(original, control, ...)
+                return true
+            end
+            return false
+        end)
+    else
+        target.OnGamepadPreferredModeChanged = function(control, ...)
+            if ADDON:ShouldUseGamepadResourceBars() then
+                return ADDON:WithNativeGamepadMode(original, control, ...)
+            end
+            return original(control, ...)
         end
-        return original(control, ...)
     end
 
     self.runtime.resourceBarHooksInstalled = true

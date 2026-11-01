@@ -47,7 +47,6 @@ local function DonationButton(amount)
     return {
         type = "button",
         name = formatted .. " gold",
-        tooltip = "Open a mail to @ZOSPlsFix with " .. formatted .. " gold attached. Review and send it yourself.",
         buttonText = "Donate " .. formatted,
         func = function() OpenDonationMail(amount) end,
         width = "half",
@@ -160,7 +159,7 @@ function ADDON:RegisterSettings()
         },
         {
             type = "description",
-            text = "Optional in-game gold donations are appreciated. Choose an amount to open a pre-filled mail. You must send it yourself.",
+            text = "Optional in-game gold donations are appreciated.",
         },
         DonationButton(5000),
         DonationButton(10000),

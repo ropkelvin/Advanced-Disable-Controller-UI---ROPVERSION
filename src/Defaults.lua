@@ -5,7 +5,7 @@ ESOHybridUI = ESOHybridUI or {}
 
 if ZO_CreateStringId then
     ZO_CreateStringId("SI_KEYBINDINGS_CATEGORY_ESO_HYBRID_UI", "ESO Hybrid UI")
-    ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Toggle keyboard / gamepad UI")
+    ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Toggle gamepad / hybrid UI")
     ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_BUTTONS", "Toggle gamepad button prompts")
 end
 
@@ -16,7 +16,7 @@ ESOHybridUI.VERSION = "3.0.8"
 
 ESOHybridUI.defaults = {
     -- Main behavior
-    useControllerUI = false,
+    useControllerUI = true,
     useHybridUI = false,
     useGamepadButtons = true,
 

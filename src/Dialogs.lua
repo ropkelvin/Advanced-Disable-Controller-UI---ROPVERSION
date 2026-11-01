@@ -11,16 +11,17 @@ function ADDON:ApplyDialogs()
     local original = ZO_Dialogs_ShowDialog
     self.runtime.originalShowDialog = original
 
-    local wrapper = function(name, data, textParams, isGamepad)
+    local wrapper = function(...)
         local settings = ADDON:GetSettings()
         local shouldUseControllerGlyphs = settings.useGamepadButtons
             and not settings.useControllerUI
             and ADDON:IsNativeGamepadMode()
 
+        -- Forward the complete current/future ESO signature unchanged.
         if shouldUseControllerGlyphs then
-            return ADDON:WithNativeGamepadMode(original, name, data, textParams, isGamepad)
+            return ADDON:WithNativeGamepadMode(original, ...)
         end
-        return original(name, data, textParams, isGamepad)
+        return original(...)
     end
 
     self.runtime.showDialogWrapper = wrapper

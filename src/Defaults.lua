@@ -1,8 +1,9 @@
 -- ESO Hybrid UI
 -- ESO Hybrid UI Update 51 baseline and maintained configuration.
 
-local ADDON = _G.ESOHybridUI or {}
-_G.ESOHybridUI = ADDON
+local ADDON = _G.ESOHYBRIDUI or {}
+_G.ESOHYBRIDUI = ADDON
+ESOHYBRIDUI = ADDON
 
 ZO_CreateStringId("SI_KEYBINDINGS_CATEGORY_ESO_HYBRID_UI", "ESO Hybrid UI")
 ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Toggle gamepad / hybrid UI")

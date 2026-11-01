@@ -1,7 +1,10 @@
 -- ESO Hybrid UI
 -- ESO Hybrid UI Update 51 baseline and maintained configuration.
 
-local ADDON = _G.ESOHYBRIDUI or {}
+-- Keep one shared addon table under the exact global name used by every module.
+-- Accept the legacy all-caps alias so existing sessions/profiles remain compatible.
+local ADDON = _G.ESOHybridUI or _G.ESOHYBRIDUI or {}
+_G.ESOHybridUI = ADDON
 _G.ESOHYBRIDUI = ADDON
 ESOHYBRIDUI = ADDON
 

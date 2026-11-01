@@ -75,10 +75,7 @@ local function InstallPlatformStyleHook()
 end
 
 local function ShouldUseControllerActionGlyphs()
-    local settings = ADDON:GetSettings()
-    return (settings.useHybridUI == true or settings.useGamepadButtons == true)
-        and settings.useControllerUI ~= true
-        and ADDON:IsNativeGamepadMode()
+    return ADDON:ShouldShowControllerPrompts()
 end
 
 local function RegisterControllerActionGlyph(button)

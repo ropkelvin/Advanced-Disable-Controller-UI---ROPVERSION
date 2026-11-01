@@ -26,36 +26,6 @@ local function FontDropdown(name, tooltip, key, choices, values)
     }
 end
 
-local function OpenDonationMail(amount)
-    if not (MAIL_SEND and MAIL_SEND.ComposeMailTo and QueueMoneyAttachment) then
-        if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
-            CHAT_SYSTEM:AddMessage("[ESO Hybrid UI] The mail composer or gold attachment function is not available.")
-        end
-        return
-    end
-
-    -- ComposeMailTo defers SetReply until the mail scene is shown.
-    -- SetReply clears pending attachments, so queue the gold only after it runs.
-    MAIL_SEND:ComposeMailTo("@ZOSPlsFix")
-    SCENE_MANAGER:CallWhen("mailSend", SCENE_SHOWN, function()
-        QueueMoneyAttachment(amount)
-    end)
-end
-
-local function DonationButton(amount)
-    local formatted = amount == 5000 and "5,000"
-        or amount == 10000 and "10,000"
-        or "50,000"
-
-    return {
-        type = "button",
-        name = formatted .. " gold",
-        buttonText = "Donate " .. formatted,
-        func = function() OpenDonationMail(amount) end,
-        width = "half",
-    }
-end
-
 function ADDON:RegisterSettings()
     local panelName = "ESOHybridUI_Settings"
     LibAddonMenu2:RegisterAddonPanel(panelName, {
@@ -140,17 +110,6 @@ function ADDON:RegisterSettings()
                 },
             },
         },
-        {
-            type = "header",
-            name = "Support the addon",
-        },
-        {
-            type = "description",
-            text = "Optional in-game gold donations are appreciated.",
-        },
-        DonationButton(5000),
-        DonationButton(10000),
-        DonationButton(50000),
     }
 
     LibAddonMenu2:RegisterOptionControls(panelName, options)

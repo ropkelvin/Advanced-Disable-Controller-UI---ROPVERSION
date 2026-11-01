@@ -12,10 +12,7 @@ function ADDON:ApplyDialogs()
     self.runtime.originalShowDialog = original
 
     local wrapper = function(...)
-        local settings = ADDON:GetSettings()
-        local shouldUseControllerGlyphs = (settings.useHybridUI or settings.useGamepadButtons)
-            and not settings.useControllerUI
-            and ADDON:IsNativeGamepadMode()
+        local shouldUseControllerGlyphs = ADDON:ShouldShowControllerPrompts()
 
         -- Forward the complete current/future ESO signature unchanged.
         if shouldUseControllerGlyphs then

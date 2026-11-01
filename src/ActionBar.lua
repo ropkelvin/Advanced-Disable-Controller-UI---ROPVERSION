@@ -130,8 +130,10 @@ local function InstallActionButtonHooks()
     if type(originalInitialize) == "function" then
         ADDON.runtime.originalActionButtonInitialize = originalInitialize
         ActionButton.Initialize = function(self, ...)
-            originalInitialize(self, ...)
+            local function Pack(...) return { n = select("#", ...), ... } end
+            local results = Pack(originalInitialize(self, ...))
             RegisterControllerActionGlyph(self)
+            return unpack(results, 1, results.n)
         end
     end
 

@@ -129,7 +129,7 @@ end
 
 local function ShouldForceControllerPrompts()
     local settings = ADDON:GetSettings()
-    return settings.useGamepadButtons == true
+    return (settings.useHybridUI == true or settings.useGamepadButtons == true)
         and settings.useControllerUI ~= true
         and ADDON:IsNativeGamepadMode()
 end
@@ -304,7 +304,10 @@ function ADDON:ApplyPrompts()
         self.runtime.promptStyleOriginal = KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode
     end
 
-    local forceGamepadPrompts = settings.useGamepadButtons
+    -- Hybrid's defining contract is a keyboard HUD with controller glyphs.
+    -- The standalone prompt toggle must not accidentally turn those glyphs
+    -- back into keyboard labels while Hybrid is active.
+    local forceGamepadPrompts = (settings.useHybridUI or settings.useGamepadButtons)
         and not settings.useControllerUI
         and self:IsNativeGamepadMode()
 

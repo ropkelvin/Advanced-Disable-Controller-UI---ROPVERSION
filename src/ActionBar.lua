@@ -27,6 +27,21 @@ local function RegisterControllerActionGlyph(button)
         gamepadActionName = "GAMEPAD_ACTION_BUTTON_" .. tostring(slotNum)
     end
 
+    -- ESO's ActionButton registers an OnUltimateChanged callback for both
+    -- player and companion ultimate slots. It swaps the keyboard-style text
+    -- label for the two native controller-key indicators in Gamepad mode.
+    -- Preserve that behavior when replacing the binding registration.
+    local isUltimateSlot = ZO_ActionBar_IsUltimateSlot(slotNum, hotbarCategory)
+    local onUltimateChanged = isUltimateSlot and function(label)
+        local showGamepadKeys = IsInGamepadPreferredMode()
+            and ZO_Keybindings_ShouldShowGamepadKeybind()
+
+        label:SetHidden(showGamepadKeys)
+        if button.leftKey and button.rightKey then
+            button:HideKeys(not showGamepadKeys)
+        end
+    end or nil
+
     ZO_Keybindings_UnregisterLabelForBindingUpdate(button.buttonText)
     local HIDE_UNBOUND = false
     -- Force only the action label to resolve its gamepad binding; the button
@@ -36,11 +51,16 @@ local function RegisterControllerActionGlyph(button)
         keyboardActionName,
         HIDE_UNBOUND,
         gamepadActionName,
-        nil,
+        onUltimateChanged,
         ShouldUseControllerActionGlyphs()
     )
-end
 
+    -- Registration can happen after ESO has already applied the current
+    -- platform style. Synchronize the ultimate label immediately as well.
+    if onUltimateChanged then
+        onUltimateChanged(button.buttonText)
+    end
+end
 local function RefreshExistingActionGlyphs()
     for _, hotbarCategory in ipairs({ HOTBAR_CATEGORY_PRIMARY, HOTBAR_CATEGORY_BACKUP }) do
         for slotNum = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1,

@@ -12,7 +12,7 @@ ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Toggle gamepad / hyb
 ADDON.ADDON_NAME = "ESOHybridUI"
 ADDON.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
 ADDON.SAVED_VARIABLES_VERSION = 1
-ADDON.VERSION = "3.2.0"
+ADDON.VERSION = "3.2.1"
 
 ADDON.defaults = {
     -- Main behavior

@@ -29,14 +29,7 @@ jobs:
           zip -r ESOHybridUI.zip ESOHybridUI
           test "$(unzip -Z1 ESOHybridUI.zip | head -n 1)" = "ESOHybridUI/"
           unzip -Z1 ESOHybridUI.zip | grep -qx "ESOHybridUI/ESOHybridUI.txt"
-          if unzip -Z1 ESOHybridUI.zip | grep -Eq '(^|/)(\.git|\.idea|\.vs|__MACOSX)/|(^|/)desktop\.ini
-      - name: Upload installable archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: ESOHybridUI
-          path: dist/ESOHybridUI.zip
-          if-no-files-found: error
-; then
+          if unzip -Z1 ESOHybridUI.zip | grep -Eq '(^|/)(\.git|\.idea|\.vs|__MACOSX)/|(^|/)desktop\.ini$'; then
             echo "Unexpected development or OS metadata found in addon archive."
             exit 1
           fi

@@ -82,7 +82,7 @@ local function RestoreStackAllMappings()
 end
 
 local function HookStackAllMapping()
-    if ADDON.runtime.promptHooksInstalled or not ZO_KeybindStrip then
+    if ADDON.runtime.promptHooksInstalled then
         return
     end
 

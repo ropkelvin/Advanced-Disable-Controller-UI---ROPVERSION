@@ -113,9 +113,29 @@ function ADDON:WithNativeGamepadMode(callback, ...)
     return unpack(results, 2, results.n)
 end
 
+function ADDON:WithKeyboardWheelMode(callback, ...)
+    local runtime = ADDON.runtime
+    runtime.forceKeyboardWheelDepth = runtime.forceKeyboardWheelDepth + 1
+
+    local function Pack(...) return { n = select("#", ...), ... } end
+    local results = Pack(pcall(callback, ...))
+    runtime.forceKeyboardWheelDepth = math.max(0, runtime.forceKeyboardWheelDepth - 1)
+
+    if not results[1] then
+        error(results[2], 0)
+    end
+    return unpack(results, 2, results.n)
+end
+
 local function IsGamepadUIAllowed()
     if ADDON.runtime.forceNativeModeDepth > 0 then
         return OriginalGamepadPreferredMode()
+    end
+
+    -- A wheel is a deliberate exception: Hybrid uses ESO's keyboard wheel
+    -- presentation while keeping the surrounding menus in native gamepad mode.
+    if ADDON.runtime.forceKeyboardWheelDepth > 0 then
+        return false
     end
 
     local settings = GetSettings()

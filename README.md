@@ -1,16 +1,16 @@
 # ESO Hybrid UI
 
-## Current release — 3.3.2
+## Current release — 3.3.3
 
-- Distinguishes real menu scenes from ESO's base HUD-UI scene, which ESO also enters during focus loss, so focus changes do not force the gamepad HUD.
-- Reapplies Hybrid platform styling when ESO returns from a gamepad settings/menu scene to the base HUD, so selecting Hybrid takes effect as soon as the menu closes.
-- Added explicit keyboard presentation for ESO's native utility, fishing, target-marker, and player-interaction wheels in Hybrid mode while preserving gamepad input and gamepad menus.
+- Defers ESO's native platform-style refresh while a menu/overlay is current, preventing the temporary preferred-mode event from closing gamepad settings. The refresh runs after ESO returns to the base HUD.
+- Reapplies platform styling after base HUD/HUD-UI transitions, including focus loss, while preserving the user's saved Gamepad Mode setting.
+- Restricts the temporary keyboard-presentation override to the utility/quickslot wheel. Fishing and target-marker wheels retain ESO's native presentation; the player-to-player wheel remains handled separately.
+- Keeps controller input, button glyphs, and all menus/navigation native gamepad in Hybrid mode.
 
 - Removed redundant defensive type checks around ESO Update 51 APIs confirmed to exist in the live UI source.
 - Preserved guards for optional libraries and UI controls that may not be initialized.
 - Kept the existing non-destructive megaserver SavedVariables migration unchanged.
 - Packaging remains a single `ESOHybridUI/` folder inside the installable ZIP.
-
 
 Controller-first interface addon for The Elder Scrolls Online. It provides native Gamepad mode and a compact Hybrid mode with controller prompts. Hybrid keeps the keyboard HUD and keyboard-style quickslot/player-interaction wheels while menus and navigation remain native gamepad UI.
 

@@ -4,7 +4,7 @@ AI-assisted development: AI tools contributed to portions of this addon's code a
 
 This add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates.
 
-## Current release — 3.3.7
+## Current release — 3.3.8
 
 - Shows player and companion ultimate controller prompts in Hybrid using ESO's native `ZO_KeyTexture` glyph controls, sized to 24×24 for the compact keyboard HUD.
 - Hides the keyboard-style ultimate binding label in Hybrid because ESO's combined gamepad ultimate action is not a normal compact text binding.
@@ -18,6 +18,8 @@ Controller-first interface addon for The Elder Scrolls Online. It provides nativ
 
 - **Required:** LibAddonMenu-2.0 version 43 or newer.
 - The dependency is declared in `ESOHybridUI.txt` with `## DependsOn: LibAddonMenu-2.0>=43`.
+- **Optional:** LibGamepadOptions AddOnVersion 7 or newer. When installed, ESO Hybrid UI gets its own category in ESO's native gamepad Options menu. The keyboard LibAddonMenu panel remains available and both interfaces edit the same SavedVariables.
+- Without LibGamepadOptions, the addon continues to work normally; only the native gamepad settings category is unavailable. Install LibGamepadOptions separately from [ESOUI](https://www.esoui.com/downloads/info4614-libgamepadoptions.html).
 
 ## Recommended ESO settings
 
@@ -57,7 +59,7 @@ Character-specific settings use ESO character IDs, which are unique across megas
 - **LibAddonMenu-2.0:** required third-party settings-library dependency; it is distributed and maintained separately by its ESOUI authors.
 - **Advanced Disable Controller UI:** acknowledged as inspiration; originally by Lionas, with contributions from jc28735250 and subsequent maintenance by DoriKyll. ESO Hybrid UI does not include that project's source code or assets. See [NOTICE.md](NOTICE.md) for the attribution clarification.
 
-This repository does not bundle LibAddonMenu-2.0. Install it separately through ESOUI. Any directly reused third-party code or assets must retain the original license and attribution.
+This repository does not bundle LibAddonMenu-2.0 or LibGamepadOptions. Install the required and optional libraries separately through ESOUI. Any directly reused third-party code or assets must retain the original license and attribution.
 
 ## In-game actions and donations
 

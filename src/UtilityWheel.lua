@@ -87,7 +87,12 @@ local function InstallManagerHooks()
         end
         local settings = ADDON:GetSettings()
         local results
-        if settings.useHybridUI and ADDON:IsNativeGamepadMode() then
+        -- Hybrid's keyboard-style override is intentionally limited to the
+        -- utility/quickslot wheel. Fishing and target-marker wheels retain
+        -- ESO's native presentation; player-to-player has its own hook below.
+        if wheelType == ZO_INTERACTIVE_WHEEL_TYPE_UTILITY
+            and settings.useHybridUI
+            and ADDON:IsNativeGamepadMode() then
             results = Pack(ADDON:WithKeyboardWheelMode(StartNativeWheel))
         else
             results = Pack(StartNativeWheel())

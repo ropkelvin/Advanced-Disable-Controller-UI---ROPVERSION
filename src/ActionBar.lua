@@ -140,7 +140,6 @@ local function RefreshExistingActionGlyphs()
     RegisterControllerActionGlyph(ZO_ActionBar_GetButton(ACTION_BAR_ULTIMATE_SLOT_INDEX + 1, HOTBAR_CATEGORY_COMPANION))
 end
 
-
 local function InstallActionButtonHooks()
     if ADDON.runtime.actionButtonHooksInstalled then
         return
@@ -149,7 +148,6 @@ local function InstallActionButtonHooks()
     -- This is a pure after-initialize task; use ESO's hook system
     -- rather than replacing the shared ActionButton method.
     ZO_PostHook(ActionButton, "Initialize", RegisterControllerActionGlyph)
-
 
     ADDON.runtime.actionButtonHooksInstalled = true
 end

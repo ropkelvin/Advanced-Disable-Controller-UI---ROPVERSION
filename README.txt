@@ -24,4 +24,4 @@ CREDITS
 SAFETY / SCOPE
 This addon changes UI presentation and keybind prompt display only. It does not automate combat, send mail, attach gold, trade, or execute gameplay actions on the player's behalf. The optional donation control only opens a mail draft; the player decides whether to send it and whether to attach gold.
 
-AI disclosure and third-party attribution are provided here for ESOUI/ZOS review. This addon is an independent community project.
+This addon is an independent community project.

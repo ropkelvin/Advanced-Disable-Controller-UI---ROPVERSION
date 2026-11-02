@@ -16,7 +16,6 @@ function ADDON:ApplyDialogs()
     local wrapper = function(...)
         local shouldUseControllerGlyphs = ADDON:ShouldShowControllerPrompts()
 
-        -- Forward the complete current/future ESO signature unchanged.
         if shouldUseControllerGlyphs then
             return ADDON:WithNativeGamepadMode(original, ...)
         end

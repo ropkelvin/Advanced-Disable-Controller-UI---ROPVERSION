@@ -53,7 +53,7 @@ function ADDON:RegisterSettings()
             return
         end
 
-        -- Only open a addressed draft. The player manually chooses whether
+        -- Only open an addressed draft. The player manually chooses whether
         -- to attach gold and the amount; this addon never changes mail gold.
         MAIL_SEND:ComposeMailTo("@ZOSPlsFix")
     end

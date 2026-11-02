@@ -35,6 +35,7 @@ ADDON.runtime = {
     originalIsInGamepadPreferredMode = nil,
     modeOverrideInstalled = false,
     forceNativeModeDepth = 0,
+    forceKeyboardWheelDepth = 0,
     isLockpicking = false,
     isRefreshing = false,
     initialized = false,

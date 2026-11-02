@@ -143,6 +143,14 @@ local function IsGamepadUIAllowed()
         return OriginalGamepadPreferredMode()
     end
 
+    -- ESO deliberately enters UI mode when the game loses window focus. That
+    -- is a focus-management state, not a request to change Hybrid's HUD
+    -- platform. Keep the keyboard presentation while unfocused; on focus
+    -- regain ESO's scene manager gets first chance to restore the HUD scene.
+    if settings.useHybridUI and ADDON.runtime.gameHasFocus == false then
+        return false
+    end
+
     -- Loot containers have a dedicated native gamepad scene, but ESO can
     -- request the keyboard scene while Hybrid mode keeps the gameplay HUD in
     -- keyboard presentation. Preserve the native controller loot workflow.
@@ -436,6 +444,32 @@ local function OnGamepadPreferredModeChanged()
     end
 end
 
+local function OnGameFocusChanged(_, hasFocus)
+    local runtime = ADDON.runtime
+    runtime.gameHasFocus = hasFocus == true
+    runtime.focusRefreshGeneration = (runtime.focusRefreshGeneration or 0) + 1
+    local generation = runtime.focusRefreshGeneration
+
+    ADDON:LogDebug("Game focus changed:", tostring(runtime.gameHasFocus))
+
+    -- ZO_IngameSceneManager handles this same event first. Defer our refresh
+    -- until its focus/UI-mode transition has completed, and ignore stale
+    -- callbacks if focus changes again before the delay expires.
+    if runtime.gameHasFocus then
+        zo_callLater(function()
+            if generation ~= runtime.focusRefreshGeneration then
+                return
+            end
+            if not GetSettings().useHybridUI then
+                return
+            end
+
+            ADDON:LogDebug("Refreshing Hybrid presentation after focus regain.")
+            ADDON:Refresh()
+        end, 150)
+    end
+end
+
 local function OnAddonLoaded(_, addonName)
     if addonName ~= ADDON.ADDON_NAME or ADDON.runtime.initialized then
         return
@@ -451,6 +485,8 @@ local function OnAddonLoaded(_, addonName)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickSuccess", EVENT_LOCKPICK_SUCCESS, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickFailed", EVENT_LOCKPICK_FAILED, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_ModeChanged", EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, OnGamepadPreferredModeChanged)
+    ADDON.runtime.gameHasFocus = DoesGameHaveFocus()
+    EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_GameFocusChanged", EVENT_GAME_FOCUS_CHANGED, OnGameFocusChanged)
 
     local function OnLockpickSceneStateChanged(_, newState)
         if newState == SCENE_HIDDEN then

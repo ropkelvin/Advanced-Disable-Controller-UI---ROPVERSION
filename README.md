@@ -1,6 +1,8 @@
 # ESO Hybrid UI
 
-## Current release — 3.3.3
+## Current release — 3.3.4
+
+- Fixes the player and companion ultimate controller glyphs in Hybrid mode by using the add-on controller-prompt state as well as ESO’s native gamepad mode state. Native Gamepad mode behavior remains unchanged.
 
 - Defers ESO's native platform-style refresh while a menu/overlay is current, preventing the temporary preferred-mode event from closing gamepad settings. The refresh runs after ESO returns to the base HUD.
 - Reapplies platform styling after base HUD/HUD-UI transitions, including focus loss, while preserving the user's saved Gamepad Mode setting.

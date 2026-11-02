@@ -210,32 +210,61 @@ local function InstallModeOverride()
     return true
 end
 
+local function IsShowingBaseHUDScene()
+    return SCENE_MANAGER
+        and SCENE_MANAGER.IsShowingBaseScene
+        and SCENE_MANAGER:IsShowingBaseScene()
+end
+
 local function RefreshPlatformMode()
     local runtime = ADDON.runtime
-    -- ESO keeps PLATFORM_STYLE_MANAGER local to its platform-style library;
-    -- it exposes no public "reapply all styles" method. Changing the preferred
-    -- mode is what emits the native event that refreshes those styles. We
-    -- therefore restore the exact saved setting immediately after the event.
     if runtime.isRefreshing then
-        return
+        return false
     end
 
-    local currentMode = GetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE)
+    -- Changing GAMEPAD_SETTING_INPUT_PREFERRED_MODE while a gamepad menu is
+    -- current makes ESO's IngameSceneManager compare that menu's original
+    -- input mode with the temporary mode. It can close the menu and return
+    -- to the HUD. Never emit the mode-change event from an overlay/menu.
+    if not IsShowingBaseHUDScene() then
+        runtime.platformRefreshPending = true
+        return false
+    end
 
+    -- PLATFORM_STYLE_MANAGER is private to ESO's platform-style library and
+    -- has no public refresh method. The supported event is emitted by changing
+    -- the preferred-mode setting. At the base HUD scene, ESO's scene manager
+    -- will not replace the scene in response to that event. Restore the exact
+    -- saved value immediately; this is a presentation refresh, not a setting.
+    local currentMode = GetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE)
     local currentNumeric = tonumber(currentMode)
-    local keyboardMode = INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
-    local temporaryMode = currentNumeric == keyboardMode
+    local temporaryMode = currentNumeric == INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
         and INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
-        or keyboardMode
+        or INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
 
     runtime.isRefreshing = true
-    local changed, changeError = pcall(SetSetting, SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, tostring(temporaryMode))
-    local restored, restoreError = pcall(SetSetting, SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE, tostring(currentMode))
+    local changed, changeError = pcall(
+        SetSetting,
+        SETTING_TYPE_GAMEPAD,
+        GAMEPAD_SETTING_INPUT_PREFERRED_MODE,
+        tostring(temporaryMode)
+    )
+    local restored, restoreError = pcall(
+        SetSetting,
+        SETTING_TYPE_GAMEPAD,
+        GAMEPAD_SETTING_INPUT_PREFERRED_MODE,
+        tostring(currentMode)
+    )
     runtime.isRefreshing = false
 
     if not changed or not restored then
+        runtime.platformRefreshPending = true
         ADDON:LogError("Could not refresh platform styles:", tostring(changeError or restoreError))
+        return false
     end
+
+    runtime.platformRefreshPending = false
+    return true
 end
 
 function ADDON:Refresh()
@@ -244,6 +273,8 @@ function ADDON:Refresh()
 
     self:ApplyAll()
 
+    -- If called from a settings/menu scene, defer the native platform-style
+    -- refresh. The scene callback below performs it after the base HUD returns.
     RefreshPlatformMode()
 end
 
@@ -457,13 +488,13 @@ local function OnAddonLoaded(_, addonName)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickSuccess", EVENT_LOCKPICK_SUCCESS, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickFailed", EVENT_LOCKPICK_FAILED, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_ModeChanged", EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, OnGamepadPreferredModeChanged)
-    -- Refresh native platform styles whenever ESO returns to a base HUD
-    -- scene. This is important when Hybrid was selected from inside a
-    -- gamepad settings scene: the settings scene must remain gamepad, then
-    -- the base HUD must be restyled as keyboard when that scene closes.
+    -- Complete deferred platform refreshes only after ESO has returned to
+    -- its base HUD/HUD-UI scene. This handles mode changes made in settings
+    -- menus and focus loss (which ESO represents by showing the base hudui
+    -- scene). It deliberately runs for both Hybrid and Gamepad selections.
     if SCENE_MANAGER and SCENE_MANAGER.RegisterCallback then
         SCENE_MANAGER:RegisterCallback("SceneStateChanged", function(scene, oldState, newState)
-            if not GetSettings().useHybridUI or newState ~= SCENE_SHOWN then
+            if newState ~= SCENE_SHOWN then
                 return
             end
 
@@ -473,11 +504,14 @@ local function OnAddonLoaded(_, addonName)
             end
 
             zo_callLater(function()
-                if GetSettings().useHybridUI and SCENE_MANAGER:IsShowingBaseScene() then
-                    ADDON:LogDebug("Reapplying Hybrid platform styling after base HUD scene transition.")
+                local settings = GetSettings()
+                if ADDON.runtime.initialized
+                    and IsShowingBaseHUDScene()
+                    and (ADDON.runtime.platformRefreshPending or settings.useHybridUI) then
+                    ADDON:LogDebug("Refreshing platform styles after returning to the base HUD scene.")
                     RefreshPlatformMode()
                 end
-            end, 50)
+            end, 100)
         end)
     end
 

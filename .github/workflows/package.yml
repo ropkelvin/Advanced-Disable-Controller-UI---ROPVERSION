@@ -5,10 +5,12 @@ on:
     branches:
       - master
       - feature/hybrid-keyboard-hud-gamepad
+      - feature/gamepad-addon-settings
   pull_request:
     branches:
       - master
       - feature/hybrid-keyboard-hud-gamepad
+      - feature/gamepad-addon-settings
   workflow_dispatch:
 
 permissions:

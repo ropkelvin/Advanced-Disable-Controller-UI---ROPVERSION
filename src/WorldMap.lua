@@ -8,9 +8,6 @@ local function InstallHybridMapCategoryHook()
     end
 
     local mainMenu = MAIN_MENU_KEYBOARD
-    if not mainMenu or type(mainMenu.ToggleCategory) ~= "function" then
-        return
-    end
 
     ZO_PreHook(mainMenu, "ToggleCategory", function(_, category)
         local settings = ADDON:GetSettings()
@@ -29,7 +26,7 @@ local function InstallHybridMapCategoryHook()
 end
 
 local function InstallHybridWorldMapSceneHook()
-    if ADDON.runtime.hybridWorldMapHookInstalled or type(ZO_WorldMap_ShowWorldMap) ~= "function" then
+    if ADDON.runtime.hybridWorldMapHookInstalled then
         return
     end
 

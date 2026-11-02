@@ -219,19 +219,22 @@ function ADDON:Refresh()
     self:LogDebug("Refreshing UI presentation.")
     InstallModeOverride()
 
-    if self.ApplyAll then
-        self:ApplyAll()
-    end
+    self:ApplyAll()
 
     RefreshPlatformMode()
 end
 
 function ADDON:ApplyAll()
-    if self.ApplyPrompts then self:LogDebug("Applying prompt styles."); self:ApplyPrompts() end
-    if self.ApplyDialogs then self:LogDebug("Applying dialog styles."); self:ApplyDialogs() end
-    if self.ApplyUtilityWheel then self:LogDebug("Applying utility-wheel bridge."); self:ApplyUtilityWheel() end
-    if self.ApplyActionBar then self:LogDebug("Applying action-bar style."); self:ApplyActionBar() end
-    if self.ApplyWorldMap then self:LogDebug("Applying world-map behavior."); self:ApplyWorldMap() end
+    self:LogDebug("Applying prompt styles.")
+    self:ApplyPrompts()
+    self:LogDebug("Applying dialog styles.")
+    self:ApplyDialogs()
+    self:LogDebug("Applying utility-wheel bridge.")
+    self:ApplyUtilityWheel()
+    self:LogDebug("Applying action-bar style.")
+    self:ApplyActionBar()
+    self:LogDebug("Applying world-map behavior.")
+    self:ApplyWorldMap()
 end
 
 function ADDON:SetUseAccountWideSettings(enabled)
@@ -421,11 +424,9 @@ local function OnAddonLoaded(_, addonName)
     end
 
     InitializeSavedVariables()
-    if ADDON.InitializeDiagnostics then
-        ADDON:InitializeDiagnostics()
-        ADDON:RegisterDiagnosticCommands()
-        ADDON:LogInfo("Initializing addon", ADDON.VERSION)
-    end
+    ADDON:InitializeDiagnostics()
+    ADDON:RegisterDiagnosticCommands()
+    ADDON:LogInfo("Initializing addon", ADDON.VERSION)
     InstallModeOverride()
 
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickBegin", EVENT_BEGIN_LOCKPICK, OnLockpickBegin)
@@ -448,9 +449,7 @@ local function OnAddonLoaded(_, addonName)
 
     RegisterSlashCommands()
 
-    if ADDON.RegisterSettings then
-        ADDON:RegisterSettings()
-    end
+    ADDON:RegisterSettings()
 
     ADDON.runtime.initialized = true
     ADDON:Refresh()

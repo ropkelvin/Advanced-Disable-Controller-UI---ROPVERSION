@@ -34,11 +34,7 @@ local function CopyProfileSettings(source, target)
 end
 
 local function OriginalGamepadPreferredMode()
-    local original = ADDON.runtime.originalIsInGamepadPreferredMode
-    if type(original) == "function" then
-        return original()
-    end
-    return false
+    return ADDON.runtime.originalIsInGamepadPreferredMode()
 end
 
 local function GetSettings()

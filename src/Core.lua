@@ -488,26 +488,26 @@ local function OnAddonLoaded(_, addonName)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickSuccess", EVENT_LOCKPICK_SUCCESS, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickFailed", EVENT_LOCKPICK_FAILED, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_ModeChanged", EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, OnGamepadPreferredModeChanged)
-    -- Complete deferred platform refreshes only after ESO has returned to
-    -- its base HUD/HUD-UI scene. This handles mode changes made in settings
-    -- menus and focus loss (which ESO represents by showing the base hudui
-    -- scene). It deliberately runs for both Hybrid and Gamepad selections.
+    -- SceneStateChanged fires for the menu scene as it hides too. Listen to
+    -- all scene transitions rather than only hud/hudui becoming SHOWN: HUD
+    -- may have remained shown underneath a stacked settings scene and receive
+    -- no new SHOWN event when it becomes current again. The delayed base-scene
+    -- check handles both that case and focus loss (which shows hudui).
     if SCENE_MANAGER and SCENE_MANAGER.RegisterCallback then
         SCENE_MANAGER:RegisterCallback("SceneStateChanged", function(scene, oldState, newState)
-            if newState ~= SCENE_SHOWN then
+            if newState ~= SCENE_SHOWN and newState ~= SCENE_HIDDEN then
                 return
             end
 
-            local sceneName = scene and scene.GetName and scene:GetName()
-            if sceneName ~= "hud" and sceneName ~= "hudui" then
+            local settings = GetSettings()
+            if not ADDON.runtime.platformRefreshPending and not settings.useHybridUI then
                 return
             end
 
             zo_callLater(function()
-                local settings = GetSettings()
                 if ADDON.runtime.initialized
                     and IsShowingBaseHUDScene()
-                    and (ADDON.runtime.platformRefreshPending or settings.useHybridUI) then
+                    and (ADDON.runtime.platformRefreshPending or GetSettings().useHybridUI) then
                     ADDON:LogDebug("Refreshing platform styles after returning to the base HUD scene.")
                     RefreshPlatformMode()
                 end

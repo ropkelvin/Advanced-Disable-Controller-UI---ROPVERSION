@@ -8,7 +8,7 @@
 - Packaging remains a single `ESOHybridUI/` folder inside the installable ZIP.
 
 
-Controller-first interface addon for The Elder Scrolls Online. It provides native Gamepad mode and a compact Hybrid mode with controller prompts.
+Controller-first interface addon for The Elder Scrolls Online. It provides native Gamepad mode and a compact Hybrid mode with controller prompts. Hybrid keeps the keyboard HUD and keyboard-style quickslot/player-interaction wheels while menus and navigation remain native gamepad UI.
 
 ## Dependency
 

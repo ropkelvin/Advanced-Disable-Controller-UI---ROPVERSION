@@ -81,8 +81,9 @@ local function InstallManagerHooks()
 
     managerClass.StartInteraction = function(self, wheelType, ...)
         local function Pack(...) return { n = select("#", ...), ... } end
+        local args = { n = select("#", ...), ... }
         local function StartNativeWheel()
-            return originalStart(self, wheelType, ...)
+            return originalStart(self, wheelType, unpack(args, 1, args.n))
         end
         local settings = ADDON:GetSettings()
         local results
@@ -130,8 +131,9 @@ local function InstallPlayerInteractionWheelHook()
     playerToPlayerClass.StartInteraction = function(self, ...)
         local settings = ADDON:GetSettings()
         if settings.useHybridUI and ADDON:IsNativeGamepadMode() then
+            local args = { n = select("#", ...), ... }
             local function StartKeyboardWheel()
-                return originalStart(self, ...)
+                return originalStart(self, unpack(args, 1, args.n))
             end
             return ADDON:WithKeyboardWheelMode(StartKeyboardWheel)
         end

@@ -1,7 +1,8 @@
 # ESO Hybrid UI
 
-## Current release — 3.3.0
+## Current release — 3.3.1
 
+- Keeps the Hybrid keyboard HUD presentation stable across window focus loss and regain by refreshing ESO platform styles after its focus transition.
 - Added explicit keyboard presentation for ESO's native utility, fishing, target-marker, and player-interaction wheels in Hybrid mode while preserving gamepad input and gamepad menus.
 
 - Removed redundant defensive type checks around ESO Update 51 APIs confirmed to exist in the live UI source.

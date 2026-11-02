@@ -87,8 +87,7 @@ local function InstallManagerHooks()
             and wheelType == ZO_INTERACTIVE_WHEEL_TYPE_UTILITY
             and self.gamepad == false
             and ADDON:GetSettings().useControllerUI ~= true
-            and ADDON:IsNativeGamepadMode()
-            then
+            and ADDON:IsNativeGamepadMode() then
             PushActionLayerByName(BRIDGE_LAYER)
             ADDON.runtime.utilityWheelLayerActive = true
         end

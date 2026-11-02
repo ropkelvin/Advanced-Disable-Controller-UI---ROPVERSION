@@ -12,7 +12,7 @@ ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Toggle gamepad / hyb
 ADDON.ADDON_NAME = "ESOHybridUI"
 ADDON.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
 ADDON.SAVED_VARIABLES_VERSION = 1
-ADDON.VERSION = "3.3.0"
+ADDON.VERSION = "3.3.1"
 
 ADDON.defaults = {
     -- Main behavior
@@ -38,6 +38,8 @@ ADDON.runtime = {
     forceKeyboardWheelDepth = 0,
     isLockpicking = false,
     isRefreshing = false,
+    gameHasFocus = nil,
+    focusRefreshGeneration = 0,
     initialized = false,
     actionBarHooksInstalled = false,
     promptHooksInstalled = false,

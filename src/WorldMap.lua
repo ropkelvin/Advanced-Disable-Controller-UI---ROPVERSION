@@ -31,7 +31,6 @@ local function InstallHybridWorldMapSceneHook()
     end
 
     local originalShowWorldMap = ZO_WorldMap_ShowWorldMap
-    ADDON.runtime.originalShowWorldMap = originalShowWorldMap
     -- ESO's function only selects/shows a scene and has no return value,
     -- so a native pre-hook can safely run it under the gamepad context.
     ZO_PreHook("ZO_WorldMap_ShowWorldMap", function(...)
@@ -49,7 +48,4 @@ end
 function ADDON:ApplyWorldMap()
     InstallHybridWorldMapSceneHook()
     InstallHybridMapCategoryHook()
-    if self.runtime.worldMapHooksInstalled then return end
-
-    self.runtime.worldMapHooksInstalled = true
 end

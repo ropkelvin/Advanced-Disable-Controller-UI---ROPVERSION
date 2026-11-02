@@ -87,7 +87,6 @@ function ADDON:ApplyRecommendedESOSettings()
         saveOption
     )
 
-    self.savedVariablesAccountWide._esoHybridRecommendedSettingsApplied = true
     self:LogInfo("Recommended ESO controller and keyboard-chat settings applied and saved.")
 
     if CHAT_SYSTEM and CHAT_SYSTEM.AddMessage then
@@ -318,7 +317,6 @@ function ADDON:SetUseAccountWideSettings(enabled)
     -- character enables it, every character on this ESO account uses the
     -- same account profile without requiring a separate opt-in.
     account._esoHybridUseAccountWideSettings = enabled == true
-    character.useAccountWideSettings = enabled == true
     self:Refresh()
 end
 
@@ -365,7 +363,6 @@ local function InitializeSavedVariables()
         CopyProfileSettings(legacyAccountProfile, account)
         account._esoHybridUseAccountWideSettings = legacyAccountProfile._esoHybridUseAccountWideSettings
         account._esoHybridWelcomeShown = legacyAccountProfile._esoHybridWelcomeShown
-        account._esoHybridRecommendedSettingsApplied = legacyAccountProfile._esoHybridRecommendedSettingsApplied
         account._esoHybridServerProfileMigrated = true
     end
 

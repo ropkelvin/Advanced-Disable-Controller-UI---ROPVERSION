@@ -27,7 +27,6 @@ ADDON.defaults = {
         stealthIcon = "ZoInteractionPrompt",
     },
 
-    useAccountWideSettings = false,
     debugLoggingEnabled = false,
 }
 
@@ -43,7 +42,6 @@ ADDON.runtime = {
     initialized = false,
     actionBarHooksInstalled = false,
     promptHooksInstalled = false,
-    worldMapHooksInstalled = false,
     utilityWheelHooksInstalled = false,
     utilityWheelDefaultsCopied = false,
     utilityWheelLeftCopied = false,

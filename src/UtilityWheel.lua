@@ -75,9 +75,6 @@ local function InstallManagerHooks()
     -- singleton. Preserve StartInteraction's complete return tuple because
     -- ESO's input binding consumes its boolean result.
     local originalStart = managerClass.StartInteraction
-    local originalStop = managerClass.StopInteraction
-    ADDON.runtime.originalUtilityWheelStart = originalStart
-    ADDON.runtime.originalUtilityWheelStop = originalStop
 
     managerClass.StartInteraction = function(self, wheelType, ...)
         local function Pack(...) return { n = select("#", ...), ... } end

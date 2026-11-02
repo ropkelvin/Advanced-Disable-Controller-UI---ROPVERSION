@@ -144,32 +144,26 @@ local function InstallGlobalPromptHooks()
     -- return values while suppressing the original implementation. Preserve
     -- each original function and forward all arguments when Hybrid is off.
     local originalShouldUseGamepadAction = ZO_Keybindings_ShouldUseGamepadAction
-    if type(originalShouldUseGamepadAction) == "function" then
-        runtime.originalShouldUseGamepadAction = originalShouldUseGamepadAction
-        _G.ZO_Keybindings_ShouldUseGamepadAction = function(alwaysPreferGamepadMode, ...)
-            if ShouldForceControllerPrompts() then return true end
-            return originalShouldUseGamepadAction(alwaysPreferGamepadMode, ...)
-        end
+    runtime.originalShouldUseGamepadAction = originalShouldUseGamepadAction
+    _G.ZO_Keybindings_ShouldUseGamepadAction = function(alwaysPreferGamepadMode, ...)
+        if ShouldForceControllerPrompts() then return true end
+        return originalShouldUseGamepadAction(alwaysPreferGamepadMode, ...)
     end
 
     local originalGetPreferredKeyType = ZO_Keybindings_GetPreferredKeyType
-    if type(originalGetPreferredKeyType) == "function" then
-        runtime.originalGetPreferredKeyType = originalGetPreferredKeyType
-        _G.ZO_Keybindings_GetPreferredKeyType = function(alwaysPreferGamepadMode, ...)
-            if ShouldForceControllerPrompts() then
-                return PREFERRED_INPUT_DEVICE_TYPE_GAMEPAD
-            end
-            return originalGetPreferredKeyType(alwaysPreferGamepadMode, ...)
+    runtime.originalGetPreferredKeyType = originalGetPreferredKeyType
+    _G.ZO_Keybindings_GetPreferredKeyType = function(alwaysPreferGamepadMode, ...)
+        if ShouldForceControllerPrompts() then
+            return PREFERRED_INPUT_DEVICE_TYPE_GAMEPAD
         end
+        return originalGetPreferredKeyType(alwaysPreferGamepadMode, ...)
     end
 
     local originalShouldShowGamepadKeybind = ZO_Keybindings_ShouldShowGamepadKeybind
-    if type(originalShouldShowGamepadKeybind) == "function" then
-        runtime.originalShouldShowGamepadKeybind = originalShouldShowGamepadKeybind
-        _G.ZO_Keybindings_ShouldShowGamepadKeybind = function(alwaysPreferGamepadMode, ...)
-            if ShouldForceControllerPrompts() then return true end
-            return originalShouldShowGamepadKeybind(alwaysPreferGamepadMode, ...)
-        end
+    runtime.originalShouldShowGamepadKeybind = originalShouldShowGamepadKeybind
+    _G.ZO_Keybindings_ShouldShowGamepadKeybind = function(alwaysPreferGamepadMode, ...)
+        if ShouldForceControllerPrompts() then return true end
+        return originalShouldShowGamepadKeybind(alwaysPreferGamepadMode, ...)
     end
 
     runtime.globalPromptHooksInstalled = true
@@ -177,7 +171,7 @@ end
 
 local function InstallDeathPromptHook()
     local runtime = ADDON.runtime
-    if runtime.deathPromptHookInstalled or not DEATH or type(DEATH.ApplyStyle) ~= "function" then
+    if runtime.deathPromptHookInstalled or not DEATH then
         return
     end
 
@@ -199,20 +193,16 @@ end
 local function RefreshReticlePrompt()
     if not RETICLE or not RETICLE.interactKeybindButton then return end
     local button = RETICLE.interactKeybindButton
-    if type(button.SetKeybind) == "function" then
-        button:SetKeybind("GAME_CAMERA_INTERACT", false, "GAMEPAD_JUMP_OR_INTERACT")
-    end
+    button:SetKeybind("GAME_CAMERA_INTERACT", false, "GAMEPAD_JUMP_OR_INTERACT")
 end
 
 local function RefreshPlayerInteractionPrompt()
     if not PLAYER_TO_PLAYER or not PLAYER_TO_PLAYER.actionKeybindButton then return end
     local button = PLAYER_TO_PLAYER.actionKeybindButton
-    if type(button.SetKeybind) == "function" then
-        -- Keep the same action so ESO resolves the user's actual configured
-        -- gamepad binding (including hold/chord combinations) instead of
-        -- displaying the generic A-button glyph from GAMEPAD_JUMP_OR_INTERACT.
-        button:SetKeybind("PLAYER_TO_PLAYER_INTERACT", false, nil)
-    end
+    -- Keep the same action so ESO resolves the user's actual configured
+    -- gamepad binding (including hold/chord combinations) instead of
+    -- displaying the generic A-button glyph from GAMEPAD_JUMP_OR_INTERACT.
+    button:SetKeybind("PLAYER_TO_PLAYER_INTERACT", false, nil)
 end
 
 local function ApplyReticleFonts(settings, forceGamepadPrompts)

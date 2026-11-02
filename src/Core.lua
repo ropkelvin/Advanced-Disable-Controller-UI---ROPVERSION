@@ -504,7 +504,14 @@ local function OnAddonLoaded(_, addonName)
                 return
             end
 
+            -- Scene transitions can arrive in bursts while menus stack or
+            -- close. Coalesce them into one deferred base-HUD refresh.
+            if ADDON.runtime.platformRefreshScheduled then
+                return
+            end
+            ADDON.runtime.platformRefreshScheduled = true
             zo_callLater(function()
+                ADDON.runtime.platformRefreshScheduled = false
                 if ADDON.runtime.initialized
                     and IsShowingBaseHUDScene()
                     and (ADDON.runtime.platformRefreshPending or GetSettings().useHybridUI) then

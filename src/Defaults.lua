@@ -39,6 +39,7 @@ ADDON.runtime = {
     isLockpicking = false,
     isRefreshing = false,
     platformRefreshPending = false,
+    platformRefreshScheduled = false,
     initialized = false,
     actionBarHooksInstalled = false,
     promptHooksInstalled = false,

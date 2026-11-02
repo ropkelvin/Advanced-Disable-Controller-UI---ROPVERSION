@@ -81,7 +81,16 @@ local function InstallManagerHooks()
 
     managerClass.StartInteraction = function(self, wheelType, ...)
         local function Pack(...) return { n = select("#", ...), ... } end
-        local results = Pack(originalStart(self, wheelType, ...))
+        local function StartNativeWheel()
+            return originalStart(self, wheelType, ...)
+        end
+        local settings = ADDON:GetSettings()
+        local results
+        if settings.useHybridUI and ADDON:IsNativeGamepadMode() then
+            results = Pack(ADDON:WithKeyboardWheelMode(StartNativeWheel))
+        else
+            results = Pack(StartNativeWheel())
+        end
         local started = results[1]
         if started
             and wheelType == ZO_INTERACTIVE_WHEEL_TYPE_UTILITY
@@ -107,8 +116,34 @@ local function InstallManagerHooks()
     ADDON.runtime.utilityWheelHooksInstalled = true
 end
 
+local function InstallPlayerInteractionWheelHook()
+    local playerToPlayerClass = ZO_PlayerToPlayer
+    if not playerToPlayerClass or ADDON.runtime.playerInteractionWheelHookInstalled then
+        return
+    end
+
+    local originalStart = playerToPlayerClass.StartInteraction
+    if type(originalStart) ~= "function" then
+        return
+    end
+
+    playerToPlayerClass.StartInteraction = function(self, ...)
+        local settings = ADDON:GetSettings()
+        if settings.useHybridUI and ADDON:IsNativeGamepadMode() then
+            local function StartKeyboardWheel()
+                return originalStart(self, ...)
+            end
+            return ADDON:WithKeyboardWheelMode(StartKeyboardWheel)
+        end
+        return originalStart(self, ...)
+    end
+
+    ADDON.runtime.playerInteractionWheelHookInstalled = true
+end
+
 function ADDON:ApplyUtilityWheel()
     InstallManagerHooks()
+    InstallPlayerInteractionWheelHook()
 
     if not self.runtime.utilityWheelLeftCopied then
         self.runtime.utilityWheelLeftCopied = CopyGamepadDefaultBindings(

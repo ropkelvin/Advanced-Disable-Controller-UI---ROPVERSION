@@ -106,6 +106,9 @@ local function RegisterControllerActionGlyph(button)
         local showDedicatedGamepadKeys = IsInGamepadPreferredMode()
             and ZO_Keybindings_ShouldShowGamepadKeybind()
 
+        -- Restore ESO's native controls when leaving Hybrid's custom glyph
+        -- presentation; the next line then applies ESO's normal visibility.
+        SetNativeUltimateKeysHidden(button, not showDedicatedGamepadKeys)
         label:SetHidden(showDedicatedGamepadKeys)
         if button.leftKey and button.rightKey then
             button:HideKeys(not showDedicatedGamepadKeys)

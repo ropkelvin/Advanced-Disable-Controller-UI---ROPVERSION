@@ -1,9 +1,14 @@
 # ESO Hybrid UI
 
-## Current release — 3.3.6
+AI-assisted development: AI tools contributed to portions of this addon's code and documentation. The maintainer is responsible for reviewing changes, validating behavior in ESO, and maintaining the addon.
+
+This add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates.
+
+## Current release — 3.3.7
 
 - Shows player and companion ultimate controller prompts in Hybrid using ESO's native `ZO_KeyTexture` glyph controls, sized to 24×24 for the compact keyboard HUD.
 - Hides the keyboard-style ultimate binding label in Hybrid because ESO's combined gamepad ultimate action is not a normal compact text binding.
+- Restores ESO's native ultimate-key controls when leaving Hybrid's custom glyph presentation.
 - Removes the speculative 600 ms weapon-swap refresh; the standalone key textures persist independently of action-slot swap updates.
 - Leaves native Gamepad-mode ultimate presentation to ESO.
 
@@ -34,11 +39,12 @@ ESOHybridUI.zip
 └── ESOHybridUI/
     ├── ESOHybridUI.txt
     ├── Bindings.xml
+    ├── README.txt
     └── src/
         └── *.lua
 ```
 
-Do not zip the repository root directly. The GitHub Actions workflow packages the correct folder and uploads an `ESOHybridUI.zip` artifact on pushes to `master`.
+Do not zip the repository root directly. The GitHub Actions workflow packages the installable files and uploads an `ESOHybridUI.zip` artifact on pushes to `master` and the maintenance feature branch. The packaged `README.txt` contains the required third-party disclaimer and addon notices.
 
 ## SavedVariables
 
@@ -56,7 +62,3 @@ This repository does not bundle LibAddonMenu-2.0. Install it separately through 
 ## In-game actions and donations
 
 The optional donation shortcut only opens a mail draft addressed to @ZOSPlsFix. The player must manually choose whether to attach gold and the amount. The addon never attaches or modifies mail gold, sends mail, trades, automates combat, or performs other player actions.
-
-## AI disclosure
-
-AI-assisted development: AI tools have contributed to portions of this addon's code and documentation. The maintainer is responsible for reviewing changes, validating behavior in ESO, and maintaining the addon.

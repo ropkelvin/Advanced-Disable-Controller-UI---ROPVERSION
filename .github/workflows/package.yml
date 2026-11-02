@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - master
+      - feature/hybrid-keyboard-hud-gamepad
   pull_request:
     branches:
       - master
+      - feature/hybrid-keyboard-hud-gamepad
   workflow_dispatch:
 
 permissions:
@@ -19,20 +21,42 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Build ESO addon archive
+      - name: Install Lua 5.1 and XML validation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes lua5.1 libxml2-utils
+
+      - name: Validate Lua syntax and binding XML
         shell: bash
         run: |
+          set -euo pipefail
+          for file in src/*.lua; do
+            luac5.1 -p "$file"
+          done
+          xmllint --noout Bindings.xml
+
+      - name: Build and validate ESO addon archive
+        shell: bash
+        run: |
+          set -euo pipefail
           mkdir -p dist/ESOHybridUI
-          cp ESOHybridUI.txt Bindings.xml dist/ESOHybridUI/
+          cp ESOHybridUI.txt Bindings.xml README.txt dist/ESOHybridUI/
           cp -R src dist/ESOHybridUI/
           cd dist
-          zip -r ESOHybridUI.zip ESOHybridUI
+          zip -X -r ESOHybridUI.zip ESOHybridUI
           test "$(unzip -Z1 ESOHybridUI.zip | head -n 1)" = "ESOHybridUI/"
           unzip -Z1 ESOHybridUI.zip | grep -qx "ESOHybridUI/ESOHybridUI.txt"
+          unzip -Z1 ESOHybridUI.zip | grep -qx "ESOHybridUI/README.txt"
           if unzip -Z1 ESOHybridUI.zip | grep -Eq '(^|/)(\.git|\.idea|\.vs|__MACOSX)/|(^|/)desktop\.ini$'; then
             echo "Unexpected development or OS metadata found in addon archive."
             exit 1
           fi
+          while IFS= read -r entry; do
+            case "$entry" in
+              ESOHybridUI/|ESOHybridUI/src/|ESOHybridUI/ESOHybridUI.txt|ESOHybridUI/Bindings.xml|ESOHybridUI/README.txt|ESOHybridUI/src/*.lua) ;;
+              *) echo "Unexpected archive entry: $entry"; exit 1 ;;
+            esac
+          done < <(unzip -Z1 ESOHybridUI.zip)
 
       - name: Upload installable archive
         uses: actions/upload-artifact@v4

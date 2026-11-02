@@ -137,16 +137,6 @@ local function RefreshExistingActionGlyphs()
     RegisterControllerActionGlyph(ZO_ActionBar_GetButton(ACTION_BAR_ULTIMATE_SLOT_INDEX + 1, HOTBAR_CATEGORY_COMPANION))
 end
 
-local function RefreshUltimateGlyphs()
-    for _, hotbarCategory in ipairs({ HOTBAR_CATEGORY_PRIMARY, HOTBAR_CATEGORY_BACKUP }) do
-        RegisterControllerActionGlyph(
-            ZO_ActionBar_GetButton(ACTION_BAR_ULTIMATE_SLOT_INDEX + 1, hotbarCategory)
-        )
-    end
-    RegisterControllerActionGlyph(
-        ZO_ActionBar_GetButton(ACTION_BAR_ULTIMATE_SLOT_INDEX + 1, HOTBAR_CATEGORY_COMPANION)
-    )
-end
 
 local function InstallActionButtonHooks()
     if ADDON.runtime.actionButtonHooksInstalled then
@@ -157,24 +147,6 @@ local function InstallActionButtonHooks()
     -- rather than replacing the shared ActionButton method.
     ZO_PostHook(ActionButton, "Initialize", RegisterControllerActionGlyph)
 
-    -- ESO's active-hotbar event starts a swap animation and temporarily
-    -- suppresses action-button updates. Re-register after the animation so
-    -- ESO's style/visibility updates cannot leave either ultimate label hidden.
-    EVENT_MANAGER:RegisterForEvent(
-        "ESOHybridUI_UltimateGlyphSwapRefresh",
-        EVENT_ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED,
-        function(_, didActiveHotbarChange)
-            if not didActiveHotbarChange or not ADDON:GetSettings().useHybridUI then
-                return
-            end
-
-            zo_callLater(function()
-                if ADDON:GetSettings().useHybridUI then
-                    RefreshUltimateGlyphs()
-                end
-            end, 600)
-        end
-    )
 
     ADDON.runtime.actionButtonHooksInstalled = true
 end

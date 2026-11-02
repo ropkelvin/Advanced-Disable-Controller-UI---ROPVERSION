@@ -143,14 +143,6 @@ local function IsGamepadUIAllowed()
         return OriginalGamepadPreferredMode()
     end
 
-    -- ESO deliberately enters UI mode when the game loses window focus. That
-    -- is a focus-management state, not a request to change Hybrid's HUD
-    -- platform. Keep the keyboard presentation while unfocused; on focus
-    -- regain ESO's scene manager gets first chance to restore the HUD scene.
-    if settings.useHybridUI and ADDON.runtime.gameHasFocus == false then
-        return false
-    end
-
     -- Loot containers have a dedicated native gamepad scene, but ESO can
     -- request the keyboard scene while Hybrid mode keeps the gameplay HUD in
     -- keyboard presentation. Preserve the native controller loot workflow.
@@ -180,11 +172,16 @@ local function IsGamepadUIAllowed()
             return OriginalGamepadPreferredMode()
         end
 
-        return OriginalGamepadPreferredMode()
-            and SCENE_MANAGER
+        -- UI mode alone is not enough: ESO also enters UI mode on focus
+        -- loss while showing its base HUD-UI scene. Only use gamepad styling
+        -- for an actual menu/overlay scene, not for the base HUD scene.
+        local inUIMode = SCENE_MANAGER
             and SCENE_MANAGER.IsInUIMode
             and SCENE_MANAGER:IsInUIMode()
-            or false
+        local showingBaseScene = SCENE_MANAGER
+            and SCENE_MANAGER.IsShowingBaseScene
+            and SCENE_MANAGER:IsShowingBaseScene()
+        return OriginalGamepadPreferredMode() and inUIMode and not showingBaseScene
     end
 
     return false
@@ -444,31 +441,6 @@ local function OnGamepadPreferredModeChanged()
     end
 end
 
-local function OnGameFocusChanged(_, hasFocus)
-    local runtime = ADDON.runtime
-    runtime.gameHasFocus = hasFocus == true
-    runtime.focusRefreshGeneration = (runtime.focusRefreshGeneration or 0) + 1
-    local generation = runtime.focusRefreshGeneration
-
-    ADDON:LogDebug("Game focus changed:", tostring(runtime.gameHasFocus))
-
-    -- ZO_IngameSceneManager handles this same event first. Defer our refresh
-    -- until its focus/UI-mode transition has completed, and ignore stale
-    -- callbacks if focus changes again before the delay expires.
-    if runtime.gameHasFocus then
-        zo_callLater(function()
-            if generation ~= runtime.focusRefreshGeneration then
-                return
-            end
-            if not GetSettings().useHybridUI then
-                return
-            end
-
-            ADDON:LogDebug("Refreshing Hybrid presentation after focus regain.")
-            ADDON:Refresh()
-        end, 150)
-    end
-end
 
 local function OnAddonLoaded(_, addonName)
     if addonName ~= ADDON.ADDON_NAME or ADDON.runtime.initialized then
@@ -485,8 +457,30 @@ local function OnAddonLoaded(_, addonName)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickSuccess", EVENT_LOCKPICK_SUCCESS, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_LockpickFailed", EVENT_LOCKPICK_FAILED, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_ModeChanged", EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, OnGamepadPreferredModeChanged)
-    ADDON.runtime.gameHasFocus = DoesGameHaveFocus()
-    EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_GameFocusChanged", EVENT_GAME_FOCUS_CHANGED, OnGameFocusChanged)
+    -- Refresh native platform styles whenever ESO returns to a base HUD
+    -- scene. This is important when Hybrid was selected from inside a
+    -- gamepad settings scene: the settings scene must remain gamepad, then
+    -- the base HUD must be restyled as keyboard when that scene closes.
+    if SCENE_MANAGER and SCENE_MANAGER.RegisterCallback then
+        SCENE_MANAGER:RegisterCallback("SceneStateChanged", function(scene, oldState, newState)
+            if not GetSettings().useHybridUI or newState ~= SCENE_SHOWN then
+                return
+            end
+
+            local sceneName = scene and scene.GetName and scene:GetName()
+            if sceneName ~= "hud" and sceneName ~= "hudui" then
+                return
+            end
+
+            zo_callLater(function()
+                if GetSettings().useHybridUI and SCENE_MANAGER:IsShowingBaseScene() then
+                    ADDON:LogDebug("Reapplying Hybrid platform styling after base HUD scene transition.")
+                    RefreshPlatformMode()
+                end
+            end, 50)
+        end)
+    end
+
 
     local function OnLockpickSceneStateChanged(_, newState)
         if newState == SCENE_HIDDEN then

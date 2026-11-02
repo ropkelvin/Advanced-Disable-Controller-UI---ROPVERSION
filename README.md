@@ -1,20 +1,11 @@
 # ESO Hybrid UI
 
-## Current release — 3.3.5
+## Current release — 3.3.6
 
-- Displays Hybrid ultimate controller glyphs through the compact keyboard-HUD binding label rather than the larger dedicated Gamepad ultimate key controls. Reapplies both player and companion ultimate labels after weapon-swap animations.
-
-- Fixes the player and companion ultimate controller glyphs in Hybrid mode by using the add-on controller-prompt state as well as ESO’s native gamepad mode state. Native Gamepad mode behavior remains unchanged.
-
-- Defers ESO's native platform-style refresh while a menu/overlay is current, preventing the temporary preferred-mode event from closing gamepad settings. The refresh runs after ESO returns to the base HUD.
-- Reapplies platform styling after base HUD/HUD-UI transitions, including focus loss, while preserving the user's saved Gamepad Mode setting.
-- Restricts the temporary keyboard-presentation override to the utility/quickslot wheel. Fishing and target-marker wheels retain ESO's native presentation; the player-to-player wheel remains handled separately.
-- Keeps controller input, button glyphs, and all menus/navigation native gamepad in Hybrid mode.
-
-- Removed redundant defensive type checks around ESO Update 51 APIs confirmed to exist in the live UI source.
-- Preserved guards for optional libraries and UI controls that may not be initialized.
-- Kept the existing non-destructive megaserver SavedVariables migration unchanged.
-- Packaging remains a single `ESOHybridUI/` folder inside the installable ZIP.
+- Shows player and companion ultimate controller prompts in Hybrid using ESO's native `ZO_KeyTexture` glyph controls, sized to 24×24 for the compact keyboard HUD.
+- Hides the keyboard-style ultimate binding label in Hybrid because ESO's combined gamepad ultimate action is not a normal compact text binding.
+- Removes the speculative 600 ms weapon-swap refresh; the standalone key textures persist independently of action-slot swap updates.
+- Leaves native Gamepad-mode ultimate presentation to ESO.
 
 Controller-first interface addon for The Elder Scrolls Online. It provides native Gamepad mode and a compact Hybrid mode with controller prompts. Hybrid keeps the keyboard HUD and keyboard-style quickslot/player-interaction wheels while menus and navigation remain native gamepad UI.
 

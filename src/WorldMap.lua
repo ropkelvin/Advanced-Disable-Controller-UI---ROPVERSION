@@ -29,7 +29,7 @@ local function InstallHybridMapCategoryHook()
 end
 
 local function InstallHybridWorldMapSceneHook()
-    if ADDON.runtime.hybridWorldMapHookInstalled or type(ZO_WorldMap_ShowWorldMap) ~= "function" then
+    if ADDON.runtime.hybridWorldMapHookInstalled then
         return
     end
 

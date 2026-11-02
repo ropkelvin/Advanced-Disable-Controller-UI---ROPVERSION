@@ -1,6 +1,8 @@
 # ESO Hybrid UI
 
-## Current release — 3.3.4
+## Current release — 3.3.5
+
+- Displays Hybrid ultimate controller glyphs through the compact keyboard-HUD binding label rather than the larger dedicated Gamepad ultimate key controls. Reapplies both player and companion ultimate labels after weapon-swap animations.
 
 - Fixes the player and companion ultimate controller glyphs in Hybrid mode by using the add-on controller-prompt state as well as ESO’s native gamepad mode state. Native Gamepad mode behavior remains unchanged.
 

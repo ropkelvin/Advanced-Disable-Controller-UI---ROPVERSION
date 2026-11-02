@@ -1,5 +1,13 @@
 # ESO Hybrid UI
 
+## Current release — 3.2.4
+
+- Removed redundant defensive type checks around ESO Update 51 APIs confirmed to exist in the live UI source.
+- Preserved guards for optional libraries and UI controls that may not be initialized.
+- Kept the existing non-destructive megaserver SavedVariables migration unchanged.
+- Packaging remains a single `ESOHybridUI/` folder inside the installable ZIP.
+
+
 Controller-first interface addon for The Elder Scrolls Online. It provides native Gamepad mode and a compact Hybrid mode with controller prompts.
 
 ## Dependency

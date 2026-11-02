@@ -12,7 +12,7 @@ ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Toggle gamepad / hyb
 ADDON.ADDON_NAME = "ESOHybridUI"
 ADDON.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
 ADDON.SAVED_VARIABLES_VERSION = 1
-ADDON.VERSION = "3.3.6"
+ADDON.VERSION = "3.3.8"
 
 ADDON.defaults = {
     -- Main behavior
@@ -27,7 +27,6 @@ ADDON.defaults = {
         stealthIcon = "ZoInteractionPrompt",
     },
 
-    useAccountWideSettings = false,
     debugLoggingEnabled = false,
 }
 
@@ -39,10 +38,10 @@ ADDON.runtime = {
     isLockpicking = false,
     isRefreshing = false,
     platformRefreshPending = false,
+    platformRefreshScheduled = false,
     initialized = false,
     actionBarHooksInstalled = false,
     promptHooksInstalled = false,
-    worldMapHooksInstalled = false,
     utilityWheelHooksInstalled = false,
     utilityWheelDefaultsCopied = false,
     utilityWheelLeftCopied = false,

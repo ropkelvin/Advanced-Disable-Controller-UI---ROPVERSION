@@ -6,6 +6,70 @@ local function ShouldUseControllerActionGlyphs()
     return ADDON:ShouldShowControllerPrompts()
 end
 
+local function SetNativeUltimateKeysHidden(button, hidden)
+    if not button or not button.slot then
+        return
+    end
+
+    local leftKey = button.slot:GetNamedChild("LeftKeybind")
+    local rightKey = button.slot:GetNamedChild("RightKeybind")
+    if leftKey then
+        leftKey:SetHidden(hidden)
+    end
+    if rightKey then
+        rightKey:SetHidden(hidden)
+    end
+end
+
+local function CreateHybridUltimateKey(button, side, keyCode)
+    local control = button["hybrid" .. side .. "Key"]
+    if control then
+        return control
+    end
+
+    -- Use ESO's native key-texture control so glyph artwork follows the
+    -- active controller type. The keyboard ultimate template has no
+    -- LeftKeybind/RightKeybind children, so these compact controls are
+    -- created independently of the platform action-button template.
+    local controlName = button.slot:GetName() .. "ESOHybrid" .. side .. "Keybind"
+    control = CreateControlFromVirtual(controlName, button.slot, "ZO_KeyTexture")
+    control:SetKeyCode(keyCode)
+    control:SetDimensions(24, 24)
+    control:SetDrawLayer(DL_OVERLAY)
+
+    if side == "Left" then
+        control:SetAnchor(TOPRIGHT, button.slot, BOTTOMLEFT, 8, -8)
+    else
+        control:SetAnchor(TOPLEFT, button.slot, BOTTOMRIGHT, -8, -8)
+    end
+
+    button["hybrid" .. side .. "Key"] = control
+    return control
+end
+
+local function SetHybridUltimateGlyphs(button, visible)
+    if not button or not button.slot then
+        return
+    end
+
+    if visible then
+        local isCompanion = button:GetHotbarCategory() == HOTBAR_CATEGORY_COMPANION
+        local leftCode = isCompanion and KEY_GAMEPAD_LEFT_STICK or KEY_GAMEPAD_LEFT_SHOULDER
+        local rightCode = isCompanion and KEY_GAMEPAD_RIGHT_STICK or KEY_GAMEPAD_RIGHT_SHOULDER
+
+        CreateHybridUltimateKey(button, "Left", leftCode):SetHidden(false)
+        CreateHybridUltimateKey(button, "Right", rightCode):SetHidden(false)
+        SetNativeUltimateKeysHidden(button, true)
+    else
+        if button.hybridLeftKey then
+            button.hybridLeftKey:SetHidden(true)
+        end
+        if button.hybridRightKey then
+            button.hybridRightKey:SetHidden(true)
+        end
+    end
+end
+
 local function RegisterControllerActionGlyph(button)
     if not button or not button.buttonText then
         return
@@ -27,17 +91,18 @@ local function RegisterControllerActionGlyph(button)
         gamepadActionName = "GAMEPAD_ACTION_BUTTON_" .. tostring(slotNum)
     end
 
-    -- ESO's ActionButton registers an OnUltimateChanged callback for both
-    -- player and companion ultimate slots. Preserve native gamepad behavior,
-    -- but also show the controller indicators on Hybrid's keyboard HUD.
     local isUltimateSlot = ZO_ActionBar_IsUltimateSlot(slotNum, hotbarCategory)
     local onUltimateChanged = isUltimateSlot and function(label)
-        -- IsInGamepadPreferredMode() is intentionally false on Hybrid's
-        -- gameplay HUD. The prompt helper covers that case without changing
-        -- the platform mode used by ESO's HUD or menus.
-        -- The dedicated LeftKey/RightKey controls are larger gamepad-ultimate
-        -- indicators. Use them only in native Gamepad mode. Hybrid instead
-        -- shows the controller binding in buttonText, matching normal skills.
+        if ADDON:GetSettings().useHybridUI and ShouldUseControllerActionGlyphs() then
+            -- The hidden GAMEPAD_ACTION_BUTTON_8 binding is not a substitute
+            -- for ESO's two-part ultimate prompt. Use native ZO_KeyTexture
+            -- glyphs at compact keyboard-HUD dimensions instead.
+            label:SetHidden(true)
+            SetHybridUltimateGlyphs(button, true)
+            return
+        end
+
+        SetHybridUltimateGlyphs(button, false)
         local showDedicatedGamepadKeys = IsInGamepadPreferredMode()
             and ZO_Keybindings_ShouldShowGamepadKeybind()
 
@@ -49,8 +114,6 @@ local function RegisterControllerActionGlyph(button)
 
     ZO_Keybindings_UnregisterLabelForBindingUpdate(button.buttonText)
     local HIDE_UNBOUND = false
-    -- Force only the action label to resolve its gamepad binding; the button
-    -- control and all action-bar dimensions retain their keyboard style.
     ZO_Keybindings_RegisterLabelForBindingUpdate(
         button.buttonText,
         keyboardActionName,
@@ -59,12 +122,6 @@ local function RegisterControllerActionGlyph(button)
         onUltimateChanged,
         ShouldUseControllerActionGlyphs()
     )
-
-    -- Registration can happen after ESO has already applied the current
-    -- platform style. Synchronize the ultimate label immediately as well.
-    if onUltimateChanged then
-        onUltimateChanged(button.buttonText)
-    end
 end
 
 local function RefreshExistingActionGlyphs()

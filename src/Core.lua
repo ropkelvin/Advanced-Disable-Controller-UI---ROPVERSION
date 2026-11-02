@@ -147,9 +147,7 @@ local function IsGamepadUIAllowed()
         -- Keep the combat/world HUD on the compact keyboard platform, but let
         -- the world map opt into ESO's native gamepad map presentation even
         -- though opening the map does not necessarily enter UI mode.
-        local worldMapShowing = WORLD_MAP_SCENE
-            and WORLD_MAP_SCENE.IsShowing
-            and WORLD_MAP_SCENE:IsShowing()
+        local worldMapShowing = WORLD_MAP_SCENE:IsShowing()
         if worldMapShowing then
             return OriginalGamepadPreferredMode()
         end

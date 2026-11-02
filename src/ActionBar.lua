@@ -28,13 +28,16 @@ local function RegisterControllerActionGlyph(button)
     end
 
     -- ESO's ActionButton registers an OnUltimateChanged callback for both
-    -- player and companion ultimate slots. It swaps the keyboard-style text
-    -- label for the two native controller-key indicators in Gamepad mode.
-    -- Preserve that behavior when replacing the binding registration.
+    -- player and companion ultimate slots. Preserve native gamepad behavior,
+    -- but also show the controller indicators on Hybrid's keyboard HUD.
     local isUltimateSlot = ZO_ActionBar_IsUltimateSlot(slotNum, hotbarCategory)
     local onUltimateChanged = isUltimateSlot and function(label)
-        local showGamepadKeys = IsInGamepadPreferredMode()
-            and ZO_Keybindings_ShouldShowGamepadKeybind()
+        -- IsInGamepadPreferredMode() is intentionally false on Hybrid's
+        -- gameplay HUD. The prompt helper covers that case without changing
+        -- the platform mode used by ESO's HUD or menus.
+        local showGamepadKeys = (
+            IsInGamepadPreferredMode() or ShouldUseControllerActionGlyphs()
+        ) and ZO_Keybindings_ShouldShowGamepadKeybind()
 
         label:SetHidden(showGamepadKeys)
         if button.leftKey and button.rightKey then
@@ -61,6 +64,7 @@ local function RegisterControllerActionGlyph(button)
         onUltimateChanged(button.buttonText)
     end
 end
+
 local function RefreshExistingActionGlyphs()
     for _, hotbarCategory in ipairs({ HOTBAR_CATEGORY_PRIMARY, HOTBAR_CATEGORY_BACKUP }) do
         for slotNum = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1,

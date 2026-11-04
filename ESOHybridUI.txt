@@ -15,6 +15,7 @@ src/Prompts.lua
 src/Dialogs.lua
 src/UtilityWheel.lua
 src/ActionBar.lua
+src/HudStyle.lua
 src/WorldMap.lua
 src/Settings.lua
 Bindings.xml

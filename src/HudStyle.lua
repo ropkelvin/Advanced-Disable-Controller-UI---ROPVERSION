@@ -58,20 +58,30 @@ local function StyleTargetFrame(unitFrame)
 end
 
 local function ApplyAllAdditionalHUDStyles()
-    if not IsHybridHUD() then return end
+    local hybrid = IsHybridHUD()
 
+    -- First let ESO choose the native platform presentation. Only then apply
+    -- keyboard templates to these specific gameplay HUD controls in Hybrid.
     if BOSS_BAR and BOSS_BAR.ApplyStyle then BOSS_BAR:ApplyStyle() end
-    StyleBossBar()
+    if hybrid then StyleBossBar() end
 
     if COMPASS_FRAME and COMPASS_FRAME.ApplyStyle then COMPASS_FRAME:ApplyStyle() end
-    StyleCompassFrame()
+    if hybrid then StyleCompassFrame() end
 
-    StyleCompass()
+    if COMPASS then
+        if hybrid then
+            StyleCompass()
+        elseif ADDON:IsNativeGamepadMode() and COMPASS.ApplyGamepadStyle then
+            COMPASS:ApplyGamepadStyle()
+        elseif COMPASS.ApplyKeyboardStyle then
+            COMPASS:ApplyKeyboardStyle()
+        end
+    end
 
     if ACTIVE_COMBAT_TIP_SYSTEM and ACTIVE_COMBAT_TIP_SYSTEM.ApplyStyle then
         ACTIVE_COMBAT_TIP_SYSTEM:ApplyStyle()
     end
-    StyleActiveCombatTip()
+    if hybrid then StyleActiveCombatTip() end
 end
 
 function ADDON:ApplyAdditionalHUDStyles()
@@ -90,17 +100,12 @@ local function InstallHooks()
     if ZO_ActiveCombatTip then
         ZO_PostHook(ZO_ActiveCombatTip, "ApplyStyle", StyleActiveCombatTip)
     end
-    if ZO_UnitFrameObject then
-        ZO_PostHook(ZO_UnitFrameObject, "ApplyVisualStyle", StyleTargetFrame)
-    end
 
     ADDON.runtime.additionalHUDHooksInstalled = true
 end
 
 local function OnHUDStyleRefresh()
-    if IsHybridHUD() then
-        ApplyAllAdditionalHUDStyles()
-    end
+    ApplyAllAdditionalHUDStyles()
 end
 
 local function OnAddonLoaded(_, addonName)

@@ -48,15 +48,6 @@ local function StyleActiveCombatTip()
     end
 end
 
-local function StyleTargetFrame(unitFrame)
-    if not IsHybridHUD() or not unitFrame or not unitFrame.frame then return end
-    -- Keep the keyboard target-frame art/layout, without changing target
-    -- selection, target-of-target, unit tags or interaction logic.
-    if unitFrame.templateName == "ZO_TargetUnitFrame" then
-        ApplyTemplateToControl(unitFrame.frame, "ZO_TargetUnitFrame_Keyboard_Template")
-    end
-end
-
 local function ApplyAllAdditionalHUDStyles()
     local hybrid = IsHybridHUD()
 

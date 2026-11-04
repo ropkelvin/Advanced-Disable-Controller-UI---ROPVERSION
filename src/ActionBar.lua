@@ -224,10 +224,16 @@ local function InstallActionButtonHooks()
     if ADDON.runtime.actionButtonHooksInstalled then return end
 
     ZO_PostHook(ActionButton, "Initialize", RegisterActionButtonLabel)
-    ZO_PostHook(ActionButton, "ApplyStyle", ApplyActionButtonPresentation)
+    ZO_PostHook(ActionButton, "ApplyStyle", function(button)
+        ApplyActionButtonPresentation(button)
+        if IsHybridHUD() then ApplyActionBarLayout() end
+    end)
     ZO_PostHook(ActionButton, "UpdateCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
-    ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", ApplyBackbarPresentation)
+    ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", function(button)
+        ApplyBackbarPresentation(button)
+        if IsHybridHUD() then ApplyActionBarLayout() end
+    end)
 
     local eventNamespace = ADDON.ADDON_NAME .. "_ActionBarStyle"
     local function RefreshActionBar()
@@ -237,6 +243,7 @@ local function InstallActionButtonHooks()
     EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, RefreshActionBar)
     EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_PLAYER_ACTIVATED, RefreshActionBar)
     EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED, RefreshActionBar)
+    EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_HOTBAR_SLOT_UPDATED, RefreshActionBar)
     EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_ACTIVE_COMPANION_STATE_CHANGED, RefreshActionBar)
 
     ADDON.runtime.actionButtonHooksInstalled = true

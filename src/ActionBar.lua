@@ -76,7 +76,7 @@ local function SetHybridUltimateGlyphs(button, visible)
 end
 
 local function RegisterControllerActionGlyph(button)
-    if not button or not button.buttonText or button.hybridGlyphBindingRegistered then return end
+    if not button or not button.buttonText then return end
 
     local slotNum = button:GetSlot()
     local hotbarCategory = button:GetHotbarCategory()
@@ -121,7 +121,6 @@ local function RegisterControllerActionGlyph(button)
         onUltimateChanged,
         ShouldUseControllerActionGlyphs()
     )
-    button.hybridGlyphBindingRegistered = true
 end
 
 local function RefreshExistingActionGlyphs()
@@ -330,10 +329,7 @@ local function InstallActionButtonHooks()
     if ADDON.runtime.actionButtonHooksInstalled then return end
 
     ZO_PostHook(ActionButton, "Initialize", RegisterControllerActionGlyph)
-    ZO_PostHook(ActionButton, "ApplyStyle", function(button, ...)
-        ApplyActionButtonPresentation(button)
-        RegisterControllerActionGlyph(button)
-    end)
+    ZO_PostHook(ActionButton, "ApplyStyle", ApplyActionButtonPresentation)
     ZO_PostHook(ActionButton, "UpdateCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", ApplyBackbarPresentation)

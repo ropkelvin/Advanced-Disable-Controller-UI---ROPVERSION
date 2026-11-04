@@ -145,7 +145,7 @@ local function ApplyActionBarLayout()
 
     local ultimate = ZO_ActionBar_GetButton(ultimateSlot, activeHotbar)
     if ultimate and lastButton then
-        ultimate:SetShowBindingText(true)
+        ultimate:SetShowBindingText(hybrid)
         ultimate:ApplyAnchor(lastButton.slot, ultimateOffset)
         if hybrid then ApplyActionButtonPresentation(ultimate) end
     end
@@ -158,7 +158,7 @@ local function ApplyActionBarLayout()
 
     local companionUltimate = ZO_ActionBar_GetButton(ultimateSlot, HOTBAR_CATEGORY_COMPANION)
     if companionUltimate then
-        companionUltimate:SetShowBindingText(true)
+        companionUltimate:SetShowBindingText(hybrid)
         if lastButton then companionUltimate:ApplyAnchor(ZO_ActionBar_GetButton(firstSlot, activeHotbar).slot, ultimateOffset, true) end
         if hybrid then ApplyActionButtonPresentation(companionUltimate) end
     end

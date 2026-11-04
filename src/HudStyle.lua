@@ -1,0 +1,117 @@
+-- Presentation-only styling for additional gameplay HUD components.
+-- No scene, dialog, action-layer, interaction, targeting or combat handlers are replaced.
+
+local ADDON = ESOHybridUI
+
+local function IsHybridHUD()
+    return ADDON:GetSettings().useHybridUI == true and ADDON:IsNativeGamepadMode()
+end
+
+local function StyleBossBar()
+    if not IsHybridHUD() or not BOSS_BAR or not BOSS_BAR.control then return end
+    ApplyTemplateToControl(BOSS_BAR.control, "ZO_BossBar_Keyboard_Template")
+end
+
+local function StyleCompassFrame()
+    if not IsHybridHUD() or not COMPASS_FRAME or not COMPASS_FRAME.control then return end
+
+    ApplyTemplateToControl(COMPASS_FRAME.control, "ZO_CompassFrame_Keyboard_Template")
+    local center = COMPASS_FRAME.control:GetNamedChild("Center")
+    if center then
+        local topOverlay = center:GetNamedChild("TopMungeOverlay")
+        local bottomOverlay = center:GetNamedChild("BottomMungeOverlay")
+        if topOverlay then topOverlay:SetHidden(false) end
+        if bottomOverlay then bottomOverlay:SetHidden(false) end
+    end
+
+    -- Clear HUD-editor offsets for either platform so the keyboard HUD
+    -- element owns its normal position. Scene membership is untouched.
+    if COMPASS_FRAME.keyboardHUDElement then
+        COMPASS_FRAME.keyboardHUDElement:RevertOffsetModifications()
+    end
+    if COMPASS_FRAME.gamepadHUDElement then
+        COMPASS_FRAME.gamepadHUDElement:RevertOffsetModifications()
+    end
+end
+
+local function StyleCompass()
+    if IsHybridHUD() and COMPASS and COMPASS.ApplyKeyboardStyle then
+        COMPASS:ApplyKeyboardStyle()
+    end
+end
+
+local function StyleActiveCombatTip()
+    if not IsHybridHUD() or not ACTIVE_COMBAT_TIP_SYSTEM then return end
+    local tipSystem = ACTIVE_COMBAT_TIP_SYSTEM
+    if tipSystem.control then
+        ApplyTemplateToControl(tipSystem.control, "ZO_ActiveCombatTips_Keyboard_Template")
+    end
+end
+
+local function StyleTargetFrame(unitFrame)
+    if not IsHybridHUD() or not unitFrame or not unitFrame.frame then return end
+    -- Keep the keyboard target-frame art/layout, without changing target
+    -- selection, target-of-target, unit tags or interaction logic.
+    if unitFrame.templateName == "ZO_TargetUnitFrame" then
+        ApplyTemplateToControl(unitFrame.frame, "ZO_TargetUnitFrame_Keyboard_Template")
+    end
+end
+
+local function ApplyAllAdditionalHUDStyles()
+    if not IsHybridHUD() then return end
+
+    if BOSS_BAR and BOSS_BAR.ApplyStyle then BOSS_BAR:ApplyStyle() end
+    StyleBossBar()
+
+    if COMPASS_FRAME and COMPASS_FRAME.ApplyStyle then COMPASS_FRAME:ApplyStyle() end
+    StyleCompassFrame()
+
+    StyleCompass()
+
+    if ACTIVE_COMBAT_TIP_SYSTEM and ACTIVE_COMBAT_TIP_SYSTEM.ApplyStyle then
+        ACTIVE_COMBAT_TIP_SYSTEM:ApplyStyle()
+    end
+    StyleActiveCombatTip()
+end
+
+function ADDON:ApplyAdditionalHUDStyles()
+    ApplyAllAdditionalHUDStyles()
+end
+
+local function InstallHooks()
+    if ADDON.runtime.additionalHUDHooksInstalled then return end
+
+    if CompassFrame then
+        ZO_PostHook(CompassFrame, "ApplyStyle", StyleCompassFrame)
+    end
+    if Compass then
+        ZO_PostHook(Compass, "OnGamepadPreferredModeChanged", StyleCompass)
+    end
+    if ZO_ActiveCombatTip then
+        ZO_PostHook(ZO_ActiveCombatTip, "ApplyStyle", StyleActiveCombatTip)
+    end
+    if ZO_UnitFrameObject then
+        ZO_PostHook(ZO_UnitFrameObject, "ApplyVisualStyle", StyleTargetFrame)
+    end
+
+    ADDON.runtime.additionalHUDHooksInstalled = true
+end
+
+local function OnHUDStyleRefresh()
+    if IsHybridHUD() then
+        ApplyAllAdditionalHUDStyles()
+    end
+end
+
+local function OnAddonLoaded(_, addonName)
+    if addonName ~= ADDON.ADDON_NAME then return end
+
+    InstallHooks()
+    ApplyAllAdditionalHUDStyles()
+
+    EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_HUDStyle", EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, OnHUDStyleRefresh)
+    EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_HUDStyle", EVENT_PLAYER_ACTIVATED, OnHUDStyleRefresh)
+    EVENT_MANAGER:UnregisterForEvent(ADDON.ADDON_NAME .. "_HUDStyle_Load", EVENT_ADD_ON_LOADED)
+end
+
+EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_HUDStyle_Load", EVENT_ADD_ON_LOADED, OnAddonLoaded)

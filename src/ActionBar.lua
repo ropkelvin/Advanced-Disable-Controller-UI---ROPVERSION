@@ -35,14 +35,14 @@ local function SetNativeUltimateKeysHidden(button, hidden)
 end
 
 local function CreateHybridUltimateKey(button, side, keyCode)
-    local control = button["hybrid" .. side .. "Key"]
-    if control then return control end
-
-    -- Keyboard ultimate templates omit ESO's dedicated two-part key controls.
-    -- Create native key textures independently so controller glyphs remain
-    -- correct for the active controller type and user bindings.
+    -- Applying an ESO template can replace the slot's child controls.
+    -- Resolve by name after template application instead of trusting a cached
+    -- Lua reference to a child that may no longer belong to this slot.
     local controlName = button.slot:GetName() .. "ESOHybrid" .. side .. "Keybind"
-    control = CreateControlFromVirtual(controlName, button.slot, "ZO_KeyTexture")
+    local control = button.slot:GetNamedChild("ESOHybrid" .. side .. "Keybind")
+    if not control then
+        control = CreateControlFromVirtual(controlName, button.slot, "ZO_KeyTexture")
+    end
     control:SetKeyCode(keyCode)
     control:SetDimensions(24, 24)
     control:SetDrawLayer(DL_OVERLAY)
@@ -156,7 +156,12 @@ local function HideGamepadUltimateDecorations(button)
 end
 
 local function ApplyActionButtonPresentation(button)
-    if not IsHybridHUD() or not button or not button.slot then return end
+    if not button or not button.slot then return end
+
+    if not IsHybridHUD() then
+        SetHybridUltimateGlyphs(button, false)
+        return
+    end
 
     local slotNum = button:GetSlot()
     local category = button:GetHotbarCategory()
@@ -356,6 +361,9 @@ local function InstallActionButtonHooks()
     local eventNamespace = ADDON.ADDON_NAME .. "_ActionBarStyle"
     local function RefreshActionBar()
         ApplyActionBarLayout()
+        -- Register after template application so the keybinding system targets
+        -- the current keyboard-template label controls, not replaced children.
+        RefreshExistingActionGlyphs()
     end
     EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, RefreshActionBar)
     EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_PLAYER_ACTIVATED, RefreshActionBar)
@@ -370,6 +378,6 @@ function ADDON:ApplyActionBar()
     if not ActionButton or not ZO_ActionBarTimer or not ZO_ActionBar1 then return end
 
     InstallActionButtonHooks()
-    RefreshExistingActionGlyphs()
     ApplyActionBarLayout()
+    RefreshExistingActionGlyphs()
 end

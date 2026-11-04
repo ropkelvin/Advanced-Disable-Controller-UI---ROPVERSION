@@ -102,21 +102,31 @@ local function ApplyActionButtonPresentation(button)
         button.countText:SetFont("ZoFontGameShadow")
     end
 
-    -- Keep the keyboard-style ultimate frame decoration; only constrain the glow.
+    -- Keep the keyboard-style ultimate frame decoration, but prevent the
+    -- gamepad ultimate glow texture from extending beyond the actual icon.
+    local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, category)
     local decoration = button.slot:GetNamedChild("Decoration")
     if decoration then decoration:SetHidden(false) end
 
-    -- Keep the ultimate-ready glow, but constrain it to a small halo around the
-    -- keyboard-sized icon instead of the stock gamepad +/-19px expansion.
-    if button.glow and button.flipCard and ZO_ActionBar_IsUltimateSlot(slotNum, category) then
+    if isUltimate and button.glow and button.flipCard then
         button.glow:ClearAnchors()
-        button.glow:SetAnchor(TOPLEFT, button.flipCard, TOPLEFT, -6, -6)
-        button.glow:SetAnchor(BOTTOMRIGHT, button.flipCard, BOTTOMRIGHT, 6, 6)
+        button.glow:SetAnchorFill(button.flipCard)
+        button.glow:SetTextureCoords(0.1875, 0.8125, 0.1875, 0.8125)
     end
 
     if category == HOTBAR_CATEGORY_COMPANION then
         if button.buttonText then button.buttonText:SetHidden(true) end
-        if button.leftKey and button.rightKey then button:HideKeys(false) end
+        if button.leftKey and button.rightKey then
+            -- Stock ultimate glyphs are 40px and sit outside the slot. The
+            -- companion slot is adjacent to quickslot, so use compact glyphs.
+            button.leftKey:SetDimensions(28, 28)
+            button.rightKey:SetDimensions(28, 28)
+            button.leftKey:ClearAnchors()
+            button.rightKey:ClearAnchors()
+            button.leftKey:SetAnchor(TOPRIGHT, button.slot, BOTTOMLEFT, 4, -10)
+            button.rightKey:SetAnchor(TOPLEFT, button.slot, BOTTOMRIGHT, -4, -10)
+            button:HideKeys(false)
+        end
     end
 
     if button.cooldown then

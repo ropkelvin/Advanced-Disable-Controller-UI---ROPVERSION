@@ -1,51 +1,5 @@
--- Preserve native gamepad map routing in Hybrid mode.
-
+-- Intentionally no map scene interception. ESO owns native gamepad map routing.
 local ADDON = ESOHybridUI
-
-local function InstallHybridMapCategoryHook()
-    if ADDON.runtime.hybridMapCategoryHookInstalled then
-        return
-    end
-
-    local mainMenu = MAIN_MENU_KEYBOARD
-
-    ZO_PreHook(mainMenu, "ToggleCategory", function(_, category)
-        local settings = ADDON:GetSettings()
-        if settings.useHybridUI and ADDON:IsNativeGamepadMode() and category == MENU_CATEGORY_MAP then
-            -- The dedicated Map button is routed through the keyboard main-menu
-            -- object in Hybrid mode. Bypass its keyboard scene selection.
-            ADDON:WithNativeGamepadMode(function()
-                SCENE_MANAGER:Show("gamepad_worldMap")
-            end)
-            return true
-        end
-        return false
-    end)
-
-    ADDON.runtime.hybridMapCategoryHookInstalled = true
-end
-
-local function InstallHybridWorldMapSceneHook()
-    if ADDON.runtime.hybridWorldMapHookInstalled then
-        return
-    end
-
-    local originalShowWorldMap = ZO_WorldMap_ShowWorldMap
-    -- ESO's function only selects/shows a scene and has no return value,
-    -- so a native pre-hook can safely run it under the gamepad context.
-    ZO_PreHook("ZO_WorldMap_ShowWorldMap", function(...)
-        local settings = ADDON:GetSettings()
-        if settings.useHybridUI and ADDON:IsNativeGamepadMode() then
-            ADDON:WithNativeGamepadMode(originalShowWorldMap, ...)
-            return true
-        end
-        return false
-    end)
-
-    ADDON.runtime.hybridWorldMapHookInstalled = true
-end
-
 function ADDON:ApplyWorldMap()
-    InstallHybridWorldMapSceneHook()
-    InstallHybridMapCategoryHook()
+    -- Native scene selection is deliberately untouched.
 end

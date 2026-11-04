@@ -85,6 +85,12 @@ local function ApplyActionButtonPresentation(button)
         button.button:SetNormalTexture(KEYBOARD_BUTTON_BORDER)
         button.button:SetPressedTexture(KEYBOARD_BUTTON_PRESSED_BORDER)
     end
+    if button.ApplySwapAnimationStyle then
+        button:ApplySwapAnimationStyle()
+    end
+    if button.SetBounceAnimationParameters then
+        button:SetBounceAnimationParameters(0)
+    end
     if button.countText then
         button.countText:SetFont("ZoFontGameShadow")
     end
@@ -242,15 +248,41 @@ local function InstallActionButtonHooks()
     if ADDON.runtime.actionButtonHooksInstalled then return end
 
     ZO_PostHook(ActionButton, "Initialize", RegisterActionButtonLabel)
-    ZO_PostHook(ActionButton, "ApplyStyle", function(button)
-        ApplyActionButtonPresentation(button)
-        if IsHybridHUD() then ApplyActionBarLayout() end
-    end)
+    ZO_PostHook(ActionButton, "ApplyStyle", ApplyActionButtonPresentation)
     ZO_PostHook(ActionButton, "UpdateCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
-    ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", function(button)
-        ApplyBackbarPresentation(button)
-        if IsHybridHUD() then ApplyActionBarLayout() end
+    ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", ApplyBackbarPresentation)
+
+    -- ESO's stock bounce animation is hard-coded to 61/67px gamepad icons.
+    -- Keyboard HUD slots are 50px with a 47px icon, so recalculate the
+    -- animation from the live control dimensions after ESO's own setup.
+    ZO_PostHook(ActionButton, "SetBounceAnimationParameters", function(button)
+        if not IsHybridHUD() or not button.flipCard or not button.icon
+            or not button.bounceAnimation or not button.iconBounceAnimation then
+            return
+        end
+
+        local function SetDimensions(timeline, control, shrinkScale, resetTime)
+            local width, height = control:GetDimensions()
+            if not width or not height or width <= 0 or height <= 0 then return end
+
+            local shrink = timeline:GetAnimation(1)
+            local grow = timeline:GetAnimation(2)
+            local reset = timeline:GetAnimation(3)
+
+            shrink:SetStartAndEndWidth(width, width * shrinkScale)
+            shrink:SetStartAndEndHeight(height, height * shrinkScale)
+
+            grow:SetStartAndEndWidth(width * shrinkScale, width * 1.1)
+            grow:SetStartAndEndHeight(height * shrinkScale, height * 1.1)
+
+            reset:SetStartAndEndWidth(width * 1.1, width)
+            reset:SetStartAndEndHeight(height * 1.1, height)
+            reset:SetDuration(resetTime)
+        end
+
+        SetDimensions(button.bounceAnimation, button.flipCard, 0.9, 167)
+        SetDimensions(button.iconBounceAnimation, button.icon, 0.8, 100)
     end)
 
     local eventNamespace = ADDON.ADDON_NAME .. "_ActionBarStyle"

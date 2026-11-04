@@ -21,64 +21,6 @@ local function IsHybridHUD()
     return ADDON:GetSettings().useHybridUI == true and ADDON:IsNativeGamepadMode()
 end
 
-local function OnUltimateLabelChanged(button, label)
-    -- Companion ultimates use the native left/right stick glyphs, not a text binding label.
-    if button:GetHotbarCategory() == HOTBAR_CATEGORY_COMPANION then
-        label:SetHidden(true)
-        if button.leftKey and button.rightKey then button:HideKeys(false) end
-        return
-    end
-
-    if ADDON:ShouldShowControllerPrompts() then
-        label:SetHidden(false)
-        if button.leftKey and button.rightKey then button:HideKeys(true) end
-    elseif IsInGamepadPreferredMode() and ZO_Keybindings_ShouldShowGamepadKeybind() then
-        label:SetHidden(true)
-        if button.leftKey and button.rightKey then button:HideKeys(false) end
-    else
-        label:SetHidden(false)
-        if button.leftKey and button.rightKey then button:HideKeys(true) end
-    end
-end
-
-local function RegisterActionButtonLabel(button)
-    if not button or not button.buttonText then return end
-
-    local slotNum = button:GetSlot()
-    local hotbarCategory = button:GetHotbarCategory()
-
-    local keyboardAction
-    local gamepadAction
-    if hotbarCategory == HOTBAR_CATEGORY_COMPANION then
-        keyboardAction = "COMMAND_PET"
-        gamepadAction = "COMMAND_PET"
-    elseif hotbarCategory == HOTBAR_CATEGORY_QUICKSLOT_WHEEL then
-        keyboardAction = "ACTION_BUTTON_9"
-        gamepadAction = "GAMEPAD_ACTION_BUTTON_9"
-    else
-        keyboardAction = "ACTION_BUTTON_" .. tostring(slotNum)
-        gamepadAction = "GAMEPAD_ACTION_BUTTON_" .. tostring(slotNum)
-    end
-
-    -- Remove ESO's ultimate-label callback, which hides the glyph in Gamepad
-    -- Mode. The per-label preference selects the real gamepad binding while
-    -- leaving the action and its input handler untouched.
-    local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, hotbarCategory)
-    local onChanged = isUltimate and function(label)
-        OnUltimateLabelChanged(button, label)
-    end or nil
-
-    ZO_Keybindings_UnregisterLabelForBindingUpdate(button.buttonText)
-    ZO_Keybindings_RegisterLabelForBindingUpdate(
-        button.buttonText,
-        keyboardAction,
-        false,
-        gamepadAction,
-        onChanged,
-        ADDON:ShouldShowControllerPrompts()
-    )
-end
-
 local function ApplyActionButtonPresentation(button)
     if not IsHybridHUD() or not button or not button.slot then return end
 
@@ -109,7 +51,6 @@ local function ApplyActionButtonPresentation(button)
     end
 
     if category == HOTBAR_CATEGORY_COMPANION then
-        if button.buttonText then button.buttonText:SetHidden(true) end
     end
 
     if button.cooldown then
@@ -204,7 +145,7 @@ local function ApplyActionBarLayout()
     local quickslot = ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
     if quickslot then
         if companionUltimate and DoesUnitExist("companion") and HasActiveCompanion() then
-            quickslot:ApplyAnchor(companionUltimate.slot, hybrid and 18 or 45, true)
+            quickslot:ApplyAnchor(companionUltimate.slot, 45, true)
         else
             quickslot:ApplyAnchor(ZO_ActionBar1WeaponSwap, 5, true)
         end
@@ -251,23 +192,9 @@ local function ApplyActionBarLayout()
     end
 end
 
-local function RefreshExistingActionLabels()
-    local firstSlot = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1
-    local lastSlot = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + ACTION_BAR_SLOTS_PER_PAGE - 1
-    for _, category in ipairs({ HOTBAR_CATEGORY_PRIMARY, HOTBAR_CATEGORY_BACKUP }) do
-        for slot = firstSlot, lastSlot do
-            RegisterActionButtonLabel(ZO_ActionBar_GetButton(slot, category))
-        end
-        RegisterActionButtonLabel(ZO_ActionBar_GetButton(ACTION_BAR_ULTIMATE_SLOT_INDEX + 1, category))
-    end
-    RegisterActionButtonLabel(ZO_ActionBar_GetButton(ACTION_BAR_ULTIMATE_SLOT_INDEX + 1, HOTBAR_CATEGORY_COMPANION))
-    RegisterActionButtonLabel(ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL))
-end
-
 local function InstallActionButtonHooks()
     if ADDON.runtime.actionButtonHooksInstalled then return end
 
-    ZO_PostHook(ActionButton, "Initialize", RegisterActionButtonLabel)
     ZO_PostHook(ActionButton, "ApplyStyle", ApplyActionButtonPresentation)
     ZO_PostHook(ActionButton, "UpdateCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
@@ -277,7 +204,6 @@ local function InstallActionButtonHooks()
 
     local eventNamespace = ADDON.ADDON_NAME .. "_ActionBarStyle"
     local function RefreshActionBar()
-        RefreshExistingActionLabels()
         ApplyActionBarLayout()
     end
     EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, RefreshActionBar)
@@ -293,6 +219,5 @@ function ADDON:ApplyActionBar()
     if not ActionButton or not ZO_ActionBarTimer or not ZO_ActionBar1 then return end
 
     InstallActionButtonHooks()
-    RefreshExistingActionLabels()
     ApplyActionBarLayout()
 end

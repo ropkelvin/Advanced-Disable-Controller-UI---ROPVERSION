@@ -108,19 +108,27 @@ local function ApplyActionButtonPresentation(button)
     local decoration = button.slot:GetNamedChild("Decoration")
     if decoration then decoration:SetHidden(false) end
 
-    if isUltimate and button.glow and button.flipCard then
-        button.glow:ClearAnchors()
-        button.glow:SetAnchorFill(button.flipCard)
-        button.glow:SetTextureCoords(0.1875, 0.8125, 0.1875, 0.8125)
+    if isUltimate then
+        if button.glow and button.flipCard then
+            button.glow:ClearAnchors()
+            button.glow:SetAnchorFill(button.flipCard)
+            button.glow:SetTextureCoords(0.1875, 0.8125, 0.1875, 0.8125)
+        end
+
+        -- ESO's stock ultimate key textures are 40px; make them slightly
+        -- smaller than the regular skill glyphs to keep the ultimate row tidy.
+        if button.leftKey and button.rightKey then
+            local glyphSize = category == HOTBAR_CATEGORY_COMPANION and 28 or 32
+            button.leftKey:SetDimensions(glyphSize, glyphSize)
+            button.rightKey:SetDimensions(glyphSize, glyphSize)
+        end
     end
 
     if category == HOTBAR_CATEGORY_COMPANION then
         if button.buttonText then button.buttonText:SetHidden(true) end
         if button.leftKey and button.rightKey then
-            -- Stock ultimate glyphs are 40px and sit outside the slot. The
-            -- companion slot is adjacent to quickslot, so use compact glyphs.
-            button.leftKey:SetDimensions(28, 28)
-            button.rightKey:SetDimensions(28, 28)
+            -- Keep the companion glyphs inside their own footprint so they
+            -- cannot collide with the adjacent quickslot.
             button.leftKey:ClearAnchors()
             button.rightKey:ClearAnchors()
             button.leftKey:SetAnchor(TOPRIGHT, button.slot, BOTTOMLEFT, 4, -10)

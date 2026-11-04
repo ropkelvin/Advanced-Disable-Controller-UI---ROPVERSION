@@ -21,6 +21,22 @@ local function IsHybridHUD()
     return ADDON:GetSettings().useHybridUI == true and ADDON:IsNativeGamepadMode()
 end
 
+local function HideGamepadUltimateDecorations(button)
+    if not button or not button.slot then return end
+    local controlNames = {
+        "Glow",
+        "Frame",
+        "FillAnimationLeft",
+        "FillAnimationRight",
+        "ReadyBurst",
+        "ReadyLoop",
+    }
+    for _, name in ipairs(controlNames) do
+        local control = button.slot:GetNamedChild(name)
+        if control then control:SetHidden(true) end
+    end
+end
+
 local function ApplyActionButtonPresentation(button)
     if not IsHybridHUD() or not button or not button.slot then return end
 
@@ -43,10 +59,14 @@ local function ApplyActionButtonPresentation(button)
 
     local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, category)
     if isUltimate then
-        -- Native ApplyStyle hides the keyboard decoration in Gamepad Mode.
-        -- Keep that native visibility decision; suppress only the gamepad glow
-        -- that is not part of the compact keyboard-style HUD.
-        if button.glow then button.glow:SetHidden(true) end
+        -- Keep the keyboard-style ultimate identical to ordinary skill slots:
+        -- use ESO's registered binding label, not the oversized gamepad
+        -- shoulder/stick textures.
+        if button.SetShowBindingText then button:SetShowBindingText(true) end
+        if button.leftKey then button.leftKey:SetHidden(true) end
+        if button.rightKey then button.rightKey:SetHidden(true) end
+        if button.buttonText then button.buttonText:SetHidden(false) end
+        HideGamepadUltimateDecorations(button)
     end
 
     if button.cooldown then
@@ -195,6 +215,26 @@ local function InstallActionButtonHooks()
     ZO_PostHook(ActionButton, "UpdateCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", ApplyBackbarPresentation)
+
+    -- ESO's native ultimate callback normally swaps the binding label for
+    -- two 40px shoulder/stick textures in Gamepad Mode. Hybrid keeps the
+    -- registered native binding label, matching the skill-slot glyph style.
+    ZO_PostHook(ActionButton, "HideKeys", function(button)
+        if IsHybridHUD() and button and button.slot
+            and ZO_ActionBar_IsUltimateSlot(button:GetSlot(), button:GetHotbarCategory()) then
+            if button.leftKey then button.leftKey:SetHidden(true) end
+            if button.rightKey then button.rightKey:SetHidden(true) end
+            if button.buttonText then button.buttonText:SetHidden(false) end
+        end
+    end)
+
+    ZO_PostHook(ActionButton, "SetUltimateMeter", function(button)
+        if IsHybridHUD() and button
+            and ZO_ActionBar_IsUltimateSlot(button:GetSlot(), button:GetHotbarCategory()) then
+            HideGamepadUltimateDecorations(button)
+            if button.buttonText then button.buttonText:SetHidden(false) end
+        end
+    end)
 
     -- ESO's gamepad bounce uses fixed 61/67px dimensions. The keyboard
     -- template is smaller and has no matching native bounce style, so stop

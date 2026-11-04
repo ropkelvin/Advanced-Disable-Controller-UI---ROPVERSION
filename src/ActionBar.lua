@@ -43,14 +43,10 @@ local function ApplyActionButtonPresentation(button)
 
     local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, category)
     if isUltimate then
-        -- Keyboard-style ultimate slots use the native frame decoration, not
-        -- the gamepad-only oversized ultimate glow.
-        local decoration = button.slot:GetNamedChild("Decoration")
-        if decoration then decoration:SetHidden(false) end
+        -- Native ApplyStyle hides the keyboard decoration in Gamepad Mode.
+        -- Keep that native visibility decision; suppress only the gamepad glow
+        -- that is not part of the compact keyboard-style HUD.
         if button.glow then button.glow:SetHidden(true) end
-    end
-
-    if category == HOTBAR_CATEGORY_COMPANION then
     end
 
     if button.cooldown then

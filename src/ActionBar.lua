@@ -216,16 +216,40 @@ local function InstallActionButtonHooks()
     ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", ApplyBackbarPresentation)
 
-    -- ESO's native ultimate callback normally swaps the binding label for
-    -- two 40px shoulder/stick textures in Gamepad Mode. Hybrid keeps the
-    -- registered native binding label, matching the skill-slot glyph style.
-    ZO_PostHook(ActionButton, "HideKeys", function(button)
-        if IsHybridHUD() and button and button.slot
-            and ZO_ActionBar_IsUltimateSlot(button:GetSlot(), button:GetHotbarCategory()) then
+    -- Re-register ultimate labels through ESO's own binding-label system.
+    -- This restores the same native controller glyph rendering used by skill
+    -- slots, while avoiding the oversized shoulder/stick key textures.
+    ZO_PostHook(ActionButton, "Initialize", function(button)
+        if not IsHybridHUD() or not button or not button.buttonText then return end
+        local slotNum = button:GetSlot()
+        local category = button:GetHotbarCategory()
+        if not ZO_ActionBar_IsUltimateSlot(slotNum, category) then return end
+
+        local bindingName
+        local gamepadBindingName
+        if category == HOTBAR_CATEGORY_COMPANION then
+            bindingName = "COMMAND_PET"
+            gamepadBindingName = "COMMAND_PET"
+        else
+            bindingName = "ACTION_BUTTON_" .. slotNum
+            gamepadBindingName = "GAMEPAD_ACTION_BUTTON_" .. slotNum
+        end
+
+        local function ShowNativeUltimateGlyph(label)
+            label:SetHidden(false)
             if button.leftKey then button.leftKey:SetHidden(true) end
             if button.rightKey then button.rightKey:SetHidden(true) end
-            if button.buttonText then button.buttonText:SetHidden(false) end
         end
+
+        ZO_Keybindings_RegisterLabelForBindingUpdate(
+            button.buttonText,
+            bindingName,
+            false,
+            gamepadBindingName,
+            ShowNativeUltimateGlyph
+        )
+        button:SetShowBindingText(true)
+        ShowNativeUltimateGlyph(button.buttonText)
     end)
 
     ZO_PostHook(ActionButton, "SetUltimateMeter", function(button)

@@ -50,7 +50,7 @@ local function RegisterActionButtonLabel(button)
         false,
         gamepadAction,
         nil,
-        true
+        ADDON:ShouldShowControllerPrompts()
     )
 end
 
@@ -80,6 +80,12 @@ local function ApplyActionButtonPresentation(button)
     if button.cooldownEdge then button.cooldownEdge:SetHidden(true) end
 end
 
+local function RefreshActionButtonCooldown(button)
+    if not IsHybridHUD() or not button or not button.cooldown then return end
+    button.cooldown:SetHidden(not button.showingCooldown)
+    if button.cooldownEdge then button.cooldownEdge:SetHidden(true) end
+end
+
 local function ApplyBackbarPresentation(button)
     if not IsHybridHUD() or not button or not button.slot then return end
     local template = ZO_ActionBar_IsUltimateSlot(button.slot.slotNum, button.barType)
@@ -98,6 +104,8 @@ end
 
 local function ApplyActionBarLayout()
     if not ZO_ActionBar1 or not ZO_ActionBar1WeaponSwap then return end
+
+    if not ADDON:IsNativeGamepadMode() then return end
 
     local hybrid = IsHybridHUD()
     local firstSlot = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1
@@ -217,7 +225,19 @@ local function InstallActionButtonHooks()
 
     ZO_PostHook(ActionButton, "Initialize", RegisterActionButtonLabel)
     ZO_PostHook(ActionButton, "ApplyStyle", ApplyActionButtonPresentation)
+    ZO_PostHook(ActionButton, "UpdateCooldown", RefreshActionButtonCooldown)
+    ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", ApplyBackbarPresentation)
+
+    local eventNamespace = ADDON.ADDON_NAME .. "_ActionBarStyle"
+    local function RefreshActionBar()
+        RefreshExistingActionLabels()
+        ApplyActionBarLayout()
+    end
+    EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, RefreshActionBar)
+    EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_PLAYER_ACTIVATED, RefreshActionBar)
+    EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED, RefreshActionBar)
+    EVENT_MANAGER:RegisterForEvent(eventNamespace, EVENT_ACTIVE_COMPANION_STATE_CHANGED, RefreshActionBar)
 
     ADDON.runtime.actionButtonHooksInstalled = true
 end

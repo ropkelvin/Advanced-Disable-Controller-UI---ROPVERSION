@@ -252,6 +252,7 @@ local function ApplyActionBarLayout()
         if button then
             local anchorTarget = lastButton and lastButton.slot or ZO_ActionBar1WeaponSwap
             button:ApplyAnchor(anchorTarget, abilityOffset)
+            if hybrid then ApplyActionButtonPresentation(button) end
 
             local backbar = ZO_ActionBar_GetButton(slot, backHotbar)
             if backbar then

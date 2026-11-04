@@ -106,52 +106,21 @@ end
 
 function ADDON:DumpDiagnostics()
     local settings = self:GetSettings()
-    local runtime = self.runtime
-    local physicalGamepad = tostring(self:IsNativeGamepadMode())
-    local effectiveGamepadUI = tostring(IsInGamepadPreferredMode())
-    local inUIMode = tostring(SM:IsInUIMode())
-    local worldMapShowing = tostring(WORLD_MAP_SCENE:IsShowing())
-    local currentScene = tostring(SM:GetCurrentSceneName())
-
     local accountWide = self.savedVariablesAccountWide
         and self.savedVariablesAccountWide._esoHybridUseAccountWideSettings == true
         or false
-    local uiMode = settings.useHybridUI and "hybrid"
-        or (settings.useControllerUI and "gamepad" or "keyboard")
 
     self:LogInfo("========== DIAGNOSTIC SNAPSHOT BEGIN ==========")
     self:LogInfo("Addon version:", self.VERSION, "API:", tostring(GetAPIVersion()))
-    self:LogInfo("UI mode:", uiMode,
-        "Controller prompts:", tostring(settings.useHybridUI or settings.useGamepadButtons == true),
-        "Account-wide profile:", tostring(accountWide))
-    self:LogInfo("Physical gamepad preference:", physicalGamepad,
-        "Effective gamepad UI:", effectiveGamepadUI,
-        "Scene manager UI mode:", inUIMode)
-    self:LogInfo("Current scene:", currentScene,
-        "World map showing:", worldMapShowing,
-        "Native-mode override depth:", tostring(runtime.forceNativeModeDepth or 0))
-    self:LogInfo("Runtime:", "initialized=" .. tostring(runtime.initialized),
-        "modeOverride=" .. tostring(runtime.modeOverrideInstalled),
-        "lockpicking=" .. tostring(runtime.isLockpicking))
-    self:LogInfo("Hooks installed:",
-        "globalPrompts=" .. tostring(runtime.globalPromptHooksInstalled),
-        "promptDescriptors=" .. tostring(runtime.promptHooksInstalled),
-        "deathPrompt=" .. tostring(runtime.deathPromptHookInstalled),
-        "actionButtons=" .. tostring(runtime.actionButtonHooksInstalled),
-        "dialogs=" .. tostring(runtime.dialogHooksInstalled),
-        "worldMap=" .. tostring(runtime.hybridWorldMapHookInstalled or runtime.hybridMapCategoryHookInstalled),
-        "mapScene=" .. tostring(runtime.hybridWorldMapHookInstalled),
-        "mapCategory=" .. tostring(runtime.hybridMapCategoryHookInstalled),
-        "utilityWheel=" .. tostring(runtime.utilityWheelHooksInstalled))
-    self:LogInfo("Utility wheel:",
-        "bridgeActive=" .. tostring(runtime.utilityWheelLayerActive),
-        "defaultBindingsCopied=" .. tostring(runtime.utilityWheelDefaultsCopied),
-        "retryHook=" .. tostring(runtime.utilityWheelRetryHook))
-    self:LogInfo("Diagnostics:",
-        "enabled=" .. tostring(runtime.debugLoggingEnabled),
-        "LibDebugLoggerGlobal=" .. tostring(type(LibDebugLogger)),
-        "loggerInstance=" .. tostring(type(runtime.logger)),
+    self:LogInfo("HUD style:", settings.useHybridUI and "keyboard-style" or "native gamepad")
+    self:LogInfo("ESO native gamepad preference:", tostring(IsInGamepadPreferredMode()))
+    self:LogInfo("Current scene:", tostring(SCENE_MANAGER:GetCurrentSceneName()))
+    self:LogInfo("Account-wide settings:", tostring(accountWide))
+    self:LogInfo("Action-bar label hook installed:", tostring(self.runtime.actionButtonHooksInstalled))
+    self:LogInfo("Diagnostics:", "enabled=" .. tostring(self.runtime.debugLoggingEnabled),
+        "LibDebugLogger=" .. tostring(type(LibDebugLogger)),
         "LibAddonMenu2=" .. tostring(type(LibAddonMenu2)))
+    self:LogInfo("No platform override, dialog wrapper, wheel bridge or scene override is installed by this version.")
     self:LogInfo("========== DIAGNOSTIC SNAPSHOT END ============")
 end
 

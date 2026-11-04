@@ -95,16 +95,10 @@ local function ApplyActionButtonPresentation(button)
     if button.ApplySwapAnimationStyle then
         button:ApplySwapAnimationStyle()
     end
-    if button.SetBounceAnimationParameters then
-        button:SetBounceAnimationParameters(0)
-    end
     if button.countText then
         button.countText:SetFont("ZoFontGameShadow")
     end
 
-    -- Keep the keyboard-style ultimate frame decoration, but prevent the
-    -- gamepad ultimate glow texture from extending beyond the actual icon.
-    local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, category)
     if category == HOTBAR_CATEGORY_COMPANION then
         if button.buttonText then button.buttonText:SetHidden(true) end
     end

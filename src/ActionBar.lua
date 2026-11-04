@@ -21,6 +21,19 @@ local function IsHybridHUD()
     return ADDON:GetSettings().useHybridUI == true and ADDON:IsNativeGamepadMode()
 end
 
+local function OnUltimateLabelChanged(button, label)
+    if ADDON:ShouldShowControllerPrompts() then
+        label:SetHidden(false)
+        if button.leftKey and button.rightKey then button:HideKeys(true) end
+    elseif IsInGamepadPreferredMode() and ZO_Keybindings_ShouldShowGamepadKeybind() then
+        label:SetHidden(true)
+        if button.leftKey and button.rightKey then button:HideKeys(false) end
+    else
+        label:SetHidden(false)
+        if button.leftKey and button.rightKey then button:HideKeys(true) end
+    end
+end
+
 local function RegisterActionButtonLabel(button)
     if not button or not button.buttonText then return end
 
@@ -43,13 +56,18 @@ local function RegisterActionButtonLabel(button)
     -- Remove ESO's ultimate-label callback, which hides the glyph in Gamepad
     -- Mode. The per-label preference selects the real gamepad binding while
     -- leaving the action and its input handler untouched.
+    local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, hotbarCategory)
+    local onChanged = isUltimate and function(label)
+        OnUltimateLabelChanged(button, label)
+    end or nil
+
     ZO_Keybindings_UnregisterLabelForBindingUpdate(button.buttonText)
     ZO_Keybindings_RegisterLabelForBindingUpdate(
         button.buttonText,
         keyboardAction,
         false,
         gamepadAction,
-        nil,
+        onChanged,
         ADDON:ShouldShowControllerPrompts()
     )
 end

@@ -5,6 +5,7 @@ local ADDON = ESOHybridUI
 local function ApplyReticleStyle(settings, hybrid)
     if not RETICLE or not RETICLE.ApplyPlatformStyle then return end
 
+    local isGamepad = ADDON:IsNativeGamepadMode()
     local style
     if hybrid then
         style = {
@@ -15,15 +16,20 @@ local function ApplyReticleStyle(settings, hybrid)
         -- This is a per-control display preference. The underlying action
         -- remains the gamepad binding selected by ESO.
         style.keybindButtonStyle.alwaysPreferGamepadMode = true
-    else
+    elseif isGamepad then
         style = {
             font = "ZoFontGamepad42",
             keybindButtonStyle = ZO_ShallowTableCopy(KEYBIND_STRIP_GAMEPAD_STYLE),
         }
+    else
+        style = {
+            font = "ZoInteractionPrompt",
+            keybindButtonStyle = ZO_ShallowTableCopy(KEYBIND_STRIP_STANDARD_STYLE),
+        }
     end
     RETICLE:ApplyPlatformStyle(style)
 
-    local stealthStyle = { font = hybrid and (settings.fonts.stealthIcon or "ZoInteractionPrompt") or "ZoFontGamepad42" }
+    local stealthStyle = { font = hybrid and (settings.fonts.stealthIcon or "ZoInteractionPrompt") or (isGamepad and "ZoFontGamepad42" or "ZoInteractionPrompt") }
     if RETICLE.stealthIcon and RETICLE.stealthIcon.ApplyPlatformStyle then
         RETICLE.stealthIcon:ApplyPlatformStyle(stealthStyle)
     end

@@ -2,6 +2,8 @@
 -- No scene, dialog, action-layer, interaction, targeting or combat handlers are replaced.
 
 local ADDON = ESOHybridUI
+local trackedHUDTrackers = {}
+local applyingTrackerStyle = {}
 
 local function IsHybridHUD()
     return ADDON:GetSettings().useHybridUI == true and ADDON:IsNativeGamepadMode()
@@ -48,8 +50,65 @@ local function StyleActiveCombatTip()
     end
 end
 
+local function ApplyTrackerPlatformStyle(owner)
+    if not owner or not owner.ApplyPlatformStyle or not owner.styles then return end
+
+    local style
+    if IsHybridHUD() then
+        style = owner.styles.keyboard
+    elseif ADDON:IsNativeGamepadMode() then
+        style = owner.styles.gamepad
+    else
+        style = owner.styles.keyboard
+    end
+
+    if style then
+        applyingTrackerStyle[owner] = true
+        owner:ApplyPlatformStyle(style)
+        applyingTrackerStyle[owner] = nil
+    end
+end
+
+local function RegisterHUDTracker(owner)
+    if not owner then return end
+    trackedHUDTrackers[owner] = true
+
+    -- HUD trackers own separate keyboard and gamepad HUD-editor elements.
+    -- Select the keyboard element only for these HUD tracker objects.
+    if not owner._esoHybridOriginalGetPlatformHUDElement and owner.GetPlatformHUDElement then
+        owner._esoHybridOriginalGetPlatformHUDElement = owner.GetPlatformHUDElement
+        owner.GetPlatformHUDElement = function(self)
+            if IsHybridHUD() and self.keyboardHUDElement then
+                return self.keyboardHUDElement
+            end
+            return self._esoHybridOriginalGetPlatformHUDElement(self)
+        end
+    end
+end
+
+local function ApplyAllHUDTrackerStyles()
+    if HUD_TRACKER_MANAGER and HUD_TRACKER_MANAGER.trackers then
+        for _, trackerData in ipairs(HUD_TRACKER_MANAGER.trackers) do
+            RegisterHUDTracker(trackerData.owner)
+        end
+    end
+
+    for owner in pairs(trackedHUDTrackers) do
+        ApplyTrackerPlatformStyle(owner)
+    end
+end
+
+local function OnTrackerPlatformStyleApplied(owner)
+    if applyingTrackerStyle[owner] then return end
+    RegisterHUDTracker(owner)
+    if IsHybridHUD() then
+        ApplyTrackerPlatformStyle(owner)
+    end
+end
+
 local function ApplyAllAdditionalHUDStyles()
     local hybrid = IsHybridHUD()
+    ApplyAllHUDTrackerStyles()
 
     -- First let ESO choose the native platform presentation. Only then apply
     -- keyboard templates to these specific gameplay HUD controls in Hybrid.
@@ -91,6 +150,9 @@ local function InstallHooks()
     if ZO_ActiveCombatTip then
         ZO_PostHook(ZO_ActiveCombatTip, "ApplyStyle", StyleActiveCombatTip)
     end
+    if ZO_HUDTracker_Base then
+        ZO_PostHook(ZO_HUDTracker_Base, "ApplyPlatformStyle", OnTrackerPlatformStyleApplied)
+    end
 
     ADDON.runtime.additionalHUDHooksInstalled = true
 end
@@ -107,6 +169,9 @@ local function OnAddonLoaded(_, addonName)
 
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_HUDStyle", EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, OnHUDStyleRefresh)
     EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_HUDStyle", EVENT_PLAYER_ACTIVATED, OnHUDStyleRefresh)
+    EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_HUDTrackerStyle", EVENT_ADD_ONS_LOADED, function()
+        ApplyAllHUDTrackerStyles()
+    end)
     EVENT_MANAGER:UnregisterForEvent(ADDON.ADDON_NAME .. "_HUDStyle_Load", EVENT_ADD_ON_LOADED)
 end
 

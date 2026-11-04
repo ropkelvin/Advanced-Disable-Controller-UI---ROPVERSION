@@ -84,9 +84,9 @@ function ADDON:RegisterSettings()
             },
             {
                 type = "dropdown",
-                name = "HUD style",
-                tooltip = "Both choices keep ESO native Gamepad Mode, menus, wheels, interactions and controller bindings. Hybrid changes selected gameplay HUD visuals to a compact keyboard-style appearance.",
-                choices = { "Gamepad HUD", "Keyboard-style HUD" },
+                name = "Interface mode",
+                tooltip = "Gamepad uses ESO's native controller interface. Hybrid keeps native gamepad menus, wheels, interactions and bindings while using the compact keyboard-style gameplay HUD.",
+                choices = { "Gamepad", "Hybrid" },
                 choicesValues = { "gamepad", "hybrid" },
                 default = "gamepad",
                 getFunc = function()
@@ -191,8 +191,8 @@ function ADDON:RegisterSettings()
         {
             type = "dropdown",
             name = "Interface mode",
-            tooltip = "Both choices keep ESO native Gamepad Mode, menus, wheels, interactions and controller bindings. Hybrid changes selected gameplay HUD visuals to a compact keyboard-style appearance.",
-            choices = { "Gamepad HUD", "Keyboard-style HUD" },
+            tooltip = "Gamepad uses ESO's native controller interface. Hybrid keeps native gamepad menus, wheels, interactions and bindings while using the compact keyboard-style gameplay HUD.",
+            choices = { "Gamepad", "Hybrid" },
             choicesValues = { "gamepad", "hybrid" },
             default = "gamepad",
             getFunc = function()

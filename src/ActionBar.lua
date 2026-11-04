@@ -200,7 +200,14 @@ local function InstallActionButtonHooks()
     ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", ApplyBackbarPresentation)
 
-    -- Keep ESO's native cast-bounce animation parameters and timelines.
+    -- ESO's gamepad bounce uses fixed 61/67px dimensions. The keyboard
+    -- template is smaller and has no matching native bounce style, so stop
+    -- that gamepad-only animation in Hybrid rather than resize the HUD.
+    ZO_PostHook(ActionButton, "PlayAbilityUsedBounce", function(button)
+        if IsHybridHUD() and button.ResetBounceAnimation then
+            button:ResetBounceAnimation()
+        end
+    end)
 
     local eventNamespace = ADDON.ADDON_NAME .. "_ActionBarStyle"
     local function RefreshActionBar()

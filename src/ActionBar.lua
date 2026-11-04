@@ -99,6 +99,15 @@ local function ApplyActionButtonPresentation(button)
         button.countText:SetFont("ZoFontGameShadow")
     end
 
+    local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, category)
+    if isUltimate then
+        -- Keyboard-style ultimate slots use the native frame decoration, not
+        -- the gamepad-only oversized ultimate glow.
+        local decoration = button.slot:GetNamedChild("Decoration")
+        if decoration then decoration:SetHidden(false) end
+        if button.glow then button.glow:SetHidden(true) end
+    end
+
     if category == HOTBAR_CATEGORY_COMPANION then
         if button.buttonText then button.buttonText:SetHidden(true) end
     end
@@ -229,9 +238,15 @@ local function ApplyActionBarLayout()
             local backbar = ZO_ActionBar_GetButton(slot, backHotbar)
             if backbar then backbar:ApplyStyle(GAMEPAD_BACKBAR_TEMPLATE) end
         end
-        if ultimate then ultimate:ApplyStyle(GAMEPAD_ULTIMATE_TEMPLATE) end
+        if ultimate then
+            ultimate:ApplyStyle(GAMEPAD_ULTIMATE_TEMPLATE)
+            if ultimate.glow then ultimate.glow:SetHidden(false) end
+        end
         if backbarUltimate then backbarUltimate:ApplyStyle(GAMEPAD_BACKBAR_ULTIMATE_TEMPLATE) end
-        if companionUltimate then companionUltimate:ApplyStyle(GAMEPAD_ULTIMATE_TEMPLATE) end
+        if companionUltimate then
+            companionUltimate:ApplyStyle(GAMEPAD_ULTIMATE_TEMPLATE)
+            if companionUltimate.glow then companionUltimate.glow:SetHidden(false) end
+        end
         if quickslot then quickslot:ApplyStyle(GAMEPAD_BUTTON_TEMPLATE) end
     end
 end

@@ -21,6 +21,125 @@ local function IsHybridHUD()
     return ADDON:GetSettings().useHybridUI == true and ADDON:IsNativeGamepadMode()
 end
 
+local function ShouldUseControllerActionGlyphs()
+    return ADDON:ShouldShowControllerPrompts()
+end
+
+local function SetNativeUltimateKeysHidden(button, hidden)
+    if not button or not button.slot then return end
+
+    local leftKey = button.slot:GetNamedChild("LeftKeybind")
+    local rightKey = button.slot:GetNamedChild("RightKeybind")
+    if leftKey then leftKey:SetHidden(hidden) end
+    if rightKey then rightKey:SetHidden(hidden) end
+end
+
+local function CreateHybridUltimateKey(button, side, keyCode)
+    local control = button["hybrid" .. side .. "Key"]
+    if control then return control end
+
+    -- Keyboard ultimate templates omit ESO's dedicated two-part key controls.
+    -- Create native key textures independently so controller glyphs remain
+    -- correct for the active controller type and user bindings.
+    local controlName = button.slot:GetName() .. "ESOHybrid" .. side .. "Keybind"
+    control = CreateControlFromVirtual(controlName, button.slot, "ZO_KeyTexture")
+    control:SetKeyCode(keyCode)
+    control:SetDimensions(24, 24)
+    control:SetDrawLayer(DL_OVERLAY)
+
+    if side == "Left" then
+        control:SetAnchor(TOPRIGHT, button.slot, BOTTOMLEFT, 8, -8)
+    else
+        control:SetAnchor(TOPLEFT, button.slot, BOTTOMRIGHT, -8, -8)
+    end
+
+    button["hybrid" .. side .. "Key"] = control
+    return control
+end
+
+local function SetHybridUltimateGlyphs(button, visible)
+    if not button or not button.slot then return end
+
+    if not visible then
+        if button.hybridLeftKey then button.hybridLeftKey:SetHidden(true) end
+        if button.hybridRightKey then button.hybridRightKey:SetHidden(true) end
+        return
+    end
+
+    local isCompanion = button:GetHotbarCategory() == HOTBAR_CATEGORY_COMPANION
+    local leftCode = isCompanion and KEY_GAMEPAD_LEFT_STICK or KEY_GAMEPAD_LEFT_SHOULDER
+    local rightCode = isCompanion and KEY_GAMEPAD_RIGHT_STICK or KEY_GAMEPAD_RIGHT_SHOULDER
+
+    CreateHybridUltimateKey(button, "Left", leftCode):SetHidden(false)
+    CreateHybridUltimateKey(button, "Right", rightCode):SetHidden(false)
+    SetNativeUltimateKeysHidden(button, true)
+end
+
+local function RegisterControllerActionGlyph(button)
+    if not button or not button.buttonText or button.hybridGlyphBindingRegistered then return end
+
+    local slotNum = button:GetSlot()
+    local hotbarCategory = button:GetHotbarCategory()
+    local keyboardActionName
+    local gamepadActionName
+
+    if hotbarCategory == HOTBAR_CATEGORY_COMPANION then
+        keyboardActionName = "COMMAND_PET"
+        gamepadActionName = "COMMAND_PET"
+    elseif hotbarCategory == HOTBAR_CATEGORY_QUICKSLOT_WHEEL then
+        keyboardActionName = "ACTION_BUTTON_9"
+        gamepadActionName = "GAMEPAD_ACTION_BUTTON_9"
+    else
+        keyboardActionName = "ACTION_BUTTON_" .. tostring(slotNum)
+        gamepadActionName = "GAMEPAD_ACTION_BUTTON_" .. tostring(slotNum)
+    end
+
+    local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, hotbarCategory)
+    local onUltimateChanged = isUltimate and function(label)
+        if ADDON:GetSettings().useHybridUI and ShouldUseControllerActionGlyphs() then
+            label:SetHidden(true)
+            SetHybridUltimateGlyphs(button, true)
+            return
+        end
+
+        SetHybridUltimateGlyphs(button, false)
+        local showNativeKeys = IsInGamepadPreferredMode()
+            and ZO_Keybindings_ShouldShowGamepadKeybind()
+        SetNativeUltimateKeysHidden(button, not showNativeKeys)
+        label:SetHidden(showNativeKeys)
+        if button.leftKey and button.rightKey then
+            button:HideKeys(not showNativeKeys)
+        end
+    end or nil
+
+    ZO_Keybindings_UnregisterLabelForBindingUpdate(button.buttonText)
+    ZO_Keybindings_RegisterLabelForBindingUpdate(
+        button.buttonText,
+        keyboardActionName,
+        false,
+        gamepadActionName,
+        onUltimateChanged,
+        ShouldUseControllerActionGlyphs()
+    )
+    button.hybridGlyphBindingRegistered = true
+end
+
+local function RefreshExistingActionGlyphs()
+    for _, hotbarCategory in ipairs({ HOTBAR_CATEGORY_PRIMARY, HOTBAR_CATEGORY_BACKUP }) do
+        for slotNum = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1,
+            ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + ACTION_BAR_SLOTS_PER_PAGE - 1 do
+            RegisterControllerActionGlyph(ZO_ActionBar_GetButton(slotNum, hotbarCategory))
+        end
+        RegisterControllerActionGlyph(
+            ZO_ActionBar_GetButton(ACTION_BAR_ULTIMATE_SLOT_INDEX + 1, hotbarCategory))
+    end
+
+    RegisterControllerActionGlyph(
+        ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL))
+    RegisterControllerActionGlyph(
+        ZO_ActionBar_GetButton(ACTION_BAR_ULTIMATE_SLOT_INDEX + 1, HOTBAR_CATEGORY_COMPANION))
+end
+
 local function HideGamepadUltimateDecorations(button)
     if not button or not button.slot then return end
     local controlNames = {
@@ -59,10 +178,15 @@ local function ApplyActionButtonPresentation(button)
 
     local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, category)
     if isUltimate then
-        -- Keep ESO's dedicated native ultimate key textures visible.
-        -- Unlike ordinary skill labels, ultimates use two separate key controls
-        -- (shoulders for the player, sticks for the companion).
         HideGamepadUltimateDecorations(button)
+        if ADDON:ShouldShowControllerPrompts() then
+            if button.buttonText then button.buttonText:SetHidden(true) end
+            -- Apply after the keyboard template: it has no native ultimate
+            -- LeftKeybind/RightKeybind children for gamepad prompts.
+            SetHybridUltimateGlyphs(button, true)
+        else
+            SetHybridUltimateGlyphs(button, false)
+        end
     end
 
     if button.cooldown then
@@ -205,7 +329,11 @@ end
 local function InstallActionButtonHooks()
     if ADDON.runtime.actionButtonHooksInstalled then return end
 
-    ZO_PostHook(ActionButton, "ApplyStyle", ApplyActionButtonPresentation)
+    ZO_PostHook(ActionButton, "Initialize", RegisterControllerActionGlyph)
+    ZO_PostHook(ActionButton, "ApplyStyle", function(button, ...)
+        ApplyActionButtonPresentation(button)
+        RegisterControllerActionGlyph(button)
+    end)
     ZO_PostHook(ActionButton, "UpdateCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", ApplyBackbarPresentation)
@@ -246,5 +374,6 @@ function ADDON:ApplyActionBar()
     if not ActionButton or not ZO_ActionBarTimer or not ZO_ActionBar1 then return end
 
     InstallActionButtonHooks()
+    RefreshExistingActionGlyphs()
     ApplyActionBarLayout()
 end

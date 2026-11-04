@@ -102,9 +102,9 @@ local function ApplyActionButtonPresentation(button)
         button.countText:SetFont("ZoFontGameShadow")
     end
 
-    -- The keyboard template normally hides the oversized gamepad ultimate frame.
+    -- Keep the keyboard-style ultimate frame decoration; only constrain the glow.
     local decoration = button.slot:GetNamedChild("Decoration")
-    if decoration then decoration:SetHidden(true) end
+    if decoration then decoration:SetHidden(false) end
 
     -- Keep the ultimate-ready glow, but constrain it to a small halo around the
     -- keyboard-sized icon instead of the stock gamepad +/-19px expansion.

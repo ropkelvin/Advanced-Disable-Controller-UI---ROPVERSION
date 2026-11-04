@@ -59,13 +59,9 @@ local function ApplyActionButtonPresentation(button)
 
     local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, category)
     if isUltimate then
-        -- Keep the keyboard-style ultimate identical to ordinary skill slots:
-        -- use ESO's registered binding label, not the oversized gamepad
-        -- shoulder/stick textures.
-        if button.SetShowBindingText then button:SetShowBindingText(true) end
-        if button.leftKey then button.leftKey:SetHidden(true) end
-        if button.rightKey then button.rightKey:SetHidden(true) end
-        if button.buttonText then button.buttonText:SetHidden(false) end
+        -- Keep ESO's dedicated native ultimate key textures visible.
+        -- Unlike ordinary skill labels, ultimates use two separate key controls
+        -- (shoulders for the player, sticks for the companion).
         HideGamepadUltimateDecorations(button)
     end
 
@@ -140,7 +136,6 @@ local function ApplyActionBarLayout()
 
     local ultimate = ZO_ActionBar_GetButton(ultimateSlot, activeHotbar)
     if ultimate and lastButton then
-        ultimate:SetShowBindingText(hybrid)
         ultimate:ApplyAnchor(lastButton.slot, ultimateOffset)
         if hybrid then ApplyActionButtonPresentation(ultimate) end
     end
@@ -153,7 +148,6 @@ local function ApplyActionBarLayout()
 
     local companionUltimate = ZO_ActionBar_GetButton(ultimateSlot, HOTBAR_CATEGORY_COMPANION)
     if companionUltimate then
-        companionUltimate:SetShowBindingText(hybrid)
         if lastButton then companionUltimate:ApplyAnchor(ZO_ActionBar_GetButton(firstSlot, activeHotbar).slot, ultimateOffset, true) end
         if hybrid then ApplyActionButtonPresentation(companionUltimate) end
     end
@@ -216,47 +210,13 @@ local function InstallActionButtonHooks()
     ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", ApplyBackbarPresentation)
 
-    -- Re-register ultimate labels through ESO's own binding-label system.
-    -- This restores the same native controller glyph rendering used by skill
-    -- slots, while avoiding the oversized shoulder/stick key textures.
-    ZO_PostHook(ActionButton, "Initialize", function(button)
-        if not IsHybridHUD() or not button or not button.buttonText then return end
-        local slotNum = button:GetSlot()
-        local category = button:GetHotbarCategory()
-        if not ZO_ActionBar_IsUltimateSlot(slotNum, category) then return end
-
-        local bindingName
-        local gamepadBindingName
-        if category == HOTBAR_CATEGORY_COMPANION then
-            bindingName = "COMMAND_PET"
-            gamepadBindingName = "COMMAND_PET"
-        else
-            bindingName = "ACTION_BUTTON_" .. slotNum
-            gamepadBindingName = "GAMEPAD_ACTION_BUTTON_" .. slotNum
-        end
-
-        local function ShowNativeUltimateGlyph(label)
-            label:SetHidden(false)
-            if button.leftKey then button.leftKey:SetHidden(true) end
-            if button.rightKey then button.rightKey:SetHidden(true) end
-        end
-
-        ZO_Keybindings_RegisterLabelForBindingUpdate(
-            button.buttonText,
-            bindingName,
-            false,
-            gamepadBindingName,
-            ShowNativeUltimateGlyph
-        )
-        button:SetShowBindingText(true)
-        ShowNativeUltimateGlyph(button.buttonText)
-    end)
-
+    -- ESO registers ultimate key presentation during ActionButton:Initialize.
+    -- Preserve its OnUltimateChanged callback and dedicated LeftKeybind /
+    -- RightKeybind controls; do not replace them with ordinary ButtonText labels.
     ZO_PostHook(ActionButton, "SetUltimateMeter", function(button)
         if IsHybridHUD() and button
             and ZO_ActionBar_IsUltimateSlot(button:GetSlot(), button:GetHotbarCategory()) then
             HideGamepadUltimateDecorations(button)
-            if button.buttonText then button.buttonText:SetHidden(false) end
         end
     end)
 

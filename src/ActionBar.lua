@@ -131,8 +131,8 @@ local function ApplyActionButtonPresentation(button)
             -- cannot collide with the adjacent quickslot.
             button.leftKey:ClearAnchors()
             button.rightKey:ClearAnchors()
-            button.leftKey:SetAnchor(TOPRIGHT, button.slot, BOTTOMLEFT, 4, -10)
-            button.rightKey:SetAnchor(TOPLEFT, button.slot, BOTTOMRIGHT, -4, -10)
+            button.leftKey:SetAnchor(CENTER, button.slot, BOTTOMLEFT, 13, -9)
+            button.rightKey:SetAnchor(CENTER, button.slot, BOTTOMRIGHT, -13, -9)
             button:HideKeys(false)
         end
     end

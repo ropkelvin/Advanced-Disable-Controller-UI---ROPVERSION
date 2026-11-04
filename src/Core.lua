@@ -56,6 +56,7 @@ end
 function ADDON:ApplyAll()
     self:ApplyPrompts()
     self:ApplyActionBar()
+    if self.ApplyAdditionalHUDStyles then self:ApplyAdditionalHUDStyles() end
 end
 
 function ADDON:Refresh()

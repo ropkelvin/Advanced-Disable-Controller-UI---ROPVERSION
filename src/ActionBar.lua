@@ -22,6 +22,13 @@ local function IsHybridHUD()
 end
 
 local function OnUltimateLabelChanged(button, label)
+    -- Companion ultimates use the native left/right stick glyphs, not a text binding label.
+    if button:GetHotbarCategory() == HOTBAR_CATEGORY_COMPANION then
+        label:SetHidden(true)
+        if button.leftKey and button.rightKey then button:HideKeys(false) end
+        return
+    end
+
     if ADDON:ShouldShowControllerPrompts() then
         label:SetHidden(false)
         if button.leftKey and button.rightKey then button:HideKeys(true) end
@@ -95,8 +102,22 @@ local function ApplyActionButtonPresentation(button)
         button.countText:SetFont("ZoFontGameShadow")
     end
 
+    -- The keyboard template normally hides the oversized gamepad ultimate frame.
     local decoration = button.slot:GetNamedChild("Decoration")
-    if decoration then decoration:SetHidden(false) end
+    if decoration then decoration:SetHidden(true) end
+
+    -- Keep the ultimate-ready glow, but constrain it to a small halo around the
+    -- keyboard-sized icon instead of the stock gamepad +/-19px expansion.
+    if button.glow and button.flipCard and ZO_ActionBar_IsUltimateSlot(slotNum, category) then
+        button.glow:ClearAnchors()
+        button.glow:SetAnchor(TOPLEFT, button.flipCard, TOPLEFT, -6, -6)
+        button.glow:SetAnchor(BOTTOMRIGHT, button.flipCard, BOTTOMRIGHT, 6, 6)
+    end
+
+    if category == HOTBAR_CATEGORY_COMPANION then
+        if button.buttonText then button.buttonText:SetHidden(true) end
+        if button.leftKey and button.rightKey then button:HideKeys(false) end
+    end
 
     if button.cooldown then
         button.cooldown:SetHidden(not button.showingCooldown)

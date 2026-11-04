@@ -4,15 +4,18 @@ AI-assisted development: AI tools contributed to portions of this addon's code a
 
 This add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates.
 
-## Current release — 3.3.8
+## Current release — 3.4.0
 
-- Shows player and companion ultimate controller prompts in Hybrid using ESO's native `ZO_KeyTexture` glyph controls, sized to 24×24 for the compact keyboard HUD.
-- Hides the keyboard-style ultimate binding label in Hybrid because ESO's combined gamepad ultimate action is not a normal compact text binding.
-- Restores ESO's native ultimate-key controls when leaving Hybrid's custom glyph presentation.
-- Removes the speculative 600 ms weapon-swap refresh; the standalone key textures persist independently of action-slot swap updates.
-- Leaves native Gamepad-mode ultimate presentation to ESO.
+ESO Hybrid UI is now a presentation-only addon:
 
-Controller-first interface addon for The Elder Scrolls Online. It provides native Gamepad mode and a compact Hybrid mode with controller prompts. Hybrid keeps the keyboard HUD and keyboard-style quickslot/player-interaction wheels while menus and navigation remain native gamepad UI.
+- ESO's native Gamepad Mode remains active at all times.
+- Keyboard-style HUD presentation is applied only to selected gameplay HUD elements.
+- Gamepad input, configured controller bindings, menus, scenes, dialogs, trade, resurrection, player interaction, utility wheels, inventory and world-map routing remain owned by ESO.
+- No global platform API is replaced, no temporary platform setting changes are emitted, and no native dialog, player-interaction or wheel methods are intercepted.
+- Reticle controller glyph preference is applied locally to the reticle keybind control.
+- Action-bar labels use ESO's native keybinding registration with the actual gamepad action names. Ultimate controls remain native ESO controls.
+
+**Important:** The current release focuses on removing unsafe platform and interaction overrides. It does not yet recreate every pixel of the keyboard HUD while in gamepad mode; remaining layout differences will be addressed only through isolated HUD presentation changes that preserve native input and scene behavior.
 
 ## Dependency
 
@@ -30,7 +33,7 @@ Open the addon's settings and click **Apply settings** once. This saves the foll
 - Use Keyboard Chat: On
 - Return Cursor on Chat Focus: On
 
-The addon does not silently reapply these preferences on login. The button can be clicked again if the player later changes them.
+The addon does not silently reapply these preferences on login. It never changes the setting as a temporary visual refresh. The button can be clicked again if the player later changes them.
 
 ## Installation archive structure
 

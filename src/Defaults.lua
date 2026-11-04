@@ -1,54 +1,32 @@
 -- ESO Hybrid UI
--- ESO Hybrid UI Update 51 baseline and maintained configuration.
+-- Native gamepad behavior with optional keyboard-style gameplay HUD.
 
--- Create one shared addon table using the manifest's exact addon name.
--- Every module keeps a local reference to this single global.
 local ADDON = _G.ESOHybridUI or {}
 _G.ESOHybridUI = ADDON
 
 ZO_CreateStringId("SI_KEYBINDINGS_CATEGORY_ESO_HYBRID_UI", "ESO Hybrid UI")
-ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Toggle gamepad / hybrid UI")
+ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Toggle keyboard-style HUD")
 
 ADDON.ADDON_NAME = "ESOHybridUI"
 ADDON.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
 ADDON.SAVED_VARIABLES_VERSION = 1
-ADDON.VERSION = "3.3.8"
+ADDON.VERSION = "3.4.0"
 
 ADDON.defaults = {
-    -- Main behavior
     useControllerUI = true,
     useHybridUI = false,
     useGamepadButtons = true,
-
-    -- Reticle / stealth prompt fonts
     fonts = {
         reticle = "ZoFontKeybindStripDescription",
         reticleContext = "ZoInteractionPrompt",
         stealthIcon = "ZoInteractionPrompt",
     },
-
     debugLoggingEnabled = false,
 }
 
 ADDON.runtime = {
-    originalIsInGamepadPreferredMode = nil,
-    modeOverrideInstalled = false,
-    forceNativeModeDepth = 0,
-    forceKeyboardWheelDepth = 0,
-    isLockpicking = false,
-    isRefreshing = false,
-    platformRefreshPending = false,
-    platformRefreshScheduled = false,
     initialized = false,
-    actionBarHooksInstalled = false,
-    promptHooksInstalled = false,
-    utilityWheelHooksInstalled = false,
-    utilityWheelDefaultsCopied = false,
-    utilityWheelLeftCopied = false,
-    utilityWheelRightCopied = false,
-    utilityWheelLayerActive = false,
-    promptOriginals = {},
-    stackAllOriginals = setmetatable({}, { __mode = "k" }),
+    actionButtonHooksInstalled = false,
     logger = nil,
     debugLoggingEnabled = false,
 }

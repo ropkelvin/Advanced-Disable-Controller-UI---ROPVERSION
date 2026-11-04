@@ -105,36 +105,8 @@ local function ApplyActionButtonPresentation(button)
     -- Keep the keyboard-style ultimate frame decoration, but prevent the
     -- gamepad ultimate glow texture from extending beyond the actual icon.
     local isUltimate = ZO_ActionBar_IsUltimateSlot(slotNum, category)
-    local decoration = button.slot:GetNamedChild("Decoration")
-    if decoration then decoration:SetHidden(false) end
-
-    if isUltimate then
-        if button.glow and button.flipCard then
-            button.glow:ClearAnchors()
-            button.glow:SetAnchorFill(button.flipCard)
-            button.glow:SetTextureCoords(0.1875, 0.8125, 0.1875, 0.8125)
-        end
-
-        -- ESO's stock ultimate key textures are 40px; make them slightly
-        -- smaller than the regular skill glyphs to keep the ultimate row tidy.
-        if button.leftKey and button.rightKey then
-            local glyphSize = category == HOTBAR_CATEGORY_COMPANION and 28 or 32
-            button.leftKey:SetDimensions(glyphSize, glyphSize)
-            button.rightKey:SetDimensions(glyphSize, glyphSize)
-        end
-    end
-
     if category == HOTBAR_CATEGORY_COMPANION then
         if button.buttonText then button.buttonText:SetHidden(true) end
-        if button.leftKey and button.rightKey then
-            -- Keep the companion glyphs inside their own footprint so they
-            -- cannot collide with the adjacent quickslot.
-            button.leftKey:ClearAnchors()
-            button.rightKey:ClearAnchors()
-            button.leftKey:SetAnchor(CENTER, button.slot, BOTTOMLEFT, 13, -9)
-            button.rightKey:SetAnchor(CENTER, button.slot, BOTTOMRIGHT, -13, -9)
-            button:HideKeys(false)
-        end
     end
 
     if button.cooldown then
@@ -292,37 +264,7 @@ local function InstallActionButtonHooks()
     ZO_PostHook(ActionButton, "RefreshCooldown", RefreshActionButtonCooldown)
     ZO_PostHook(ZO_ActionBarTimer, "ApplyStyle", ApplyBackbarPresentation)
 
-    -- ESO's stock bounce animation is hard-coded to 61/67px gamepad icons.
-    -- Keyboard HUD slots are 50px with a 47px icon, so recalculate the
-    -- animation from the live control dimensions after ESO's own setup.
-    ZO_PostHook(ActionButton, "SetBounceAnimationParameters", function(button)
-        if not IsHybridHUD() or not button.flipCard or not button.icon
-            or not button.bounceAnimation or not button.iconBounceAnimation then
-            return
-        end
-
-        local function SetDimensions(timeline, control, shrinkScale, resetTime)
-            local width, height = control:GetDimensions()
-            if not width or not height or width <= 0 or height <= 0 then return end
-
-            local shrink = timeline:GetAnimation(1)
-            local grow = timeline:GetAnimation(2)
-            local reset = timeline:GetAnimation(3)
-
-            shrink:SetStartAndEndWidth(width, width * shrinkScale)
-            shrink:SetStartAndEndHeight(height, height * shrinkScale)
-
-            grow:SetStartAndEndWidth(width * shrinkScale, width * 1.1)
-            grow:SetStartAndEndHeight(height * shrinkScale, height * 1.1)
-
-            reset:SetStartAndEndWidth(width * 1.1, width)
-            reset:SetStartAndEndHeight(height * 1.1, height)
-            reset:SetDuration(resetTime)
-        end
-
-        SetDimensions(button.bounceAnimation, button.flipCard, 0.9, 167)
-        SetDimensions(button.iconBounceAnimation, button.icon, 0.8, 100)
-    end)
+    -- Keep ESO's native cast-bounce animation parameters and timelines.
 
     local eventNamespace = ADDON.ADDON_NAME .. "_ActionBarStyle"
     local function RefreshActionBar()

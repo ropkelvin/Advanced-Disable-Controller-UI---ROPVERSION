@@ -64,29 +64,27 @@ local function ApplyGamepadModeSetting()
     end
 end
 
-local function InstallHUDScenePreference()
-    local scenes = { HUD_SCENE, HUD_UI_SCENE }
+local originalSceneSetRequestedMode = ZO_Scene.SetWasRequestedToShowInGamepadPreferredMode
 
-    for _, scene in ipairs(scenes) do
-        if scene and not scene.hybridUIPreferenceHooked then
-            local originalSetRequestedMode = scene.SetWasRequestedToShowInGamepadPreferredMode
+local function InstallScenePreferredMode()
+    ZO_Scene.SetWasRequestedToShowInGamepadPreferredMode = function(self, gamepad)
+        if IsHybridMode() then
+            local baseScene = SCENE_MANAGER:GetBaseScene()
+            local isHUDScene = self == HUD_SCENE
+                or self == HUD_UI_SCENE
+                or self == baseScene
 
-            scene.SetWasRequestedToShowInGamepadPreferredMode = function(self, gamepad)
-                if IsHybridMode() then
-                    originalSetRequestedMode(self, false)
-                else
-                    originalSetRequestedMode(self, gamepad)
-                end
-            end
-
-            scene.hybridUIPreferenceHooked = true
+            originalSceneSetRequestedMode(self, not isHUDScene)
+        else
+            originalSceneSetRequestedMode(self, gamepad)
         end
+    end
 
-        if scene then
-            scene:SetWasRequestedToShowInGamepadPreferredMode(
-                IsHybridMode() and false or originalIsInGamepadPreferredMode()
-            )
-        end
+    local baseScene = SCENE_MANAGER:GetBaseScene()
+    if baseScene then
+        baseScene:SetWasRequestedToShowInGamepadPreferredMode(
+            IsHybridMode() and false or originalIsInGamepadPreferredMode()
+        )
     end
 end
 
@@ -212,7 +210,7 @@ end
 
 local function ApplyMode()
     ApplyGamepadModeSetting()
-    InstallHUDScenePreference()
+    InstallScenePreferredMode()
     InstallNativeGamepadRouting()
     InstallGamepadDialogs()
     RefreshNativePlatformStyles()

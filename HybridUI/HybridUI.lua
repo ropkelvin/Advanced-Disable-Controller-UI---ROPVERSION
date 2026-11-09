@@ -237,6 +237,26 @@ local function InstallActionButtonAdapter(button)
     end
 end
 
+
+-- ESO's ApplyAnchor ultimately calls SetAnchor on the button's slot.
+-- A reused/misresolved button can therefore be passed as its own target
+-- (notably when front and back hotbar lookups resolve to the same control).
+-- Leave that button's existing native anchor intact instead of creating a cycle.
+local function ApplyActionButtonAnchor(button, anchorTarget, offset, anchorToRight)
+    if not button or not anchorTarget then
+        return false
+    end
+
+    local buttonControl = button.slot or button
+    local targetControl = anchorTarget.slot or anchorTarget
+    if button == anchorTarget or buttonControl == targetControl then
+        return false
+    end
+
+    button:ApplyAnchor(anchorTarget, offset, anchorToRight)
+    return true
+end
+
 local function ApplyActionBarPresentation(useKeyboard)
     if not ZO_ActionBar1 or not ZO_ActionBar_GetButton then
         return
@@ -282,12 +302,12 @@ local function ApplyActionBarPresentation(useKeyboard)
                 if not lastButton then
                     anchorTarget = weaponSwap
                 end
-                button:ApplyAnchor(anchorTarget, style.abilitySlotOffsetX)
+                ApplyActionButtonAnchor(button, anchorTarget, style.abilitySlotOffsetX)
 
                 local backButton = ZO_ActionBar_GetButton(slotIndex, backHotbar)
                 if backButton then
                     backButton:ApplyStyle(backBarTemplate)
-                    backButton:ApplyAnchor(button.slot, style.backRowSlotOffsetY)
+                    ApplyActionButtonAnchor(backButton, button.slot, style.backRowSlotOffsetY)
                 end
 
                 lastButton = button
@@ -299,20 +319,20 @@ local function ApplyActionBarPresentation(useKeyboard)
         if ultimateButton and lastButton then
             ultimateButton:ApplyStyle(ZO_GetPlatformTemplate("ZO_UltimateActionButton"))
             ultimateButton:SetShowBindingText(style.showNormalBindingTextOnUltimate)
-            ultimateButton:ApplyAnchor(lastButton.slot, style.ultimateSlotOffsetX)
+            ApplyActionButtonAnchor(ultimateButton, lastButton.slot, style.ultimateSlotOffsetX)
             ultimateButton:UpdateUltimateMeter()
 
             local backUltimate = ZO_ActionBar_GetButton(ultimateSlot, backHotbar)
             if backUltimate then
                 backUltimate:ApplyStyle(ZO_GetPlatformTemplate("ZO_ActionBarTimer_BackBarSlot_Ultimate"))
-                backUltimate:ApplyAnchor(ultimateButton.slot, style.backRowUltimateSlotOffsetY)
+                ApplyActionButtonAnchor(backUltimate, ultimateButton.slot, style.backRowUltimateSlotOffsetY)
             end
 
             local companionUltimate = ZO_ActionBar_GetButton(ultimateSlot, HOTBAR_CATEGORY_COMPANION)
             if companionUltimate then
                 companionUltimate:ApplyStyle(ZO_GetPlatformTemplate("ZO_UltimateActionButton"))
                 companionUltimate:SetShowBindingText(style.showNormalBindingTextOnUltimate)
-                companionUltimate:ApplyAnchor(ZO_ActionBar_GetButton(ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1).slot, style.ultimateSlotOffsetX, true)
+                ApplyActionButtonAnchor(companionUltimate, ZO_ActionBar_GetButton(ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1).slot, style.ultimateSlotOffsetX, true)
                 companionUltimate:UpdateUltimateMeter()
             end
         end
@@ -323,14 +343,14 @@ local function ApplyActionBarPresentation(useKeyboard)
             companionUltimate:SetEnabled(true)
             keybindBackground:SetDimensions(580, 64)
             keybindBackground:SetAnchor(BOTTOM, nil, nil, -34, 0)
-            quickslot:ApplyAnchor(companionUltimate.slot, style.quickslotOffsetXFromCompanionUltimate, true)
+            ApplyActionButtonAnchor(quickslot, companionUltimate.slot, style.quickslotOffsetXFromCompanionUltimate, true)
         else
             if companionUltimate then
                 companionUltimate:SetEnabled(false)
             end
             keybindBackground:SetDimensions(512, 64)
             keybindBackground:SetAnchor(BOTTOM, nil, nil, 0, 0)
-            quickslot:ApplyAnchor(weaponSwap, style.quickslotOffsetXFromFirstSlot, true)
+            ApplyActionButtonAnchor(quickslot, weaponSwap, style.quickslotOffsetXFromFirstSlot, true)
         end
 
         quickslot:ApplyStyle(buttonTemplate)

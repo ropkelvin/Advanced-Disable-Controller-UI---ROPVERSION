@@ -82,9 +82,11 @@ local function InstallScenePreferredMode()
 
     local baseScene = SCENE_MANAGER:GetBaseScene()
     if baseScene then
-        baseScene:SetWasRequestedToShowInGamepadPreferredMode(
-            IsHybridMode() and false or originalIsInGamepadPreferredMode()
-        )
+        if IsHybridMode() then
+            baseScene:SetWasRequestedToShowInGamepadPreferredMode(false)
+        else
+            baseScene:SetWasRequestedToShowInGamepadPreferredMode(originalIsInGamepadPreferredMode())
+        end
     end
 end
 

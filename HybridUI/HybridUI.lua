@@ -19,6 +19,7 @@ local originalIsInGamepadPreferredMode = IsInGamepadPreferredMode
 
 local originalSystemMethods = {}
 local originalDialogMethods = {}
+local originalInteractionMethods = {}
 
 local function IsHybridMode()
     return savedVariables and savedVariables.mode == MODE_HYBRID
@@ -140,6 +141,20 @@ local function InstallNativeGamepadRouting()
             end
 
             return originalSystemMethods.getPlatformUISystemDisplayName(self, system)
+        end
+    end
+
+    if not originalInteractionMethods.lockpickSetHidden then
+        originalInteractionMethods.lockpickSetHidden = ZO_Lockpick.SetHidden
+
+        ZO_Lockpick.SetHidden = function(self, hidden)
+            if IsHybridMode() and not hidden then
+                self.hidden = false
+                SCENE_MANAGER:Show("lockpickGamepad")
+                return
+            end
+
+            return originalInteractionMethods.lockpickSetHidden(self, hidden)
         end
     end
 end

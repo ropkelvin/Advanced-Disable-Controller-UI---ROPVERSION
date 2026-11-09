@@ -1,0 +1,21 @@
+## Title: ESO Hybrid UI
+## Description: AI-assisted development (revision of the original ESO Hybrid UI). Controller-first Gamepad/Hybrid UI: keep ESO's Gamepad Mode on, and in Hybrid mode show a keyboard-layout HUD and keyboard quickslot wheel while every menu stays native gamepad UI. Requires LibAddonMenu-2.0 r43+. Optional: LibGamepadOptions (controller settings page), LibDebugLogger (log output). Inspired by Advanced Disable Controller UI (Lionas; contributions: jc28735250, DoriKyll).
+## Author: ZOSPlsFix (original addon); v4 revision with AI assistance
+## Version: 4.0.0-beta
+## AddOnVersion: 40000
+## APIVersion: 101050 101051
+## DependsOn: LibAddonMenu-2.0>=43
+## OptionalDependsOn: LibGamepadOptions>=7 LibDebugLogger
+## SavedVariables: ESOHybridUI_SavedVariables
+
+src/Defaults.lua
+src/Diagnostics.lua
+src/Policy.lua
+src/Core.lua
+src/Prompts.lua
+src/Dialogs.lua
+src/UtilityWheel.lua
+src/ActionBar.lua
+src/WorldMap.lua
+src/Settings.lua
+Bindings.xml

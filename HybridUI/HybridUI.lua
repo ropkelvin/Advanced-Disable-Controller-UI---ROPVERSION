@@ -8,7 +8,6 @@ local DEFAULTS =
 }
 
 local savedVariables
-local originalGetPlatformTemplate
 local originalApplyAttributeStyle
 local initialized = false
 

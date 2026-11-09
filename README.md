@@ -1,31 +1,46 @@
-## HybridUI
+**AI-assisted development disclosure:** This addon contains AI-assisted code that has not yet been verified in a live ESO client. Please treat this branch as an experimental development build, not a release.
 
-A clean, original ESO addon implementation targeting two modes:
+# HybridUI
 
-- **Native Gamepad UI** — ESO's complete native Gamepad interface.
-- **Hybrid UI** — native Gamepad menus, inventory, map, interactions and dialogues, with the original Keyboard gameplay HUD completely unchanged.
+A clean implementation of the requested two-mode interface:
 
-The addon includes an option to set ESO's Gamepad Mode preference to **On** (Always Gamepad), rather than Auto.
+- **Native Gamepad UI** — leave ESO's normal Gamepad interface in control.
+- **Hybrid UI** — native Gamepad menus, inventory, map, interactions and dialogues, with the original Keyboard platform style selected while ESO's base gameplay HUD scene is active.
 
-## Current development status
+The addon also provides an option to set ESO's Gamepad Mode preference to **On** (Always Gamepad), rather than Auto. The original setting is saved and restored if the option is disabled.
 
-The clean branch currently contains the addon manifest, account-wide settings, a LibAddonMenu configuration panel, the two-mode selector, and the supported ESO setting call for Always Gamepad.
+## Implementation approach
 
-**The HUD-only Hybrid behavior is not implemented yet.** This is intentional: overriding ESO's global `IsInGamepadPreferredMode()` also changes how ESO chooses menu and interaction scenes, so it cannot safely satisfy the requirement. The next implementation step is to integrate with the native HUD fragments/platform selection without modifying the Keyboard HUD itself, then validate all scene transitions in a live client. This branch is not release-ready yet.
+Hybrid mode uses ESO's own scene manager and platform-style selection path:
+
+1. The preferred-mode query reports Keyboard only while the base HUD scene is active, so ESO's existing platform-style objects choose their native Keyboard styles for the HUD.
+2. The HUD scene's requested-mode state is kept aligned with that HUD-only selection.
+3. ESO system-object and root-scene selection is directed to the native Gamepad implementations while Hybrid mode is active.
+4. Platform dialogs are routed to ESO's native Gamepad dialog path.
+5. After scene transitions, a temporary setting round-trip causes ESO's own platform-style manager to reapply styles. The user's actual Gamepad Mode setting is restored immediately.
+
+No Keyboard HUD templates, controls, fonts, positions, textures, or layout formulas are recreated or edited by this addon.
 
 ## Dependencies
 
-- LibAddonMenu-2.0 version 43 or newer.
+- **LibAddonMenu-2.0 r43 or newer** — required for the settings panel. Install it separately; it is not bundled.
 
-## ESOUI compliance checklist
+## Current status
 
-- No executables or bundled third-party libraries.
-- Account-wide SavedVariables.
-- Minimal local Lua scope; only ESO's required event registration is global.
-- Update APIVersion against the live client before release.
-- AI-assisted development disclosed; generated code must be reviewed and tested before publication.
-- Package the ZIP with the HybridUI folder at the archive root and remove hidden files/folders.
+The implementation is committed to the `HybridUI` branch. It has been checked against the current public ESO UI source (API 101051) and the current ESOUI addon guidance, but it has **not** been exercised inside the live game client. In particular, the scene transitions, dialog edge cases, map/loot flows, and the platform-style refresh need in-client testing before this can be called complete or released.
 
-## Install for development
+## Development and compliance references
 
-Place the HybridUI folder in Documents/Elder Scrolls Online/live/AddOns/ and install the required LibAddonMenu-2.0 library.
+- [Official ESO UI source repository](https://github.com/esoui/esoui) — reference for native scenes, platform styles, UI system routing, and dialogs. No source files were copied into this addon.
+- [ESOUI addon release best practices](https://www.esoui.com/forums/showthread.php?t=10790) — dependencies, API version, description, credits, and AI disclosure.
+- [ESOUI addon policy / prohibited functionality](https://www.esoui.com/forums/showthread.php?t=9865).
+- [LibAddonMenu-2.0](https://www.esoui.com/downloads/info7-libaddonmenu.html) — standalone dependency, current r43.
+
+## Packaging checklist
+
+- ZIP root must contain the `HybridUI` addon folder.
+- Include only addon Lua/XML/texture assets and required project documentation.
+- Do not bundle LibAddonMenu or unrelated addons.
+- Keep the manifest APIVersion current with the live client.
+- Keep the AI disclosure at the beginning of the ESOUI description until the code has been personally reviewed and validated.
+- Verify all supported modes in the live client before release.

@@ -53,7 +53,7 @@ local function ApplyGamepadModeSetting()
         SetSetting(
             SETTING_TYPE_GAMEPAD,
             GAMEPAD_SETTING_INPUT_PREFERRED_MODE,
-            INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
+            tostring(INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD)
         )
     elseif savedVariables.originalPreferredMode ~= nil then
         SetSetting(
@@ -80,6 +80,12 @@ local function InstallHUDScenePreference()
             end
 
             scene.hybridUIPreferenceHooked = true
+        end
+
+        if scene then
+            scene:SetWasRequestedToShowInGamepadPreferredMode(
+                IsHybridMode() and false or originalIsInGamepadPreferredMode()
+            )
         end
     end
 end
@@ -165,7 +171,7 @@ end
 -- changes. The saved setting is restored immediately; Hybrid mode's
 -- scene-aware preference determines which style ESO applies during refresh.
 local function RefreshNativePlatformStyles()
-    if refreshingPlatformStyles or not IsHybridMode() then
+    if refreshingPlatformStyles then
         return
     end
 
@@ -176,9 +182,9 @@ local function RefreshNativePlatformStyles()
         GAMEPAD_SETTING_INPUT_PREFERRED_MODE
     )
 
-    local alternateMode = currentMode == INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
-        and INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
-        or INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
+    local alwaysKeyboard = tostring(INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD)
+    local alwaysGamepad = tostring(INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD)
+    local alternateMode = currentMode == alwaysKeyboard and alwaysGamepad or alwaysKeyboard
 
     SetSetting(
         SETTING_TYPE_GAMEPAD,

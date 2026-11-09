@@ -211,10 +211,10 @@ local function OnSceneStateChanged(scene, oldState, newState)
 end
 
 local function ApplyMode()
-    ApplyGamepadModeSetting()
     InstallScenePreferredMode()
     InstallNativeGamepadRouting()
     InstallGamepadDialogs()
+    ApplyGamepadModeSetting()
     RefreshNativePlatformStyles()
 end
 

@@ -1,19 +1,18 @@
 -- HybridUI
--- Original implementation. No code is copied from other addon branches or projects.
+-- Fresh implementation; no code is copied from other addon branches or projects.
 
 local ADDON_NAME = "HybridUI"
-local DEFAULTS =
-{
-    mode = "native",
-    applyGamepadModeOn = true,
-}
-
 local MODE_NATIVE = "native"
 local MODE_HYBRID = "hybrid"
 
+local DEFAULTS =
+{
+    mode = MODE_NATIVE,
+    applyGamepadModeOn = true,
+}
+
 local savedVariables
-local originalIsInGamepadPreferredMode
-local isInitialized = false
+local initialized = false
 
 local function ApplyGamepadModeSetting()
     if savedVariables.applyGamepadModeOn then
@@ -25,46 +24,15 @@ local function ApplyGamepadModeSetting()
     end
 end
 
-local function IsHUDScene(sceneName)
-    return sceneName == "hud" or sceneName == "hudui"
-end
-
-local function InstallMode()
-    if savedVariables.mode == MODE_NATIVE then
-        if originalIsInGamepadPreferredMode then
-            IsInGamepadPreferredMode = originalIsInGamepadPreferredMode
-        end
-        return
-    end
-
-    if not originalIsInGamepadPreferredMode then
-        originalIsInGamepadPreferredMode = IsInGamepadPreferredMode
-    end
-
-    if not SCENE_MANAGER or not SCENE_MANAGER.Show or SCENE_MANAGER.__hybridUIWrapped then
-        return
-    end
-
-    local originalShow = SCENE_MANAGER.Show
-    SCENE_MANAGER.Show = function(sceneManager, sceneName, ...)
-        if IsHUDScene(sceneName) then
-            IsInGamepadPreferredMode = function()
-                return false
-            end
-            local results = { originalShow(sceneManager, sceneName, ...) }
-            IsInGamepadPreferredMode = originalIsInGamepadPreferredMode
-            return unpack(results)
-        end
-
-        IsInGamepadPreferredMode = originalIsInGamepadPreferredMode
-        return originalShow(sceneManager, sceneName, ...)
-    end
-    SCENE_MANAGER.__hybridUIWrapped = true
-end
-
-local function ApplyConfiguration()
+local function ApplyMode()
     ApplyGamepadModeSetting()
-    InstallMode()
+
+    -- Both modes intentionally retain ESO's real preferred-input setting.
+    -- Hybrid's HUD selection is not implemented by overriding the global
+    -- IsInGamepadPreferredMode() function: doing so also changes how ESO
+    -- selects menus and interaction scenes, which violates the specification.
+    -- The HUD-only integration must be implemented against the native HUD
+    -- fragments and verified in-client before this mode can be called complete.
 end
 
 local function CreateSettings()
@@ -88,26 +56,30 @@ local function CreateSettings()
     {
         {
             type = "description",
-            text = "Choose between ESO's complete native Gamepad UI and Hybrid UI. Hybrid UI targets the original Keyboard gameplay HUD while retaining native Gamepad menus.",
+            text = "Native Gamepad UI keeps ESO's complete Gamepad interface. Hybrid UI is intended to use native Gamepad menus with the original Keyboard gameplay HUD.",
         },
         {
             type = "dropdown",
             name = "Interface mode",
-            tooltip = "Native Gamepad UI uses ESO's normal Gamepad interface. Hybrid UI keeps native Gamepad menus and targets the original Keyboard gameplay HUD.",
+            tooltip = "Choose Native Gamepad UI or Hybrid UI.",
             choices = { "Native Gamepad UI", "Hybrid UI" },
             choicesValues = { MODE_NATIVE, MODE_HYBRID },
-            getFunc = function() return savedVariables.mode end,
+            getFunc = function()
+                return savedVariables.mode
+            end,
             setFunc = function(value)
                 savedVariables.mode = value
-                ApplyConfiguration()
+                ApplyMode()
             end,
             default = MODE_NATIVE,
         },
         {
             type = "checkbox",
             name = "Set ESO Gamepad Mode to On",
-            tooltip = "Applies ESO's Always Gamepad preference instead of Auto.",
-            getFunc = function() return savedVariables.applyGamepadModeOn end,
+            tooltip = "Sets ESO's input preference to Always Gamepad instead of Auto.",
+            getFunc = function()
+                return savedVariables.applyGamepadModeOn
+            end,
             setFunc = function(value)
                 savedVariables.applyGamepadModeOn = value
                 ApplyGamepadModeSetting()
@@ -118,11 +90,11 @@ local function CreateSettings()
 end
 
 local function OnAddonLoaded(eventCode, addonName)
-    if addonName ~= ADDON_NAME or isInitialized then
+    if addonName ~= ADDON_NAME or initialized then
         return
     end
 
-    isInitialized = true
+    initialized = true
     EVENT_MANAGER:UnregisterForEvent(ADDON_NAME, EVENT_ADD_ON_LOADED)
 
     savedVariables = ZO_SavedVars:NewAccountWide(
@@ -132,7 +104,7 @@ local function OnAddonLoaded(eventCode, addonName)
         DEFAULTS
     )
 
-    ApplyConfiguration()
+    ApplyMode()
     CreateSettings()
 end
 

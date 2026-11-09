@@ -97,7 +97,10 @@ local function InstallNativeGamepadRouting()
 
         SYSTEMS.GetObject = function(self, systemName)
             if IsHybridMode() then
-                return self:GetGamepadObject(systemName)
+                local gamepadObject = self:GetGamepadObject(systemName)
+                if gamepadObject then
+                    return gamepadObject
+                end
             end
 
             return originalSystemMethods.getObject(self, systemName)
@@ -105,7 +108,10 @@ local function InstallNativeGamepadRouting()
 
         SYSTEMS.GetRootScene = function(self, systemName)
             if IsHybridMode() then
-                return self:GetGamepadRootScene(systemName)
+                local gamepadRootScene = self:GetGamepadRootScene(systemName)
+                if gamepadRootScene then
+                    return gamepadRootScene
+                end
             end
 
             return originalSystemMethods.getRootScene(self, systemName)
@@ -116,7 +122,8 @@ local function InstallNativeGamepadRouting()
         originalSystemMethods.openPlatformUISystem = ZO_UISystemManager.OpenPlatformUISystem
 
         ZO_UISystemManager.OpenPlatformUISystem = function(self, system, ...)
-            if IsHybridMode() then
+            local systemInfo = self.systems[system]
+            if IsHybridMode() and systemInfo and systemInfo.gamepadOpen then
                 return self:OpenGamepadUISystem(system, ...)
             end
 
@@ -141,12 +148,13 @@ local function InstallGamepadDialogs()
     if not originalDialogMethods.showPlatformDialog then
         originalDialogMethods.showPlatformDialog = ZO_Dialogs_ShowPlatformDialog
 
-        ZO_Dialogs_ShowPlatformDialog = function(...)
-            if IsHybridMode() then
-                return ZO_Dialogs_ShowGamepadDialog(...)
+        ZO_Dialogs_ShowPlatformDialog = function(name, ...)
+            local dialogInfo = ESO_Dialogs[name]
+            if IsHybridMode() and dialogInfo and dialogInfo.gamepadInfo then
+                return ZO_Dialogs_ShowGamepadDialog(name, ...)
             end
 
-            return originalDialogMethods.showPlatformDialog(...)
+            return originalDialogMethods.showPlatformDialog(name, ...)
         end
     end
 

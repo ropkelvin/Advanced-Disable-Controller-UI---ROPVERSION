@@ -329,7 +329,7 @@ local function OnHudSettingsReady()
     end
     hudSettingsReady = true
     ApplyAllKeyboardHudStyles()
-    HUD_MANAGER:RegisterCallback("PropagateSettings", ApplyKeyboardHudAnchors)
+    HUD_MANAGER:RegisterCallback("PropagateSettings", ApplyAllKeyboardHudStyles)
 end
 
 local function CreateSettings()

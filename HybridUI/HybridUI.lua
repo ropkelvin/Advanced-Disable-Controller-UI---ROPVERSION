@@ -43,6 +43,46 @@ local SYNERGY_GAMEPAD_STYLE =
     HUD_ELEMENT_REF_MIN_WIDTH = 330,
 }
 
+local ACTION_BAR_KEYBOARD_STYLE =
+{
+    abilitySlotOffsetX = 2,
+    ultimateSlotOffsetX = 62,
+    quickslotOffsetXFromCompanionUltimate = 18,
+    quickslotOffsetXFromFirstSlot = 5,
+    backRowSlotOffsetY = -17,
+    backRowUltimateSlotOffsetY = -20,
+    width = 483,
+    showNormalBindingTextOnUltimate = true,
+    showKeybindBG = true,
+    showWeaponSwapButton = true,
+    weaponSwapOffsetX = 59,
+    weaponSwapOffsetY = -4,
+    hudElementRefPrimaryOffsetX = -68,
+    hudElementRefPrimaryOffsetY = -20,
+    hudElementRefSecondaryOffsetX = 2,
+    hudElementRefSecondaryOffsetY = 0,
+}
+
+local ACTION_BAR_GAMEPAD_STYLE =
+{
+    abilitySlotOffsetX = 10,
+    ultimateSlotOffsetX = 65,
+    quickslotOffsetXFromCompanionUltimate = 45,
+    quickslotOffsetXFromFirstSlot = 5,
+    backRowSlotOffsetY = -17,
+    backRowUltimateSlotOffsetY = -30,
+    width = 606,
+    showNormalBindingTextOnUltimate = false,
+    showKeybindBG = false,
+    showWeaponSwapButton = false,
+    weaponSwapOffsetX = 61,
+    weaponSwapOffsetY = 4,
+    hudElementRefPrimaryOffsetX = -125,
+    hudElementRefPrimaryOffsetY = -18,
+    hudElementRefSecondaryOffsetX = 52,
+    hudElementRefSecondaryOffsetY = 22,
+}
+
 local function WithPlatformStyle(useKeyboard, callback)
     local originalPreferredMode = IsInGamepadPreferredMode
     local originalGetPlatformTemplate = ZO_GetPlatformTemplate
@@ -176,7 +216,7 @@ end
 -- Reapply its documented Keyboard/Gamepad layout constants through the
 -- public action-bar button objects, without changing input or preferred mode.
 local function InstallActionButtonAdapter(button)
-    if not button or actionButtonOriginalStyles[button] then
+    if not button or not button.ApplyStyle or actionButtonOriginalStyles[button] then
         return
     end
 
@@ -212,52 +252,22 @@ local function ApplyActionBarPresentation(useKeyboard)
     InstallActionButtonAdapter(ZO_ActionBar_GetButton(ultimateSlot, HOTBAR_CATEGORY_COMPANION))
     InstallActionButtonAdapter(ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL))
 
-    local style
-    if useKeyboard then
-        style =
-        {
-            abilitySlotOffsetX = 2,
-            ultimateSlotOffsetX = 62,
-            quickslotOffsetXFromCompanionUltimate = 18,
-            quickslotOffsetXFromFirstSlot = 5,
-            backRowSlotOffsetY = -17,
-            backRowUltimateSlotOffsetY = -20,
-            anchor = ZO_Anchor:New(BOTTOM, GuiRoot, BOTTOM, 0, 0),
-            width = 483,
-            showNormalBindingTextOnUltimate = true,
-            showKeybindBG = true,
-            showWeaponSwapButton = true,
-            weaponSwapOffsetX = 59,
-            weaponSwapOffsetY = -4,
-            hudElementRefPrimaryAnchor = ZO_Anchor:New(TOPLEFT, nil, TOPLEFT, -68, -20),
-            hudElementRefSecondaryAnchor = ZO_Anchor:New(BOTTOMRIGHT, nil, BOTTOMRIGHT, 2, 0),
-        }
-    else
-        style =
-        {
-            abilitySlotOffsetX = 10,
-            ultimateSlotOffsetX = 65,
-            quickslotOffsetXFromCompanionUltimate = 45,
-            quickslotOffsetXFromFirstSlot = 5,
-            backRowSlotOffsetY = -17,
-            backRowUltimateSlotOffsetY = -30,
-            anchor = ZO_Anchor:New(BOTTOM, GuiRoot, BOTTOM, 0, -25),
-            width = 606,
-            showNormalBindingTextOnUltimate = false,
-            showKeybindBG = false,
-            showWeaponSwapButton = false,
-            weaponSwapOffsetX = 61,
-            weaponSwapOffsetY = 4,
-            hudElementRefPrimaryAnchor = ZO_Anchor:New(TOPLEFT, nil, TOPLEFT, -125, -18),
-            hudElementRefSecondaryAnchor = ZO_Anchor:New(BOTTOMRIGHT, nil, BOTTOMRIGHT, 52, 22),
-        }
-    end
+    local style = useKeyboard and ACTION_BAR_KEYBOARD_STYLE or ACTION_BAR_GAMEPAD_STYLE
+    local anchor = ZO_Anchor:New(BOTTOM, GuiRoot, BOTTOM, 0, useKeyboard and 0 or -25)
+    local hudElementRefPrimaryAnchor = ZO_Anchor:New(TOPLEFT, nil, TOPLEFT, style.hudElementRefPrimaryOffsetX, style.hudElementRefPrimaryOffsetY)
+    local hudElementRefSecondaryAnchor = ZO_Anchor:New(BOTTOMRIGHT, nil, BOTTOMRIGHT, style.hudElementRefSecondaryOffsetX, style.hudElementRefSecondaryOffsetY)
+
 
     WithPlatformStyle(useKeyboard, function()
-        style.anchor:Set(ZO_ActionBar1)
+        anchor:Set(ZO_ActionBar1)
         ZO_ActionBar1:SetWidth(style.width)
 
         local weaponSwap = ZO_ActionBar1WeaponSwap
+        local quickslot = ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+        local keybindBackground = ZO_ActionBar1:GetNamedChild("KeybindBG")
+        if not weaponSwap or not quickslot or not keybindBackground then
+            return
+        end
         weaponSwap:SetAnchor(TOPLEFT, nil, TOPLEFT, style.weaponSwapOffsetX, style.weaponSwapOffsetY)
 
         local buttonTemplate = ZO_GetPlatformTemplate("ZO_ActionButton")
@@ -309,9 +319,6 @@ local function ApplyActionBarPresentation(useKeyboard)
 
         local companionActive = DoesUnitExist("companion") and HasActiveCompanion()
         local companionUltimate = ZO_ActionBar_GetButton(ultimateSlot, HOTBAR_CATEGORY_COMPANION)
-        local quickslot = ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
-        local keybindBackground = ZO_ActionBar1:GetNamedChild("KeybindBG")
-
         if companionActive and companionUltimate then
             companionUltimate:SetEnabled(true)
             keybindBackground:SetDimensions(580, 64)
@@ -330,8 +337,8 @@ local function ApplyActionBarPresentation(useKeyboard)
         keybindBackground:SetHidden(not style.showKeybindBG)
         ZO_WeaponSwap_SetPermanentlyHidden(ZO_ActionBar1:GetNamedChild("WeaponSwap"), not style.showWeaponSwapButton)
 
-        style.hudElementRefPrimaryAnchor:Set(ZO_ActionBar1.hudElementRef)
-        style.hudElementRefSecondaryAnchor:AddToControl(ZO_ActionBar1.hudElementRef)
+        hudElementRefPrimaryAnchor:Set(ZO_ActionBar1.hudElementRef)
+        hudElementRefSecondaryAnchor:AddToControl(ZO_ActionBar1.hudElementRef)
     end)
 end
 

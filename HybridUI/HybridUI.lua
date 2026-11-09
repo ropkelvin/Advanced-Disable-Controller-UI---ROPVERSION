@@ -339,7 +339,7 @@ local function InstallTrackerAdapter()
 end
 
 local function ApplyTrackerStyles(useKeyboard)
-    if not HUD_TRACKER_MANAGER or not HUD_TRACKER_MANAGER.trackers then
+    if not originalTrackerApplyPlatformStyle or not HUD_TRACKER_MANAGER or not HUD_TRACKER_MANAGER.trackers then
         return
     end
 
@@ -554,6 +554,12 @@ local function ApplyAllKeyboardHudStyles()
     ApplyKeyboardHudAnchors()
 end
 
+local function OnActionBarLayoutChanged()
+    if IsKeyboardHudEnabled() then
+        ApplyActionBarPresentation(true)
+    end
+end
+
 local function OnHudSettingsReady()
     if hudSettingsReady then
         return
@@ -561,6 +567,11 @@ local function OnHudSettingsReady()
     hudSettingsReady = true
     ApplyAllKeyboardHudStyles()
     HUD_MANAGER:RegisterCallback("PropagateSettings", ApplyAllKeyboardHudStyles)
+
+    EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_ACTION_SLOTS_ACTIVE_HOTBAR_UPDATED, OnActionBarLayoutChanged)
+    EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_ACTION_SLOTS_ALL_HOTBARS_UPDATED, OnActionBarLayoutChanged)
+    EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_ACTIVE_WEAPON_PAIR_CHANGED, OnActionBarLayoutChanged)
+    EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_ACTIVE_COMPANION_STATE_CHANGED, OnActionBarLayoutChanged)
 end
 
 local function CreateSettings()

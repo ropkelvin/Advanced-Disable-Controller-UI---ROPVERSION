@@ -92,14 +92,6 @@ local function InstallResourceBarAdapter()
         return originalAttributeApplyStyle(self)
     end
 
-    if PLAYER_ATTRIBUTE_BARS then
-        PLAYER_ATTRIBUTE_BARS:ApplyStyle()
-        if IsKeyboardHudEnabled() and PLAYER_ATTRIBUTE_BARS.attributeVisualizer then
-            WithPlatformStyle(true, function()
-                PLAYER_ATTRIBUTE_BARS.attributeVisualizer:ApplyPlatformStyle()
-            end)
-        end
-    end
 end
 
 local function InstallCompassAdapter()
@@ -142,9 +134,6 @@ local function InstallUnitFrameAdapter()
         return originalUnitFrameApplyVisualStyle(self)
     end
 
-    if UnitFrames and UnitFrames.ApplyVisualStyle then
-        UnitFrames:ApplyVisualStyle()
-    end
 end
 
 local function InstallBossBarAdapter()
@@ -163,7 +152,6 @@ local function InstallBossBarAdapter()
         return originalBossBarApplyStyle(self)
     end
 
-    BOSS_BAR:ApplyStyle()
 end
 
 
@@ -336,12 +324,20 @@ local function ApplyAllKeyboardHudStyles()
 
     if PLAYER_ATTRIBUTE_BARS then
         PLAYER_ATTRIBUTE_BARS:ApplyStyle()
+        if PLAYER_ATTRIBUTE_BARS.attributeVisualizer then
+            WithPlatformStyle(true, function()
+                PLAYER_ATTRIBUTE_BARS.attributeVisualizer:ApplyPlatformStyle()
+            end)
+        end
     end
     if COMPASS_FRAME then
         COMPASS_FRAME:ApplyStyle()
     end
     if BOSS_BAR then
         BOSS_BAR:ApplyStyle()
+    end
+    if UnitFrames and UnitFrames.ApplyVisualStyle then
+        UnitFrames:ApplyVisualStyle()
     end
 
     ApplyKeyboardHudAnchors()

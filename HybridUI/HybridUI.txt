@@ -1,8 +1,8 @@
 ## Title: HybridUI
 ## Author: @ZOSPlsFix
-## Description: AI-assisted experimental Keyboard-style HUD presentation for native Gamepad mode.
-## Version: 2.3.0
-## AddOnVersion: 20300
+## Description: Experimental Keyboard-style HUD presentation for native Gamepad mode.
+## Version: 2.3.1
+## AddOnVersion: 20301
 ## APIVersion: 101051
 ## DependsOn: LibAddonMenu-2.0>=43
 ## SavedVariables: HybridUI_SavedVariables

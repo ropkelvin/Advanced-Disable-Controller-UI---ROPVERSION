@@ -2,19 +2,29 @@
 
 # HybridUI
 
-HybridUI is being rebuilt around a HUD-only rule:
+HybridUI keeps ESO in native Gamepad mode and applies Keyboard-style presentation to gameplay HUD elements only.
 
-- ESO stays in native Gamepad mode.
-- Native Gamepad menus, inventory, map, interactions, dialogues, lockpicking, input handling and scene routing are not modified.
-- The addon changes HUD presentation only.
+## Current implementation
 
-## Current implementation scope
+- Reuses ESO's Keyboard HUD element anchors for controls registered as both Keyboard and Gamepad HUD elements. This includes the native HUD positioning definitions and existing Keyboard saved positions.
+- Applies ESO's Keyboard resource-bar templates to the native player attribute bars.
+- Applies the Keyboard compass frame template and Keyboard compass anchor.
+- Applies the Keyboard boss-bar template.
+- Keeps the original ESO HUD controls, resource/event logic, and Gamepad mode active.
+- Adds one setting to enable or disable Keyboard HUD presentation.
 
-The first adapter styles the native Health, Magicka and Stamina resource bars with ESO's original Keyboard platform templates while retaining the native Gamepad resource-bar objects, power updates, visibility logic and combat behavior.
+## Explicitly untouched
 
-It scopes the Keyboard template selection to the resource-bar style pass. It does not override `IsInGamepadPreferredMode`, change the Gamepad Mode setting, patch scenes, route UI systems, force dialogs, or replace input handlers.
+- `IsInGamepadPreferredMode` is not persistently overridden.
+- The Gamepad Mode setting is not changed.
+- No scene, menu, inventory, map, dialogue, interaction, lockpicking, UI-system or input routing is patched.
+- No Keyboard menu is forced into Gamepad scenes or vice versa.
 
-**This is a first HUD adapter, not yet a complete Keyboard-HUD replica.** Compass, action bar, target frame, group frames, buffs, interaction prompts and other HUD elements still need separate inspection and compatible HUD-only adapters. They must not be changed by global platform switching.
+The platform helper overrides used for individual style passes are temporary and restored immediately after the relevant native HUD style function returns.
+
+## Important limitations
+
+This is an incremental HUD implementation, not yet a complete pixel-identical Keyboard HUD. The action bar still needs a dedicated Keyboard geometry/style adapter; group and target frames still need their full Keyboard-specific styling, not just the Keyboard HUD anchor positions. Other HUD components need individual review before being added. Gamepad prompts and keybind glyphs must be checked in the client before claiming parity.
 
 ## Dependency
 
@@ -22,13 +32,15 @@ It scopes the Keyboard template selection to the resource-bar style pass. It doe
 
 ## Testing status
 
-Static implementation only; not tested in a live ESO client. Verify the resource bars in Gamepad mode, then open and close menus and confirm the native Gamepad UI remains unchanged. Test resource values, low-resource warnings, shields, fading, mount/siege states and different resolutions.
+Static implementation only; not tested in a live ESO client. Test resource bars, compass, boss bar, group/target frames, action bar, prompt glyphs, combat visibility, boss transitions, screen resizing, and menu open/close transitions.
 
 ## Development references
 
-- [Official ESO UI source](https://github.com/esoui/esoui) — used to inspect the native HUD manager and player attribute bar templates. No ESO source files are copied into this addon.
+- [Official ESO UI source](https://github.com/esoui/esoui) — inspected for the native HUD manager, platform templates, resource bars, compass, boss bar and action bar layout.
 - [ESOUI addon developer guidance](https://www.esoui.com/forums/showthread.php?t=10790).
-- [LibAddonMenu-2.0](https://www.esoui.com/downloads/info7-libaddonmenu.html).
+- [Fancy Action Bar+](https://www.esoui.com/downloads/info3938-190624.html) — reference for the separation of Keyboard and Gamepad action-bar presentation and configuration.
+
+No ESO source files are copied into this addon. The source repository is used as API and layout reference only.
 
 ## Packaging
 

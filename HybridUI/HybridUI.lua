@@ -583,7 +583,7 @@ local function CreateSettings()
         name = "HybridUI",
         displayName = "HybridUI",
         author = "@ZOSPlsFix",
-        version = "2.1.0",
+        version = "2.3.0",
         registerForRefresh = true,
         registerForDefaults = true,
     })

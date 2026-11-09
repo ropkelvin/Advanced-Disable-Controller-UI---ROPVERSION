@@ -166,8 +166,13 @@ local function InstallActionButtonAdapter(button)
     local originalApplyStyle = button.ApplyStyle
     actionButtonOriginalStyles[button] = originalApplyStyle
     button.ApplyStyle = function(self, template, ...)
-        if IsKeyboardHudEnabled() and type(template) == "string" then
-            template = template:gsub("_Gamepad_Template$", "_Keyboard_Template")
+        if IsKeyboardHudEnabled() then
+            if type(template) == "string" then
+                template = template:gsub("_Gamepad_Template$", "_Keyboard_Template")
+            end
+            return WithPlatformStyle(true, function()
+                originalApplyStyle(self, template)
+            end)
         end
         return originalApplyStyle(self, template, ...)
     end

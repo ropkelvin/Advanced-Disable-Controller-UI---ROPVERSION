@@ -1,5 +1,3 @@
-**AI-assisted development disclosure:** This addon contains AI-assisted code that has not yet been verified in a live ESO client. Treat this branch as an experimental development build, not a release.
-
 # HybridUI
 
 HybridUI keeps ESO in native Gamepad mode and applies the original Keyboard presentation to gameplay HUD elements only.
@@ -22,7 +20,7 @@ The implementation uses ESO's native controls and data/event logic. It does not 
 ## Explicitly untouched
 
 - ESO remains in native Gamepad mode.
-- No persistent override of `IsInGamepadPreferredMode`; temporary scoped presentation contexts are restored immediately after the individual HUD style pass.
+- No persistent override of `IsInGamepadPreferredMode`; temporary scoped presentation contexts are restored even if a styling callback errors.
 - The Gamepad Mode setting is not changed.
 - No scene, menu, inventory, map, dialogue, interaction, lockpicking, UI-system or input routing is patched.
 - Gamepad keybind templates are retained for the synergy and reticle interaction prompts.
@@ -37,7 +35,7 @@ This is not yet certified pixel-identical. Other HUD elements still need individ
 
 ## Testing status
 
-Static implementation only; not tested in a live ESO client. Test resource bars, action-bar slots after skill swaps, ultimate and companion ultimate, quickslot, weapon swap, compass, boss bar, group/target frames, synergy, buffs/debuffs, reticle prompts, trackers, equipment status, controller glyphs, screen resizing, combat visibility and menu open/close transitions.
+Static implementation only; not tested in a live ESO client. Refactoring has not been runtime-validated. Test resource bars, action-bar slots after skill swaps, ultimate and companion ultimate, quickslot, weapon swap, compass, boss bar, group/target frames, synergy, buffs/debuffs, reticle prompts, trackers, equipment status, controller glyphs, screen resizing, combat visibility and menu open/close transitions.
 
 ## Development references
 
@@ -49,4 +47,4 @@ No ESO source files are copied into this addon. The source repository is used as
 
 ## Packaging
 
-The ZIP root must contain the `HybridUI` folder. Do not bundle LibAddonMenu or unrelated addons. Keep the AI disclosure until the implementation has been personally reviewed and validated.
+The ZIP root must contain the `HybridUI` folder. Do not bundle LibAddonMenu or unrelated addons. Keep the ESOUI page description accurate about the experimental status and live-client testing limitations.

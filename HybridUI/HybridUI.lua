@@ -15,6 +15,7 @@ local originalCompassApplyStyle
 local originalBossBarApplyStyle
 local originalAttributeModeChanged
 local actionButtonOriginalStyles = setmetatable({}, { __mode = "k" })
+local hudSettingsReady = false
 
 local function WithKeyboardTemplates(callback)
     local originalGetPlatformTemplate = ZO_GetPlatformTemplate
@@ -276,10 +277,8 @@ local function ApplyActionBarPresentation(useKeyboard)
         local quickslot = ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
         local keybindBackground = ZO_ActionBar1:GetNamedChild("KeybindBG")
 
-        if companionActive then
-            if companionUltimate then
-                companionUltimate:SetEnabled(true)
-            end
+        if companionActive and companionUltimate then
+            companionUltimate:SetEnabled(true)
             keybindBackground:SetDimensions(580, 64)
             keybindBackground:SetAnchor(BOTTOM, nil, nil, -34, 0)
             quickslot:ApplyAnchor(companionUltimate.slot, style.quickslotOffsetXFromCompanionUltimate, true)
@@ -325,6 +324,10 @@ local function ApplyAllKeyboardHudStyles()
 end
 
 local function OnHudSettingsReady()
+    if hudSettingsReady then
+        return
+    end
+    hudSettingsReady = true
     ApplyAllKeyboardHudStyles()
     HUD_MANAGER:RegisterCallback("PropagateSettings", ApplyKeyboardHudAnchors)
 end
@@ -367,9 +370,6 @@ local function CreateSettings()
                         if PLAYER_ATTRIBUTE_BARS.attributeVisualizer then
                             PLAYER_ATTRIBUTE_BARS.attributeVisualizer:ApplyPlatformStyle()
                         end
-                    end
-                    if originalAttributeModeChanged and ZO_PlayerAttributeBars then
-                        ZO_PlayerAttributeBars.OnGamepadPreferredModeChanged = originalAttributeModeChanged
                     end
                     if COMPASS_FRAME and originalCompassApplyStyle then
                         originalCompassApplyStyle(COMPASS_FRAME)

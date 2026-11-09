@@ -34,8 +34,8 @@ end
 -- In Hybrid mode, only the active base HUD scene reports Keyboard preference.
 -- Native Gamepad menu scenes continue to report Gamepad preference.
 IsInGamepadPreferredMode = function()
-    if IsHybridMode() and IsBaseHUDSceneShowing() then
-        return false
+    if IsHybridMode() then
+        return not IsBaseHUDSceneShowing()
     end
 
     return originalIsInGamepadPreferredMode()
@@ -184,7 +184,7 @@ local function RefreshNativePlatformStyles()
 
     local alwaysKeyboard = tostring(INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD)
     local alwaysGamepad = tostring(INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD)
-    local alternateMode = currentMode == alwaysKeyboard and alwaysGamepad or alwaysKeyboard
+    local alternateMode = originalIsInGamepadPreferredMode() and alwaysKeyboard or alwaysGamepad
 
     SetSetting(
         SETTING_TYPE_GAMEPAD,

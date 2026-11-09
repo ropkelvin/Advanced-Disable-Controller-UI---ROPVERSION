@@ -61,14 +61,14 @@ local function InstallResourceBarAdapter()
     end
 
     originalAttributeApplyStyle = ZO_PlayerAttributeBars.ApplyStyle
-    ZO_PlayerAttributeBars.ApplyStyle = function(self, ...)
+    ZO_PlayerAttributeBars.ApplyStyle = function(self)
         if IsKeyboardHudEnabled() then
             return WithKeyboardTemplates(function()
-                originalAttributeApplyStyle(self, ...)
+                originalAttributeApplyStyle(self)
             end)
         end
 
-        return originalAttributeApplyStyle(self, ...)
+        return originalAttributeApplyStyle(self)
     end
 
     if PLAYER_ATTRIBUTE_BARS then
@@ -82,10 +82,10 @@ local function InstallCompassAdapter()
     end
 
     originalCompassApplyStyle = COMPASS_FRAME.ApplyStyle
-    COMPASS_FRAME.ApplyStyle = function(self, ...)
+    COMPASS_FRAME.ApplyStyle = function(self)
         if IsKeyboardHudEnabled() then
             WithKeyboardPlatform(function()
-                originalCompassApplyStyle(self, ...)
+                originalCompassApplyStyle(self)
             end)
             if self.keyboardHUDElement then
                 self.keyboardHUDElement:RevertOffsetModifications()
@@ -105,14 +105,14 @@ local function InstallBossBarAdapter()
     end
 
     originalBossBarApplyStyle = BOSS_BAR.ApplyStyle
-    BOSS_BAR.ApplyStyle = function(self, ...)
+    BOSS_BAR.ApplyStyle = function(self)
         if IsKeyboardHudEnabled() then
             return WithKeyboardTemplates(function()
-                originalBossBarApplyStyle(self, ...)
+                originalBossBarApplyStyle(self)
             end)
         end
 
-        return originalBossBarApplyStyle(self, ...)
+        return originalBossBarApplyStyle(self)
     end
 
     BOSS_BAR:ApplyStyle()

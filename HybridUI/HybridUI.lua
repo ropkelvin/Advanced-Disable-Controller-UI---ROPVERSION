@@ -13,6 +13,7 @@ local initialized = false
 local originalAttributeApplyStyle
 local originalCompassApplyStyle
 local originalBossBarApplyStyle
+local originalUnitFrameApplyVisualStyle
 local originalAttributeModeChanged
 local actionButtonOriginalStyles = setmetatable({}, { __mode = "k" })
 local hudSettingsReady = false
@@ -122,6 +123,28 @@ local function InstallCompassAdapter()
     end
 
     COMPASS_FRAME:ApplyStyle()
+end
+
+
+local function InstallUnitFrameAdapter()
+    if not ZO_UnitFrameObject or not ZO_UnitFrameObject.ApplyVisualStyle or originalUnitFrameApplyVisualStyle then
+        return
+    end
+
+    originalUnitFrameApplyVisualStyle = ZO_UnitFrameObject.ApplyVisualStyle
+    ZO_UnitFrameObject.ApplyVisualStyle = function(self)
+        if IsKeyboardHudEnabled() then
+            return WithPlatformStyle(true, function()
+                originalUnitFrameApplyVisualStyle(self)
+            end)
+        end
+
+        return originalUnitFrameApplyVisualStyle(self)
+    end
+
+    if UnitFrames and UnitFrames.ApplyVisualStyle then
+        UnitFrames:ApplyVisualStyle()
+    end
 end
 
 local function InstallBossBarAdapter()
@@ -308,6 +331,7 @@ local function ApplyAllKeyboardHudStyles()
     InstallResourceBarAdapter()
     InstallCompassAdapter()
     InstallBossBarAdapter()
+    InstallUnitFrameAdapter()
     ApplyActionBarPresentation(true)
 
     if PLAYER_ATTRIBUTE_BARS then
@@ -376,6 +400,9 @@ local function CreateSettings()
                     end
                     if BOSS_BAR and originalBossBarApplyStyle then
                         originalBossBarApplyStyle(BOSS_BAR)
+                    end
+                    if UnitFrames and UnitFrames.ApplyVisualStyle then
+                        UnitFrames:ApplyVisualStyle()
                     end
                     ApplyActionBarPresentation(false)
                     if HUD_MANAGER then

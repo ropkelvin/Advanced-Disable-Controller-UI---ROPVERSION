@@ -25,16 +25,23 @@ local originalStealthApplyPlatformStyle
 local actionButtonOriginalStyles = setmetatable({}, { __mode = "k" })
 local hudSettingsReady = false
 
-local function WithKeyboardTemplates(callback)
-    local originalGetPlatformTemplate = ZO_GetPlatformTemplate
-    ZO_GetPlatformTemplate = function(baseTemplate)
-        return baseTemplate .. "_Keyboard_Template"
-    end
+local SYNERGY_KEYBOARD_STYLE =
+{
+    FONT = "ZoInteractionPrompt",
+    TEMPLATE = "ZO_KeybindButton_Gamepad_Template",
+    OFFSET_Y = ZO_COMMON_INFO_DEFAULT_KEYBOARD_BOTTOM_OFFSET_Y,
+    FRAME_TEXTURE = "EsoUI/Art/ActionBar/abilityFrame64_up.dds",
+    HUD_ELEMENT_REF_MIN_WIDTH = 300,
+}
 
-    callback()
-
-    ZO_GetPlatformTemplate = originalGetPlatformTemplate
-end
+local SYNERGY_GAMEPAD_STYLE =
+{
+    FONT = "ZoFontGamepad42",
+    TEMPLATE = "ZO_KeybindButton_Gamepad_Template",
+    OFFSET_Y = ZO_COMMON_INFO_DEFAULT_GAMEPAD_BOTTOM_OFFSET_Y,
+    FRAME_TEXTURE = "EsoUI/Art/ActionBar/Gamepad/gp_abilityFrame64.dds",
+    HUD_ELEMENT_REF_MIN_WIDTH = 330,
+}
 
 local function WithPlatformStyle(useKeyboard, callback)
     local originalPreferredMode = IsInGamepadPreferredMode
@@ -47,10 +54,15 @@ local function WithPlatformStyle(useKeyboard, callback)
         return baseTemplate .. (useKeyboard and "_Keyboard_Template" or "_Gamepad_Template")
     end
 
-    callback()
+    local results = { pcall(callback) }
 
     ZO_GetPlatformTemplate = originalGetPlatformTemplate
     IsInGamepadPreferredMode = originalPreferredMode
+
+    if not results[1] then
+        error(results[2], 0)
+    end
+    return results[2]
 end
 
 local function IsKeyboardHudEnabled()
@@ -61,7 +73,7 @@ end
 -- control. Reuse the real Keyboard element's saved/default anchor, rather
 -- than calculating replacement coordinates.
 local function ApplyKeyboardHudAnchors()
-    if not IsKeyboardHudEnabled() or not HUD_MANAGER or not HUD_MANAGER.keyboardElements then
+    if not IsKeyboardHudEnabled() or not HUD_MANAGER or not HUD_MANAGER.keyboardElements or not HUD_MANAGER.gamepadElements then
         return
     end
 
@@ -91,7 +103,7 @@ local function InstallResourceBarAdapter()
     end
     ZO_PlayerAttributeBars.ApplyStyle = function(self)
         if IsKeyboardHudEnabled() then
-            return WithKeyboardTemplates(function()
+            return WithPlatformStyle(true, function()
                 originalAttributeApplyStyle(self)
             end)
         end
@@ -121,9 +133,7 @@ local function InstallCompassAdapter()
         return originalCompassApplyStyle(self)
     end
 
-    COMPASS_FRAME:ApplyStyle()
 end
-
 
 local function InstallUnitFrameAdapter()
     if not ZO_UnitFrameObject or not ZO_UnitFrameObject.ApplyVisualStyle or originalUnitFrameApplyVisualStyle then
@@ -151,7 +161,7 @@ local function InstallBossBarAdapter()
     originalBossBarApplyStyle = BOSS_BAR.ApplyStyle
     BOSS_BAR.ApplyStyle = function(self)
         if IsKeyboardHudEnabled() then
-            return WithKeyboardTemplates(function()
+            return WithPlatformStyle(true, function()
                 originalBossBarApplyStyle(self)
             end)
         end
@@ -173,15 +183,17 @@ local function InstallActionButtonAdapter(button)
     local originalApplyStyle = button.ApplyStyle
     actionButtonOriginalStyles[button] = originalApplyStyle
     button.ApplyStyle = function(self, template, ...)
+        local arguments = { ... }
+        local argumentCount = select("#", ...)
         if IsKeyboardHudEnabled() then
             if type(template) == "string" then
                 template = template:gsub("_Gamepad_Template$", "_Keyboard_Template")
             end
             return WithPlatformStyle(true, function()
-                originalApplyStyle(self, template)
+                return originalApplyStyle(self, template, unpack(arguments, 1, argumentCount))
             end)
         end
-        return originalApplyStyle(self, template, ...)
+        return originalApplyStyle(self, template, unpack(arguments, 1, argumentCount))
     end
 end
 
@@ -377,21 +389,14 @@ local function InstallSynergyAdapter()
         if IsKeyboardHudEnabled() then
             -- Keyboard font, frame, width and position; retain the Gamepad
             -- keybind template so the interaction prompt remains controller-native.
-            return originalSynergyApplyTextStyle(self,
-            {
-                FONT = "ZoInteractionPrompt",
-                TEMPLATE = "ZO_KeybindButton_Gamepad_Template",
-                OFFSET_Y = ZO_COMMON_INFO_DEFAULT_KEYBOARD_BOTTOM_OFFSET_Y,
-                FRAME_TEXTURE = "EsoUI/Art/ActionBar/abilityFrame64_up.dds",
-                HUD_ELEMENT_REF_MIN_WIDTH = 300,
-            })
+            return originalSynergyApplyTextStyle(self, SYNERGY_KEYBOARD_STYLE)
         end
         return originalSynergyApplyTextStyle(self, constants)
     end
 end
 
 local function InstallBuffDebuffAdapter()
-    if not ZO_BuffDebuff_ContainerObject then
+    if not ZO_BuffDebuff_ContainerObject or not ZO_BuffDebuff_ContainerObject.ApplyPlatformStyle or not ZO_BuffDebuff_ContainerObject.Update then
         return
     end
 
@@ -447,23 +452,9 @@ end
 local function ApplyAdditionalHudStyles(useKeyboard)
     if SYNERGY and originalSynergyApplyTextStyle then
         if useKeyboard then
-            SYNERGY:ApplyTextStyle(
-            {
-                FONT = "ZoInteractionPrompt",
-                TEMPLATE = "ZO_KeybindButton_Gamepad_Template",
-                OFFSET_Y = ZO_COMMON_INFO_DEFAULT_KEYBOARD_BOTTOM_OFFSET_Y,
-                FRAME_TEXTURE = "EsoUI/Art/ActionBar/abilityFrame64_up.dds",
-                HUD_ELEMENT_REF_MIN_WIDTH = 300,
-            })
+            SYNERGY:ApplyTextStyle(SYNERGY_KEYBOARD_STYLE)
         else
-            SYNERGY:ApplyTextStyle(
-            {
-                FONT = "ZoFontGamepad42",
-                TEMPLATE = "ZO_KeybindButton_Gamepad_Template",
-                OFFSET_Y = ZO_COMMON_INFO_DEFAULT_GAMEPAD_BOTTOM_OFFSET_Y,
-                FRAME_TEXTURE = "EsoUI/Art/ActionBar/Gamepad/gp_abilityFrame64.dds",
-                HUD_ELEMENT_REF_MIN_WIDTH = 330,
-            })
+            SYNERGY:ApplyTextStyle(SYNERGY_GAMEPAD_STYLE)
         end
     end
 
@@ -474,7 +465,7 @@ local function ApplyAdditionalHudStyles(useKeyboard)
 
     if BUFF_DEBUFF and originalBuffApplyPlatformStyle then
         local style = useKeyboard and ZO_BUFF_DEBUFF_KEYBOARD_STYLE or ZO_BUFF_DEBUFF_GAMEPAD_STYLE
-        for _, container in pairs(BUFF_DEBUFF.containerObjectsByUnitTag) do
+        for _, container in pairs(BUFF_DEBUFF.containerObjectsByUnitTag or {}) do
             originalBuffApplyPlatformStyle(container, style)
             if originalBuffUpdate then
                 if useKeyboard then
@@ -509,11 +500,7 @@ local function ApplyAdditionalHudStyles(useKeyboard)
         originalStealthApplyPlatformStyle(RETICLE.stealthIcon, { font = font })
     end
 
-    if useKeyboard then
-        ApplyTrackerStyles(true)
-    else
-        ApplyTrackerStyles(false)
-    end
+    ApplyTrackerStyles(useKeyboard)
 end
 
 local function ApplyAllKeyboardHudStyles()
@@ -583,7 +570,7 @@ local function CreateSettings()
         name = "HybridUI",
         displayName = "HybridUI",
         author = "@ZOSPlsFix",
-        version = "2.3.0",
+        version = "2.3.1",
         registerForRefresh = true,
         registerForDefaults = true,
     })

@@ -1,28 +1,31 @@
 ## HybridUI
 
-A fresh ESO addon implementation with two requested modes:
+A clean, original ESO addon implementation targeting two modes:
 
-- **Native Gamepad UI** — leave ESO's native Gamepad UI in control.
-- **Hybrid UI** — native Gamepad menus and a Keyboard-style gameplay HUD.
+- **Native Gamepad UI** — ESO's complete native Gamepad interface.
+- **Hybrid UI** — native Gamepad menus, inventory, map, interactions and dialogues, with the original Keyboard gameplay HUD completely unchanged.
 
-The addon also offers an option to set ESO's Gamepad Mode preference to **On** (Always Gamepad), rather than Auto.
+The addon includes an option to set ESO's Gamepad Mode preference to **On** (Always Gamepad), rather than Auto.
 
-## Development status
+## Current development status
 
-This is an initial implementation scaffold. The mode selector, account-wide saved settings, LibAddonMenu settings panel, and Always Gamepad preference are implemented. The Hybrid HUD handoff is an early scene-level implementation and is **not yet verified in a live ESO client**. It must not be considered release-ready until the HUD is confirmed to be the unmodified native Keyboard HUD and all menus/interactions are confirmed to remain native Gamepad UI.
+The clean branch currently contains the addon manifest, account-wide settings, a LibAddonMenu configuration panel, the two-mode selector, and the supported ESO setting call for Always Gamepad.
+
+**The HUD-only Hybrid behavior is not implemented yet.** This is intentional: overriding ESO's global `IsInGamepadPreferredMode()` also changes how ESO chooses menu and interaction scenes, so it cannot safely satisfy the requirement. The next implementation step is to integrate with the native HUD fragments/platform selection without modifying the Keyboard HUD itself, then validate all scene transitions in a live client. This branch is not release-ready yet.
 
 ## Dependencies
 
 - LibAddonMenu-2.0 version 43 or newer.
 
-## ESOUI compliance
+## ESOUI compliance checklist
 
-- No executable files or bundled third-party libraries.
-- Uses account-wide SavedVariables.
-- Keeps addon globals limited to ESO's required event registration and local implementation state.
-- API version must be checked against the live client before release.
-- AI-assisted code is disclosed here; all generated code must be reviewed and tested before publication.
+- No executables or bundled third-party libraries.
+- Account-wide SavedVariables.
+- Minimal local Lua scope; only ESO's required event registration is global.
+- Update APIVersion against the live client before release.
+- AI-assisted development disclosed; generated code must be reviewed and tested before publication.
+- Package the ZIP with the HybridUI folder at the archive root and remove hidden files/folders.
 
-## Install
+## Install for development
 
 Place the HybridUI folder in Documents/Elder Scrolls Online/live/AddOns/ and install the required LibAddonMenu-2.0 library.

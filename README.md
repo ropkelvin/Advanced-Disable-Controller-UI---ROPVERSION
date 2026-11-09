@@ -16,7 +16,7 @@ Hybrid mode uses ESO's own scene manager and platform-style selection path:
 1. The preferred-mode query reports Keyboard only while the base HUD scene is active, so ESO's existing platform-style objects choose their native Keyboard styles for the HUD.
 2. The HUD scene's requested-mode state is kept aligned with that HUD-only selection.
 3. ESO system-object and root-scene selection is directed to the native Gamepad implementations while Hybrid mode is active.
-4. Platform dialogs are routed to ESO's native Gamepad dialog path.
+4. Platform dialogs are routed to ESO's native Gamepad dialog path, and lockpicking opens ESO's native Gamepad lockpick scene.
 5. After scene transitions, a temporary setting round-trip causes ESO's own platform-style manager to reapply styles. The user's actual Gamepad Mode setting is restored immediately.
 
 No Keyboard HUD templates, controls, fonts, positions, textures, or layout formulas are recreated or edited by this addon.

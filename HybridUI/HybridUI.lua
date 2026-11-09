@@ -13,6 +13,8 @@ local initialized = false
 local originalAttributeApplyStyle
 local originalCompassApplyStyle
 local originalBossBarApplyStyle
+local originalAttributeModeChanged
+local actionButtonOriginalStyles = setmetatable({}, { __mode = "k" })
 
 local function WithKeyboardTemplates(callback)
     local originalGetPlatformTemplate = ZO_GetPlatformTemplate
@@ -67,6 +69,17 @@ local function InstallResourceBarAdapter()
     end
 
     originalAttributeApplyStyle = ZO_PlayerAttributeBars.ApplyStyle
+    originalAttributeModeChanged = ZO_PlayerAttributeBars.OnGamepadPreferredModeChanged
+    if originalAttributeModeChanged then
+        ZO_PlayerAttributeBars.OnGamepadPreferredModeChanged = function(self)
+            if IsKeyboardHudEnabled() then
+                return WithPlatformStyle(true, function()
+                    originalAttributeModeChanged(self)
+                end)
+            end
+            return originalAttributeModeChanged(self)
+        end
+    end
     ZO_PlayerAttributeBars.ApplyStyle = function(self)
         if IsKeyboardHudEnabled() then
             return WithKeyboardTemplates(function()
@@ -79,6 +92,11 @@ local function InstallResourceBarAdapter()
 
     if PLAYER_ATTRIBUTE_BARS then
         PLAYER_ATTRIBUTE_BARS:ApplyStyle()
+        if IsKeyboardHudEnabled() and PLAYER_ATTRIBUTE_BARS.attributeVisualizer then
+            WithPlatformStyle(true, function()
+                PLAYER_ATTRIBUTE_BARS.attributeVisualizer:ApplyPlatformStyle()
+            end)
+        end
     end
 end
 
@@ -128,10 +146,35 @@ end
 -- The stock action-bar style callback is a file-local closure in ESO's UI.
 -- Reapply its documented Keyboard/Gamepad layout constants through the
 -- public action-bar button objects, without changing input or preferred mode.
+local function InstallActionButtonAdapter(button)
+    if not button or actionButtonOriginalStyles[button] then
+        return
+    end
+
+    local originalApplyStyle = button.ApplyStyle
+    actionButtonOriginalStyles[button] = originalApplyStyle
+    button.ApplyStyle = function(self, template, ...)
+        if IsKeyboardHudEnabled() and type(template) == "string" then
+            template = template:gsub("_Gamepad_Template$", "_Keyboard_Template")
+        end
+        return originalApplyStyle(self, template, ...)
+    end
+end
+
 local function ApplyActionBarPresentation(useKeyboard)
     if not ZO_ActionBar1 or not ZO_ActionBar_GetButton then
         return
     end
+
+    local ultimateSlot = ACTION_BAR_ULTIMATE_SLOT_INDEX + 1
+    local activeHotbar = GetActiveHotbarCategory()
+    local backHotbar = activeHotbar == HOTBAR_CATEGORY_PRIMARY and HOTBAR_CATEGORY_BACKUP or HOTBAR_CATEGORY_PRIMARY
+    for slotIndex = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1, ultimateSlot do
+        InstallActionButtonAdapter(ZO_ActionBar_GetButton(slotIndex))
+        InstallActionButtonAdapter(ZO_ActionBar_GetButton(slotIndex, backHotbar))
+    end
+    InstallActionButtonAdapter(ZO_ActionBar_GetButton(ultimateSlot, HOTBAR_CATEGORY_COMPANION))
+    InstallActionButtonAdapter(ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL))
 
     local style
     if useKeyboard then
@@ -183,9 +226,6 @@ local function ApplyActionBarPresentation(useKeyboard)
 
         local buttonTemplate = ZO_GetPlatformTemplate("ZO_ActionButton")
         local backBarTemplate = ZO_GetPlatformTemplate("ZO_ActionBarTimer_BackBarSlot")
-        local activeHotbar = GetActiveHotbarCategory()
-        local backHotbar = activeHotbar == HOTBAR_CATEGORY_PRIMARY and HOTBAR_CATEGORY_BACKUP or HOTBAR_CATEGORY_PRIMARY
-
         local lastButton
         for slotIndex = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1, ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + ACTION_BAR_SLOTS_PER_PAGE - 1 do
             local button = ZO_ActionBar_GetButton(slotIndex)
@@ -324,6 +364,12 @@ local function CreateSettings()
                     -- Reapply the original native Gamepad styles and anchors.
                     if PLAYER_ATTRIBUTE_BARS and originalAttributeApplyStyle then
                         originalAttributeApplyStyle(PLAYER_ATTRIBUTE_BARS)
+                        if PLAYER_ATTRIBUTE_BARS.attributeVisualizer then
+                            PLAYER_ATTRIBUTE_BARS.attributeVisualizer:ApplyPlatformStyle()
+                        end
+                    end
+                    if originalAttributeModeChanged and ZO_PlayerAttributeBars then
+                        ZO_PlayerAttributeBars.OnGamepadPreferredModeChanged = originalAttributeModeChanged
                     end
                     if COMPASS_FRAME and originalCompassApplyStyle then
                         originalCompassApplyStyle(COMPASS_FRAME)

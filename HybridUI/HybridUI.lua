@@ -93,7 +93,7 @@ local function InstallCompassAdapter()
             return
         end
 
-        return originalCompassApplyStyle(self, ...)
+        return originalCompassApplyStyle(self)
     end
 
     COMPASS_FRAME:ApplyStyle()

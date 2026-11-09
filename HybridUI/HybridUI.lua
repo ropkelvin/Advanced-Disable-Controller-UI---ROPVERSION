@@ -22,7 +22,6 @@ local originalBuffApplyPlatformStyle
 local originalBuffUpdate
 local originalReticleApplyPlatformStyle
 local originalStealthApplyPlatformStyle
-local actionButtonOriginalStyles = setmetatable({}, { __mode = "k" })
 local hudSettingsReady = false
 
 local SYNERGY_KEYBOARD_STYLE =
@@ -212,32 +211,6 @@ local function InstallBossBarAdapter()
 end
 
 
--- The stock action-bar style callback is a file-local closure in ESO's UI.
--- Reapply its documented Keyboard/Gamepad layout constants through the
--- public action-bar button objects, without changing input or preferred mode.
-local function InstallActionButtonAdapter(button)
-    if not button or not button.ApplyStyle or actionButtonOriginalStyles[button] then
-        return
-    end
-
-    local originalApplyStyle = button.ApplyStyle
-    actionButtonOriginalStyles[button] = originalApplyStyle
-    button.ApplyStyle = function(self, template, ...)
-        local arguments = { ... }
-        local argumentCount = select("#", ...)
-        if IsKeyboardHudEnabled() then
-            if type(template) == "string" then
-                template = template:gsub("_Gamepad_Template$", "_Keyboard_Template")
-            end
-            return WithPlatformStyle(true, function()
-                return originalApplyStyle(self, template, unpack(arguments, 1, argumentCount))
-            end)
-        end
-        return originalApplyStyle(self, template, unpack(arguments, 1, argumentCount))
-    end
-end
-
-
 -- ESO's ApplyAnchor ultimately calls SetAnchor on the button's slot.
 -- A reused/misresolved button can therefore be passed as its own target
 -- (notably when front and back hotbar lookups resolve to the same control).
@@ -257,6 +230,19 @@ local function ApplyActionButtonAnchor(button, anchorTarget, offset, anchorToRig
     return true
 end
 
+-- Action buttons are created with Gamepad child-control types. Reapplying a
+-- Keyboard template can try to replace an existing BACKDROP with a TEXTURE.
+-- Keep their native Gamepad templates while using Keyboard layout geometry.
+local function ApplyGamepadActionButtonStyle(button, baseTemplate)
+    if not button then
+        return
+    end
+
+    WithPlatformStyle(false, function()
+        button:ApplyStyle(ZO_GetPlatformTemplate(baseTemplate))
+    end)
+end
+
 local function ApplyActionBarPresentation(useKeyboard)
     if not ZO_ActionBar1 or not ZO_ActionBar_GetButton then
         return
@@ -265,13 +251,6 @@ local function ApplyActionBarPresentation(useKeyboard)
     local ultimateSlot = ACTION_BAR_ULTIMATE_SLOT_INDEX + 1
     local activeHotbar = GetActiveHotbarCategory()
     local backHotbar = activeHotbar == HOTBAR_CATEGORY_PRIMARY and HOTBAR_CATEGORY_BACKUP or HOTBAR_CATEGORY_PRIMARY
-    for slotIndex = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1, ultimateSlot do
-        InstallActionButtonAdapter(ZO_ActionBar_GetButton(slotIndex))
-        InstallActionButtonAdapter(ZO_ActionBar_GetButton(slotIndex, backHotbar))
-    end
-    InstallActionButtonAdapter(ZO_ActionBar_GetButton(ultimateSlot, HOTBAR_CATEGORY_COMPANION))
-    InstallActionButtonAdapter(ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL))
-
     local style = useKeyboard and ACTION_BAR_KEYBOARD_STYLE or ACTION_BAR_GAMEPAD_STYLE
     local anchor = ZO_Anchor:New(BOTTOM, GuiRoot, BOTTOM, 0, useKeyboard and 0 or -25)
     local hudElementRefPrimaryAnchor = ZO_Anchor:New(TOPLEFT, nil, TOPLEFT, style.hudElementRefPrimaryOffsetX, style.hudElementRefPrimaryOffsetY)
@@ -290,13 +269,11 @@ local function ApplyActionBarPresentation(useKeyboard)
         end
         weaponSwap:SetAnchor(TOPLEFT, nil, TOPLEFT, style.weaponSwapOffsetX, style.weaponSwapOffsetY)
 
-        local buttonTemplate = ZO_GetPlatformTemplate("ZO_ActionButton")
-        local backBarTemplate = ZO_GetPlatformTemplate("ZO_ActionBarTimer_BackBarSlot")
         local lastButton
         for slotIndex = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1, ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + ACTION_BAR_SLOTS_PER_PAGE - 1 do
             local button = ZO_ActionBar_GetButton(slotIndex)
             if button then
-                button:ApplyStyle(buttonTemplate)
+                ApplyGamepadActionButtonStyle(button, "ZO_ActionButton")
 
                 local anchorTarget = lastButton and lastButton.slot or weaponSwap
                 if not lastButton then
@@ -306,7 +283,7 @@ local function ApplyActionBarPresentation(useKeyboard)
 
                 local backButton = ZO_ActionBar_GetButton(slotIndex, backHotbar)
                 if backButton then
-                    backButton:ApplyStyle(backBarTemplate)
+                    ApplyGamepadActionButtonStyle(backButton, "ZO_ActionBarTimer_BackBarSlot")
                     ApplyActionButtonAnchor(backButton, button.slot, style.backRowSlotOffsetY)
                 end
 
@@ -317,20 +294,20 @@ local function ApplyActionBarPresentation(useKeyboard)
         local ultimateSlot = ACTION_BAR_ULTIMATE_SLOT_INDEX + 1
         local ultimateButton = ZO_ActionBar_GetButton(ultimateSlot)
         if ultimateButton and lastButton then
-            ultimateButton:ApplyStyle(ZO_GetPlatformTemplate("ZO_UltimateActionButton"))
+            ApplyGamepadActionButtonStyle(ultimateButton, "ZO_UltimateActionButton")
             ultimateButton:SetShowBindingText(style.showNormalBindingTextOnUltimate)
             ApplyActionButtonAnchor(ultimateButton, lastButton.slot, style.ultimateSlotOffsetX)
             ultimateButton:UpdateUltimateMeter()
 
             local backUltimate = ZO_ActionBar_GetButton(ultimateSlot, backHotbar)
             if backUltimate then
-                backUltimate:ApplyStyle(ZO_GetPlatformTemplate("ZO_ActionBarTimer_BackBarSlot_Ultimate"))
+                ApplyGamepadActionButtonStyle(backUltimate, "ZO_ActionBarTimer_BackBarSlot_Ultimate")
                 ApplyActionButtonAnchor(backUltimate, ultimateButton.slot, style.backRowUltimateSlotOffsetY)
             end
 
             local companionUltimate = ZO_ActionBar_GetButton(ultimateSlot, HOTBAR_CATEGORY_COMPANION)
             if companionUltimate then
-                companionUltimate:ApplyStyle(ZO_GetPlatformTemplate("ZO_UltimateActionButton"))
+                ApplyGamepadActionButtonStyle(companionUltimate, "ZO_UltimateActionButton")
                 companionUltimate:SetShowBindingText(style.showNormalBindingTextOnUltimate)
                 ApplyActionButtonAnchor(companionUltimate, ZO_ActionBar_GetButton(ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1).slot, style.ultimateSlotOffsetX, true)
                 companionUltimate:UpdateUltimateMeter()
@@ -353,7 +330,7 @@ local function ApplyActionBarPresentation(useKeyboard)
             ApplyActionButtonAnchor(quickslot, weaponSwap, style.quickslotOffsetXFromFirstSlot, true)
         end
 
-        quickslot:ApplyStyle(buttonTemplate)
+        ApplyGamepadActionButtonStyle(quickslot, "ZO_ActionButton")
         keybindBackground:SetHidden(not style.showKeybindBG)
         ZO_WeaponSwap_SetPermanentlyHidden(ZO_ActionBar1:GetNamedChild("WeaponSwap"), not style.showWeaponSwapButton)
 
@@ -597,7 +574,7 @@ local function CreateSettings()
         name = "HybridUI",
         displayName = "HybridUI",
         author = "@ZOSPlsFix",
-        version = "2.3.2",
+        version = "2.3.3",
         registerForRefresh = true,
         registerForDefaults = true,
     })

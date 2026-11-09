@@ -25,14 +25,20 @@ local function WithKeyboardTemplates(callback)
     ZO_GetPlatformTemplate = originalGetPlatformTemplate
 end
 
-local function WithKeyboardPlatform(callback)
+local function WithPlatformStyle(useKeyboard, callback)
     local originalPreferredMode = IsInGamepadPreferredMode
+    local originalGetPlatformTemplate = ZO_GetPlatformTemplate
+
     IsInGamepadPreferredMode = function()
-        return false
+        return not useKeyboard
+    end
+    ZO_GetPlatformTemplate = function(baseTemplate)
+        return baseTemplate .. (useKeyboard and "_Keyboard_Template" or "_Gamepad_Template")
     end
 
-    WithKeyboardTemplates(callback)
+    callback()
 
+    ZO_GetPlatformTemplate = originalGetPlatformTemplate
     IsInGamepadPreferredMode = originalPreferredMode
 end
 
@@ -84,7 +90,7 @@ local function InstallCompassAdapter()
     originalCompassApplyStyle = COMPASS_FRAME.ApplyStyle
     COMPASS_FRAME.ApplyStyle = function(self)
         if IsKeyboardHudEnabled() then
-            WithKeyboardPlatform(function()
+            WithPlatformStyle(true, function()
                 originalCompassApplyStyle(self)
             end)
             if self.keyboardHUDElement then
@@ -118,6 +124,143 @@ local function InstallBossBarAdapter()
     BOSS_BAR:ApplyStyle()
 end
 
+
+-- The stock action-bar style callback is a file-local closure in ESO's UI.
+-- Reapply its documented Keyboard/Gamepad layout constants through the
+-- public action-bar button objects, without changing input or preferred mode.
+local function ApplyActionBarPresentation(useKeyboard)
+    if not ZO_ActionBar1 or not ZO_ActionBar_GetButton then
+        return
+    end
+
+    local style
+    if useKeyboard then
+        style =
+        {
+            abilitySlotOffsetX = 2,
+            ultimateSlotOffsetX = 62,
+            quickslotOffsetXFromCompanionUltimate = 18,
+            quickslotOffsetXFromFirstSlot = 5,
+            backRowSlotOffsetY = -17,
+            backRowUltimateSlotOffsetY = -20,
+            anchor = ZO_Anchor:New(BOTTOM, GuiRoot, BOTTOM, 0, 0),
+            width = 483,
+            showNormalBindingTextOnUltimate = true,
+            showKeybindBG = true,
+            showWeaponSwapButton = true,
+            weaponSwapOffsetX = 59,
+            weaponSwapOffsetY = -4,
+            hudElementRefPrimaryAnchor = ZO_Anchor:New(TOPLEFT, nil, TOPLEFT, -68, -20),
+            hudElementRefSecondaryAnchor = ZO_Anchor:New(BOTTOMRIGHT, nil, BOTTOMRIGHT, 2, 0),
+        }
+    else
+        style =
+        {
+            abilitySlotOffsetX = 10,
+            ultimateSlotOffsetX = 65,
+            quickslotOffsetXFromCompanionUltimate = 45,
+            quickslotOffsetXFromFirstSlot = 5,
+            backRowSlotOffsetY = -17,
+            backRowUltimateSlotOffsetY = -30,
+            anchor = ZO_Anchor:New(BOTTOM, GuiRoot, BOTTOM, 0, -25),
+            width = 606,
+            showNormalBindingTextOnUltimate = false,
+            showKeybindBG = false,
+            showWeaponSwapButton = false,
+            weaponSwapOffsetX = 61,
+            weaponSwapOffsetY = 4,
+            hudElementRefPrimaryAnchor = ZO_Anchor:New(TOPLEFT, nil, TOPLEFT, -125, -18),
+            hudElementRefSecondaryAnchor = ZO_Anchor:New(BOTTOMRIGHT, nil, BOTTOMRIGHT, 52, 22),
+        }
+    end
+
+    WithPlatformStyle(useKeyboard, function()
+        style.anchor:Set(ZO_ActionBar1)
+        ZO_ActionBar1:SetWidth(style.width)
+
+        local weaponSwap = ZO_ActionBar1WeaponSwap
+        weaponSwap:SetAnchor(TOPLEFT, nil, TOPLEFT, style.weaponSwapOffsetX, style.weaponSwapOffsetY)
+
+        local buttonTemplate = ZO_GetPlatformTemplate("ZO_ActionButton")
+        local backBarTemplate = ZO_GetPlatformTemplate("ZO_ActionBarTimer_BackBarSlot")
+        local activeHotbar = GetActiveHotbarCategory()
+        local backHotbar = activeHotbar == HOTBAR_CATEGORY_PRIMARY and HOTBAR_CATEGORY_BACKUP or HOTBAR_CATEGORY_PRIMARY
+
+        local lastButton
+        for slotIndex = ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1, ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + ACTION_BAR_SLOTS_PER_PAGE - 1 do
+            local button = ZO_ActionBar_GetButton(slotIndex)
+            if button then
+                button:ApplyStyle(buttonTemplate)
+
+                local anchorTarget = lastButton and lastButton.slot or weaponSwap
+                if not lastButton then
+                    anchorTarget = weaponSwap
+                end
+                button:ApplyAnchor(anchorTarget, style.abilitySlotOffsetX)
+
+                local backButton = ZO_ActionBar_GetButton(slotIndex, backHotbar)
+                if backButton then
+                    backButton:ApplyStyle(backBarTemplate)
+                    backButton:ApplyAnchor(button.slot, style.backRowSlotOffsetY)
+                end
+
+                lastButton = button
+            end
+        end
+
+        local ultimateSlot = ACTION_BAR_ULTIMATE_SLOT_INDEX + 1
+        local ultimateButton = ZO_ActionBar_GetButton(ultimateSlot)
+        if ultimateButton and lastButton then
+            ultimateButton:ApplyStyle(ZO_GetPlatformTemplate("ZO_UltimateActionButton"))
+            ultimateButton:SetShowBindingText(style.showNormalBindingTextOnUltimate)
+            ultimateButton:ApplyAnchor(lastButton.slot, style.ultimateSlotOffsetX)
+            ultimateButton:UpdateUltimateMeter()
+
+            local backUltimate = ZO_ActionBar_GetButton(ultimateSlot, backHotbar)
+            if backUltimate then
+                backUltimate:ApplyStyle(ZO_GetPlatformTemplate("ZO_ActionBarTimer_BackBarSlot_Ultimate"))
+                backUltimate:ApplyAnchor(ultimateButton.slot, style.backRowUltimateSlotOffsetY)
+            end
+
+            local companionUltimate = ZO_ActionBar_GetButton(ultimateSlot, HOTBAR_CATEGORY_COMPANION)
+            if companionUltimate then
+                companionUltimate:ApplyStyle(ZO_GetPlatformTemplate("ZO_UltimateActionButton"))
+                companionUltimate:SetShowBindingText(style.showNormalBindingTextOnUltimate)
+                companionUltimate:ApplyAnchor(ZO_ActionBar_GetButton(ACTION_BAR_FIRST_NORMAL_SLOT_INDEX + 1).slot, style.ultimateSlotOffsetX, true)
+                companionUltimate:UpdateUltimateMeter()
+            end
+        end
+
+        local companionActive = DoesUnitExist("companion") and HasActiveCompanion()
+        local companionUltimate = ZO_ActionBar_GetButton(ultimateSlot, HOTBAR_CATEGORY_COMPANION)
+        local quickslot = ZO_ActionBar_GetButton(GetCurrentQuickslot(), HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
+        local keybindBackground = ZO_ActionBar1:GetNamedChild("KeybindBG")
+
+        if companionActive then
+            if companionUltimate then
+                companionUltimate:SetEnabled(true)
+            end
+            keybindBackground:SetDimensions(580, 64)
+            keybindBackground:SetAnchor(BOTTOM, nil, nil, -34, 0)
+            quickslot:ApplyAnchor(companionUltimate.slot, style.quickslotOffsetXFromCompanionUltimate, true)
+        else
+            if companionUltimate then
+                companionUltimate:SetEnabled(false)
+            end
+            keybindBackground:SetDimensions(512, 64)
+            keybindBackground:SetAnchor(BOTTOM, nil, nil, 0, 0)
+            quickslot:ApplyAnchor(weaponSwap, style.quickslotOffsetXFromFirstSlot, true)
+        end
+
+        quickslot:ApplyStyle(buttonTemplate)
+        keybindBackground:SetHidden(not style.showKeybindBG)
+        ZO_WeaponSwap_SetPermanentlyHidden(ZO_ActionBar1:GetNamedChild("WeaponSwap"), not style.showWeaponSwapButton)
+
+        style.hudElementRefPrimaryAnchor:Set(ZO_ActionBar1.hudElementRef)
+        style.hudElementRefSecondaryAnchor:AddToControl(ZO_ActionBar1.hudElementRef)
+    end)
+end
+
 local function ApplyAllKeyboardHudStyles()
     if not IsKeyboardHudEnabled() then
         return
@@ -126,6 +269,7 @@ local function ApplyAllKeyboardHudStyles()
     InstallResourceBarAdapter()
     InstallCompassAdapter()
     InstallBossBarAdapter()
+    ApplyActionBarPresentation(true)
 
     if PLAYER_ATTRIBUTE_BARS then
         PLAYER_ATTRIBUTE_BARS:ApplyStyle()
@@ -187,6 +331,7 @@ local function CreateSettings()
                     if BOSS_BAR and originalBossBarApplyStyle then
                         originalBossBarApplyStyle(BOSS_BAR)
                     end
+                    ApplyActionBarPresentation(false)
                     if HUD_MANAGER then
                         HUD_MANAGER:PropagateSettings()
                     end

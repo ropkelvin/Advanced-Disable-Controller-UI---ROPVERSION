@@ -1,0 +1,10 @@
+## Title: HybridUI
+## Author: @ZOSPlsFix
+## Description: Switch between ESO's native Gamepad UI and a Hybrid layout with native Gamepad menus and the original Keyboard gameplay HUD.
+## Version: 1.0.0
+## AddOnVersion: 10000
+## APIVersion: 101051
+## DependsOn: LibAddonMenu-2.0>=43
+## SavedVariables: HybridUI_SavedVariables
+
+HybridUI.lua

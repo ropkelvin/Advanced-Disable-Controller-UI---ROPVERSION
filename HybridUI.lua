@@ -1,5 +1,5 @@
 -- HybridUI
--- Fresh implementation; no code is copied from other addon branches or projects.
+-- Clean implementation using ESO's native scene and platform UI systems.
 
 local ADDON_NAME = "HybridUI"
 local MODE_NATIVE = "native"
@@ -9,30 +9,207 @@ local DEFAULTS =
 {
     mode = MODE_NATIVE,
     applyGamepadModeOn = true,
+    originalPreferredMode = nil,
 }
 
 local savedVariables
 local initialized = false
+local refreshingPlatformStyles = false
+local originalIsInGamepadPreferredMode = IsInGamepadPreferredMode
+
+local originalSystemMethods = {}
+local originalDialogMethods = {}
+
+local function IsHybridMode()
+    return savedVariables and savedVariables.mode == MODE_HYBRID
+end
+
+local function IsBaseHUDSceneShowing()
+    return SCENE_MANAGER
+        and SCENE_MANAGER.IsShowingBaseScene
+        and SCENE_MANAGER:IsShowingBaseScene()
+end
+
+-- ESO's platform style manager asks this function which style to apply.
+-- In Hybrid mode, only the active base HUD scene reports Keyboard preference.
+-- Native Gamepad menu scenes continue to report Gamepad preference.
+IsInGamepadPreferredMode = function()
+    if IsHybridMode() and IsBaseHUDSceneShowing() then
+        return false
+    end
+
+    return originalIsInGamepadPreferredMode()
+end
 
 local function ApplyGamepadModeSetting()
     if savedVariables.applyGamepadModeOn then
+        if savedVariables.originalPreferredMode == nil then
+            savedVariables.originalPreferredMode = GetSetting(
+                SETTING_TYPE_GAMEPAD,
+                GAMEPAD_SETTING_INPUT_PREFERRED_MODE
+            )
+        end
+
         SetSetting(
             SETTING_TYPE_GAMEPAD,
             GAMEPAD_SETTING_INPUT_PREFERRED_MODE,
             INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
         )
+    elseif savedVariables.originalPreferredMode ~= nil then
+        SetSetting(
+            SETTING_TYPE_GAMEPAD,
+            GAMEPAD_SETTING_INPUT_PREFERRED_MODE,
+            savedVariables.originalPreferredMode
+        )
+    end
+end
+
+local function InstallHUDScenePreference()
+    local scenes = { HUD_SCENE, HUD_UI_SCENE }
+
+    for _, scene in ipairs(scenes) do
+        if scene and not scene.hybridUIPreferenceHooked then
+            local originalSetRequestedMode = scene.SetWasRequestedToShowInGamepadPreferredMode
+
+            scene.SetWasRequestedToShowInGamepadPreferredMode = function(self, gamepad)
+                if IsHybridMode() then
+                    originalSetRequestedMode(self, false)
+                else
+                    originalSetRequestedMode(self, gamepad)
+                end
+            end
+
+            scene.hybridUIPreferenceHooked = true
+        end
+    end
+end
+
+local function InstallNativeGamepadRouting()
+    if not originalSystemMethods.getObject then
+        originalSystemMethods.getObject = SYSTEMS.GetObject
+        originalSystemMethods.getRootScene = SYSTEMS.GetRootScene
+
+        SYSTEMS.GetObject = function(self, systemName)
+            if IsHybridMode() then
+                return self:GetGamepadObject(systemName)
+            end
+
+            return originalSystemMethods.getObject(self, systemName)
+        end
+
+        SYSTEMS.GetRootScene = function(self, systemName)
+            if IsHybridMode() then
+                return self:GetGamepadRootScene(systemName)
+            end
+
+            return originalSystemMethods.getRootScene(self, systemName)
+        end
+    end
+
+    if not originalSystemMethods.openPlatformUISystem then
+        originalSystemMethods.openPlatformUISystem = ZO_UISystemManager.OpenPlatformUISystem
+
+        ZO_UISystemManager.OpenPlatformUISystem = function(self, system, ...)
+            if IsHybridMode() then
+                return self:OpenGamepadUISystem(system, ...)
+            end
+
+            return originalSystemMethods.openPlatformUISystem(self, system, ...)
+        end
+    end
+
+    if not originalSystemMethods.getPlatformUISystemDisplayName then
+        originalSystemMethods.getPlatformUISystemDisplayName = ZO_UISystemManager.GetPlatformUISystemDisplayName
+
+        ZO_UISystemManager.GetPlatformUISystemDisplayName = function(self, system)
+            if IsHybridMode() then
+                return self:GetGamepadUISystemDisplayName(system)
+            end
+
+            return originalSystemMethods.getPlatformUISystemDisplayName(self, system)
+        end
+    end
+end
+
+local function InstallGamepadDialogs()
+    if not originalDialogMethods.showPlatformDialog then
+        originalDialogMethods.showPlatformDialog = ZO_Dialogs_ShowPlatformDialog
+
+        ZO_Dialogs_ShowPlatformDialog = function(...)
+            if IsHybridMode() then
+                return ZO_Dialogs_ShowGamepadDialog(...)
+            end
+
+            return originalDialogMethods.showPlatformDialog(...)
+        end
+    end
+
+    if not originalDialogMethods.showDialog then
+        originalDialogMethods.showDialog = ZO_Dialogs_ShowDialog
+
+        ZO_Dialogs_ShowDialog = function(name, data, textParams, isGamepad)
+            if IsHybridMode() then
+                local dialogInfo = ESO_Dialogs[name]
+                if dialogInfo and dialogInfo.gamepadInfo then
+                    isGamepad = true
+                end
+            end
+
+            return originalDialogMethods.showDialog(name, data, textParams, isGamepad)
+        end
+    end
+end
+
+-- ZO_PlatformStyle objects are refreshed by ESO when this setting changes.
+-- A temporary round-trip forces that native refresh after the base scene
+-- changes. The saved setting is restored immediately; Hybrid mode's
+-- scene-aware preference determines which style ESO applies during refresh.
+local function RefreshNativePlatformStyles()
+    if refreshingPlatformStyles or not IsHybridMode() then
+        return
+    end
+
+    refreshingPlatformStyles = true
+
+    local currentMode = GetSetting(
+        SETTING_TYPE_GAMEPAD,
+        GAMEPAD_SETTING_INPUT_PREFERRED_MODE
+    )
+
+    local alternateMode = currentMode == INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
+        and INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
+        or INPUT_PREFERRED_MODE_ALWAYS_KEYBOARD
+
+    SetSetting(
+        SETTING_TYPE_GAMEPAD,
+        GAMEPAD_SETTING_INPUT_PREFERRED_MODE,
+        alternateMode
+    )
+
+    SetSetting(
+        SETTING_TYPE_GAMEPAD,
+        GAMEPAD_SETTING_INPUT_PREFERRED_MODE,
+        currentMode
+    )
+
+    refreshingPlatformStyles = false
+end
+
+local function OnSceneStateChanged(scene, oldState, newState)
+    if IsHybridMode()
+        and newState == SCENE_SHOWN
+        and scene == SCENE_MANAGER:GetCurrentScene()
+    then
+        RefreshNativePlatformStyles()
     end
 end
 
 local function ApplyMode()
     ApplyGamepadModeSetting()
-
-    -- Both modes intentionally retain ESO's real preferred-input setting.
-    -- Hybrid's HUD selection is not implemented by overriding the global
-    -- IsInGamepadPreferredMode() function: doing so also changes how ESO
-    -- selects menus and interaction scenes, which violates the specification.
-    -- The HUD-only integration must be implemented against the native HUD
-    -- fragments and verified in-client before this mode can be called complete.
+    InstallHUDScenePreference()
+    InstallNativeGamepadRouting()
+    InstallGamepadDialogs()
+    RefreshNativePlatformStyles()
 end
 
 local function CreateSettings()
@@ -47,7 +224,7 @@ local function CreateSettings()
         name = "HybridUI",
         displayName = "HybridUI",
         author = "@ZOSPlsFix",
-        version = "1.0.0",
+        version = "1.0.1",
         registerForRefresh = true,
         registerForDefaults = true,
     })
@@ -56,12 +233,12 @@ local function CreateSettings()
     {
         {
             type = "description",
-            text = "Native Gamepad UI keeps ESO's complete Gamepad interface. Hybrid UI is intended to use native Gamepad menus with the original Keyboard gameplay HUD.",
+            text = "Native Gamepad UI leaves ESO's Gamepad interface untouched. Hybrid UI keeps native Gamepad menus, inventory, map, interactions and dialogues while selecting the original Keyboard platform style for the base gameplay HUD.",
         },
         {
             type = "dropdown",
             name = "Interface mode",
-            tooltip = "Choose Native Gamepad UI or Hybrid UI.",
+            tooltip = "Native Gamepad UI uses ESO's normal Gamepad interface. Hybrid UI uses Keyboard platform styling only while the base HUD scene is active and routes supported menus and dialogs to their native Gamepad versions.",
             choices = { "Native Gamepad UI", "Hybrid UI" },
             choicesValues = { MODE_NATIVE, MODE_HYBRID },
             getFunc = function()
@@ -76,13 +253,14 @@ local function CreateSettings()
         {
             type = "checkbox",
             name = "Set ESO Gamepad Mode to On",
-            tooltip = "Sets ESO's input preference to Always Gamepad instead of Auto.",
+            tooltip = "Applies ESO's Always Gamepad preference. When disabled, HybridUI restores the setting value saved when the option was first enabled.",
             getFunc = function()
                 return savedVariables.applyGamepadModeOn
             end,
             setFunc = function(value)
                 savedVariables.applyGamepadModeOn = value
                 ApplyGamepadModeSetting()
+                RefreshNativePlatformStyles()
             end,
             default = true,
         },
@@ -103,6 +281,8 @@ local function OnAddonLoaded(eventCode, addonName)
         nil,
         DEFAULTS
     )
+
+    SCENE_MANAGER:RegisterCallback("SceneStateChanged", OnSceneStateChanged)
 
     ApplyMode()
     CreateSettings()

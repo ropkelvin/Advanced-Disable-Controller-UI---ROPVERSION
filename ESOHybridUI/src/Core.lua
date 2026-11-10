@@ -565,8 +565,6 @@ local function OnAddonLoaded(_, addonName)
     ADDON:RegisterDiagnosticCommands()
     ADDON:RefreshSettingsCache()
     ADDON:InstallModeOverride()
-    ADDON:InstallWhenReady("platformUISystemHook", InstallPlatformUISystemHook)
-    ADDON:InstallWhenReady("mainMenuSystemHook", InstallMainMenuSystemHook)
 
     local name = ADDON.ADDON_NAME
     EVENT_MANAGER:RegisterForEvent(name .. "_LockpickBegin", EVENT_BEGIN_LOCKPICK, OnLockpickBegin)

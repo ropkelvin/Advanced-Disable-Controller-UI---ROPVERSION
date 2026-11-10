@@ -153,19 +153,19 @@ local function InstallGlobalPromptHooks()
     end
 
     _G.ZO_Keybindings_ShouldUseGamepadAction = function(alwaysPreferGamepadMode, ...)
-        if ADDON:ShouldShowControllerPrompts() then return true end
+        if ADDON:ShouldShowControllerPrompts() and alwaysPreferGamepadMode ~= false then return true end
         return originalShouldUseGamepadAction(alwaysPreferGamepadMode, ...)
     end
 
     _G.ZO_Keybindings_GetPreferredKeyType = function(alwaysPreferGamepadMode, ...)
-        if ADDON:ShouldShowControllerPrompts() then
+        if ADDON:ShouldShowControllerPrompts() and alwaysPreferGamepadMode ~= false then
             return PREFERRED_INPUT_DEVICE_TYPE_GAMEPAD
         end
         return originalGetPreferredKeyType(alwaysPreferGamepadMode, ...)
     end
 
     _G.ZO_Keybindings_ShouldShowGamepadKeybind = function(alwaysPreferGamepadMode, ...)
-        if ADDON:ShouldShowControllerPrompts() then return true end
+        if ADDON:ShouldShowControllerPrompts() and alwaysPreferGamepadMode ~= false then return true end
         return originalShouldShowGamepadKeybind(alwaysPreferGamepadMode, ...)
     end
     return true

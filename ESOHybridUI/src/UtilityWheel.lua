@@ -1,15 +1,10 @@
 -- Hybrid quickslot (utility) wheel.
 --
 -- ESO has separate keyboard and gamepad wheel classes. The manager caches
--- its selected platform when StartInteraction runs; cycle/stop operations must
--- therefore stay in the same keyboard scope as the utility wheel was opened in.
--- In Hybrid we therefore:
---   1. start the utility wheel under the "keyboard" answer -> keyboard wheel;
---   2. push a short-lived action layer that re-exposes the controller's cycle
---      buttons while that wheel is open;
---   3. remove the layer in StopInteraction, before ESO pops its own layer.
--- Fishing and target-marker wheels keep ESO's native presentation. The
--- player-to-player wheel has its own hook below.
+-- its selected platform when StartInteraction runs, so each wheel must be
+-- started under the platform that should own it. The optional controller bridge
+-- uses native inherited keybindings rather than mutating protected bindings.
+-- Fishing and target-marker wheels keep ESO's native presentation.
 
 local ADDON = ESOHybridUI
 local rt = ADDON.runtime
@@ -45,89 +40,6 @@ function ADDON:CycleUtilityWheel(direction)
     return true
 end
 
-local function CopyGamepadDefaultBindings(sourceActionName, targetActionName)
-    local sourceLayer, sourceCategory, sourceAction = GetActionIndicesFromName(sourceActionName)
-    local targetLayer, targetCategory, targetAction = GetActionIndicesFromName(targetActionName)
-    if not sourceLayer or not sourceCategory or not sourceAction
-        or not targetLayer or not targetCategory or not targetAction then
-        return false
-    end
-
-    local foundBinding = false
-    for bindingIndex = 1, GetMaxBindingsPerAction() do
-        -- Preserve a binding explicitly assigned to the bridge action. Otherwise
-        -- copy the player's live source binding (not merely a default binding)
-        -- into the active bridge action.
-        local targetKey = GetActionBindingInfo(targetLayer, targetCategory, targetAction, bindingIndex)
-        if targetKey and targetKey ~= KEY_INVALID and IsKeyCodeGamepadKey(targetKey) then
-            foundBinding = true
-        else
-            local key, mod1, mod2, mod3, mod4 =
-                GetActionBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
-            if not key or key == KEY_INVALID then
-                key, mod1, mod2, mod3, mod4 =
-                    GetActionDefaultBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
-            end
-            if key and key ~= KEY_INVALID and IsKeyCodeGamepadKey(key) then
-                BindKeyToAction(targetLayer, targetCategory, targetAction, bindingIndex,
-                    key, mod1, mod2, mod3, mod4)
-                foundBinding = true
-            end
-        end
-    end
-    return foundBinding
-end
-
--- Keep the bridge actions in step with the player's own gamepad cycle bindings.
--- ESO's keybindings screen changes bindings with BindKeyToAction /
--- UnbindKeyFromAction and announces every change with EVENT_KEYBINDING_SET and
--- EVENT_KEYBINDING_CLEARED, so we mirror a change of the source action onto the
--- bridge action as it happens. Only changes to the source are mirrored: a
--- binding the player sets directly on a bridge action is never overwritten.
-local BRIDGE_MIRRORS = {
-    { source = "UTILITY_WHEEL_GAMEPAD_CYCLE_LEFT", target = "ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_LEFT" },
-    { source = "UTILITY_WHEEL_GAMEPAD_CYCLE_RIGHT", target = "ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_RIGHT" },
-}
-
-local function MirrorBinding(entry, bindingIndex)
-    local sourceLayer, sourceCategory, sourceAction = GetActionIndicesFromName(entry.source)
-    local targetLayer, targetCategory, targetAction = GetActionIndicesFromName(entry.target)
-    if not sourceLayer or not sourceCategory or not sourceAction
-        or not targetLayer or not targetCategory or not targetAction then
-        return
-    end
-
-    local key, mod1, mod2, mod3, mod4 =
-        GetActionBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
-    if key and key ~= KEY_INVALID and IsKeyCodeGamepadKey(key) then
-        BindKeyToAction(targetLayer, targetCategory, targetAction, bindingIndex, key, mod1, mod2, mod3, mod4)
-    else
-        UnbindKeyFromAction(targetLayer, targetCategory, targetAction, bindingIndex)
-    end
-    ADDON:LogDebug("Mirrored binding", entry.source, "slot", bindingIndex, "->", entry.target)
-end
-
-local function OnKeybindingChanged(_, layerIndex, categoryIndex, actionIndex, bindingIndex)
-    for _, entry in ipairs(BRIDGE_MIRRORS) do
-        local sourceLayer, sourceCategory, sourceAction = GetActionIndicesFromName(entry.source)
-        if sourceLayer == layerIndex and sourceCategory == categoryIndex and sourceAction == actionIndex then
-            -- ESO limits how many changed bindings can be saved; a refused bind
-            -- must never break the keybindings screen.
-            local ok, err = pcall(MirrorBinding, entry, bindingIndex)
-            if not ok then
-                ADDON:LogWarn("Could not mirror binding for", entry.source, "-", tostring(err))
-            end
-        end
-    end
-end
-
-local function InstallBindingSync()
-    local name = ADDON.ADDON_NAME
-    EVENT_MANAGER:RegisterForEvent(name .. "_BindingSet", EVENT_KEYBINDING_SET, OnKeybindingChanged)
-    EVENT_MANAGER:RegisterForEvent(name .. "_BindingCleared", EVENT_KEYBINDING_CLEARED, OnKeybindingChanged)
-    return true
-end
-
 local function PushBridgeLayer()
     if not rt.utilityWheelLayerActive then
         PushActionLayerByName(BRIDGE_LAYER)
@@ -145,8 +57,7 @@ local function RemoveBridgeLayer()
 end
 
 local function WantsKeyboardQuickslot()
-    return ADDON:IsHybrid() and ADDON:IsNativeGamepadMode()
-        and ADDON:GetSettings().hybridQuickslotWheel ~= false
+    return ADDON:GetSettings().hybridQuickslotWheel ~= false
 end
 
 -- StartInteraction returns a started flag (ESO's input binding consumes it) plus
@@ -167,8 +78,14 @@ local function InstallManagerHooks()
     -- Hook the class, not the live singleton.
     local originalStart = managerClass.StartInteraction
     managerClass.StartInteraction = function(self, wheelType, ...)
-        if wheelType == ZO_INTERACTIVE_WHEEL_TYPE_UTILITY and WantsKeyboardQuickslot() then
-            return AfterUtilityStart(ADDON:WithKeyboardWheelMode(originalStart, self, wheelType, ...))
+        if wheelType == ZO_INTERACTIVE_WHEEL_TYPE_UTILITY
+            and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+            if WantsKeyboardQuickslot() then
+                return AfterUtilityStart(ADDON:WithKeyboardWheelMode(originalStart, self, wheelType, ...))
+            end
+            -- Explicitly select ESO's real Gamepad radial wheel when the option
+            -- is off; the Hybrid HUD itself reports keyboard mode.
+            return ADDON:WithNativeGamepadMode(originalStart, self, wheelType, ...)
         end
         if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode()
             and (wheelType == ZO_INTERACTIVE_WHEEL_TYPE_FISHING
@@ -196,32 +113,20 @@ local function InstallPlayerWheelHook()
 
     local originalStart = playerToPlayerClass.StartInteraction
     playerToPlayerClass.StartInteraction = function(self, ...)
-        if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() and ADDON:GetSettings().hybridPlayerWheel ~= false then
-            return ADDON:WithKeyboardWheelMode(originalStart, self, ...)
+        if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+            if ADDON:GetSettings().hybridPlayerWheel ~= false then
+                return ADDON:WithKeyboardWheelMode(originalStart, self, ...)
+            end
+            return ADDON:WithNativeGamepadMode(originalStart, self, ...)
         end
         return originalStart(self, ...)
     end
     return true
 end
 
-local function CopyBridgeBindings()
-    if not rt.utilityWheelLeftCopied then
-        rt.utilityWheelLeftCopied = CopyGamepadDefaultBindings(
-            "UTILITY_WHEEL_GAMEPAD_CYCLE_LEFT", "ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_LEFT")
-    end
-    if not rt.utilityWheelRightCopied then
-        rt.utilityWheelRightCopied = CopyGamepadDefaultBindings(
-            "UTILITY_WHEEL_GAMEPAD_CYCLE_RIGHT", "ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_RIGHT")
-    end
-    rt.utilityWheelDefaultsCopied = rt.utilityWheelLeftCopied and rt.utilityWheelRightCopied
-    return rt.utilityWheelDefaultsCopied
-end
-
 function ADDON:ApplyUtilityWheel()
     self:InstallWhenReady("utilityWheelHooks", InstallManagerHooks)
     self:InstallWhenReady("playerWheelHook", InstallPlayerWheelHook)
-    self:InstallWhenReady("wheelBindings", CopyBridgeBindings)
-    self:InstallWhenReady("wheelBindingSync", InstallBindingSync)
     self:InstallWhenReady("wheelCleanup", function()
         -- Never leave the bridge layer behind across a zone change or logout.
         EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_WheelCleanup", EVENT_PLAYER_DEACTIVATED, RemoveBridgeLayer)

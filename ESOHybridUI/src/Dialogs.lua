@@ -10,11 +10,18 @@ local function InstallDialogWrapper()
         return false
     end
 
-    _G.ZO_Dialogs_ShowDialog = function(...)
-        if ADDON:ShouldShowControllerPrompts() then
-            return ADDON:WithNativeGamepadMode(original, ...)
+    _G.ZO_Dialogs_ShowDialog = function(name, data, textParams, isGamepad, ...)
+        if ADDON:ShouldShowControllerPrompts() and isGamepad == nil then
+            local dialogInfo = ESO_Dialogs and ESO_Dialogs[name]
+            if type(dialogInfo) == "table" and dialogInfo.gamepadInfo then
+                isGamepad = true
+            end
         end
-        return original(...)
+
+        if ADDON:ShouldShowControllerPrompts() and isGamepad == true then
+            return ADDON:WithNativeGamepadMode(original, name, data, textParams, isGamepad, ...)
+        end
+        return original(name, data, textParams, isGamepad, ...)
     end
     return true
 end

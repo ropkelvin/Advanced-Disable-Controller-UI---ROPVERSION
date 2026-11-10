@@ -39,7 +39,7 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_STATUS_HYBRID", "hybrid UI")
 
 -- Settings: how menus opened from the HUD are chosen
 ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_NAME", "Menus opened from the HUD")
-ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_TOOLTIP", "Gamepad: every menu, shop, bank, crafting station, housing editor and photo mode uses ESO's gamepad version; only the HUD is keyboard-style. Legacy: the 3.x behavior, where ESO may pick keyboard menus when opened from the HUD. Switch to Legacy if the HUD looks wrong in Gamepad.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_TOOLTIP", "Gamepad: prefer ESO's native gamepad versions for UI-system objects and registered root scenes; direct special-case screens can still follow ESO's own routing. Legacy: the older 3.x behaviour, where ESO may choose keyboard menus from the HUD. Switch to Legacy only if the default policy causes a specific compatibility problem.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_GAMEPAD", "Gamepad (recommended)")
 ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_LEGACY", "Legacy")
 ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_CHANGED", "Menu policy: <<1>>")

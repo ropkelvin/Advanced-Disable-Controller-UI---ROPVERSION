@@ -52,6 +52,7 @@ if (Test-Path -LiteralPath $zipPath) {
 # extra repository or versioned parent folder.
 Compress-Archive -LiteralPath $addonFolder -DestinationPath $zipPath -CompressionLevel Optimal
 
+$null = Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
 try {
     $entries = @($archive.Entries | ForEach-Object { $_.FullName -replace '\\', '/' })

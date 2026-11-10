@@ -85,6 +85,17 @@ local NATIVE_HUD_SCENES = {
 
 -- Legacy policy only: does the current context want ESO's native gamepad presentation?
 local function HybridWantsGamepad()
+    -- A dialog built with ESO's gamepad template must keep the native answer for
+    -- its entire visible lifetime. Some updateFn callbacks branch on this global
+    -- every frame and otherwise address keyboard-only Button1 controls.
+    local dialogName = rt.gamepadDialogName
+    if dialogName then
+        if type(ZO_Dialogs_IsShowing) == "function" and ZO_Dialogs_IsShowing(dialogName) then
+            return true
+        end
+        rt.gamepadDialogName = nil
+    end
+
     -- Loot has a dedicated native scene, but ESO can request the keyboard one.
     if GetInteractionType() == INTERACTION_LOOT then
         return true

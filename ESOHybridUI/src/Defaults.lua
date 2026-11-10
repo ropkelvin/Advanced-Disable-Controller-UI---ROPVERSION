@@ -10,7 +10,7 @@ ADDON.ADDON_NAME = "ESOHybridUI"
 ADDON.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
 -- Keep at 1: changing it makes ZO_SavedVars discard every user's saved settings.
 ADDON.SAVED_VARIABLES_VERSION = 1
-ADDON.VERSION = "4.2.0-beta"
+ADDON.VERSION = "4.2.1-beta"
 
 ADDON.MODE_GAMEPAD = "gamepad"
 ADDON.MODE_HYBRID = "hybrid"
@@ -28,7 +28,6 @@ ADDON.defaults = {
 
     -- Hybrid feature switches (each one can be turned off if a game patch breaks it).
     hybridQuickslotWheel = true,
-    hybridPlayerWheel = true,
     hybridActionBarGlyphs = true,
 
     fonts = {

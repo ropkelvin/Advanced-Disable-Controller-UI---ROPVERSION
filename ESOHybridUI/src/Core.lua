@@ -454,7 +454,7 @@ local function ShowWelcomeDialog()
     end
 
     local dialogName = "ESOHYBRIDUI_FIRST_INSTALL"
-    local ok, err = pcall(function()
+    local ok, dialogOrError = pcall(function()
         ZO_Dialogs_RegisterCustomDialog(dialogName, {
             canQueue = true,
             gamepadInfo = { dialogType = GAMEPAD_DIALOGS.BASIC },
@@ -462,14 +462,17 @@ local function ShowWelcomeDialog()
             mainText = { text = GetString(SI_ESOHYBRIDUI_WELCOME_TEXT) },
             buttons = { { text = GetString(SI_ESOHYBRIDUI_WELCOME_BUTTON) } },
         })
-        ZO_Dialogs_ShowDialog(dialogName)
+        return ZO_Dialogs_ShowDialog(dialogName)
     end)
 
-    if ok then
-        -- Only mark it as seen once it really was shown.
+    if ok and dialogOrError then
+        -- ZO_Dialogs_ShowDialog returns the dialog control only when it was
+        -- actually created and displayed; nil means it was deferred or blocked.
         account._esoHybridWelcomeShown = true
+    elseif not ok then
+        ADDON:LogWarn("Welcome dialog could not be shown:", tostring(dialogOrError))
     else
-        ADDON:LogWarn("Welcome dialog could not be shown:", tostring(err))
+        ADDON:LogDebug("Welcome dialog was not displayed yet; it can be retried.")
     end
 end
 

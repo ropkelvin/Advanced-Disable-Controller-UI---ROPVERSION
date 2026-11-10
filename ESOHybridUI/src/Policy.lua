@@ -12,14 +12,11 @@
 --
 --   Gamepad mode        : answer is the game's own (untouched).
 --   Hybrid, policy
---   "gamepad" (default) : answer is the game's own everywhere EXCEPT inside
---                         WithKeyboardWheelMode scopes. The HUD is restyled to
---                         keyboard once, inside such a scope (Core.lua), and the
---                         wheels are built inside one. Everything opened later
---                         is therefore native gamepad.
---   Hybrid, policy
---   "legacy" (3.x)      : base HUD -> false; loot, lockpicking, the map, whitelisted
---                         HUD scenes and any menu/overlay scene -> the game's own.
+--   "gamepad" (default) : base HUD -> keyboard; menus are explicitly opened under
+--                         WithNativeGamepadMode and remain native once their scene
+--                         is shown. This keeps the HUD stable during bar/scene rebuilds.
+--   "legacy" (3.x)      : base HUD -> false; only contexts recognized by
+--                         HybridWantsGamepad use native gamepad presentation.
 --   Depth scopes        : WithNativeGamepadMode / WithKeyboardWheelMode force an
 --                         answer for the duration of one call (restored on error).
 
@@ -120,9 +117,13 @@ local function IsGamepadUIAllowed()
         answer = RealAnswer()
     elseif rt.forceKeyboardWheelDepth > 0 then
         answer = false
-    elseif not rt.hybrid or rt.menusGamepad then
+    elseif not rt.hybrid then
         answer = RealAnswer()
     else
+        -- Hybrid is always a keyboard-style HUD. Native menus opt in through
+        -- WithNativeGamepadMode while they are opened, then their scene is
+        -- recognized by HybridWantsGamepad. Do not leave the whole HUD in
+        -- gamepad mode just because the menu policy is set to "gamepad".
         answer = RealAnswer() and HybridWantsGamepad() or false
     end
 

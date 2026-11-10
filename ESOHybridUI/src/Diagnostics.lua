@@ -254,7 +254,6 @@ function ADDON:DumpDiagnostics()
         "Depth native/keyboard: " .. rt.forceNativeModeDepth .. "/" .. rt.forceKeyboardWheelDepth
             .. " | lockpicking: " .. tostring(rt.isLockpicking),
         "Features: quickslotWheel=" .. tostring(settings.hybridQuickslotWheel)
-            .. " playerWheel=" .. tostring(settings.hybridPlayerWheel)
             .. " actionBarGlyphs=" .. tostring(settings.hybridActionBarGlyphs),
         "Platform: dirty=" .. tostring(rt.platformDirty) .. " refreshing=" .. tostring(rt.isRefreshing)
             .. " wheelInteracting=" .. tostring(wheelInteracting),

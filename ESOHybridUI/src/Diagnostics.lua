@@ -258,6 +258,8 @@ function ADDON:DumpDiagnostics()
             .. " actionBarGlyphs=" .. tostring(settings.hybridActionBarGlyphs),
         "Platform: dirty=" .. tostring(rt.platformDirty) .. " refreshing=" .. tostring(rt.isRefreshing)
             .. " wheelInteracting=" .. tostring(wheelInteracting),
+        "HUD editor: " .. tostring(HUD_EDITOR_SCENE_KEYBOARD and HUD_EDITOR_SCENE_KEYBOARD:IsShowing() or false)
+            .. " | editor layout: " .. tostring(HUD_EDITOR_SCENE_KEYBOARD and HUD_EDITOR_SCENE_KEYBOARD:IsShowing() and "keyboard" or "normal policy"),
         "Keyboard HUD active: " .. tostring(rt.hybrid and sm and sm:IsShowingBaseScene()
             and not IsInGamepadPreferredMode()),
         "Quickslot controller bridge active: " .. tostring(rt.utilityWheelLayerActive)

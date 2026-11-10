@@ -232,9 +232,8 @@ function ADDON:DumpDiagnostics()
             .. " actionBarGlyphs=" .. tostring(settings.hybridActionBarGlyphs),
         "Platform: dirty=" .. tostring(rt.platformDirty) .. " refreshing=" .. tostring(rt.isRefreshing)
             .. " wheelInteracting=" .. tostring(wheelInteracting),
-        "Keyboard HUD policy: hybrid=" .. tostring(rt.hybrid)
-            .. " | base scene=" .. tostring(sm and sm:IsShowingBaseScene())
-            .. " | effective keyboard platform=" .. tostring(not IsInGamepadPreferredMode()),
+        "Keyboard HUD active: " .. tostring(rt.hybrid and sm and sm:IsShowingBaseScene()
+            and not IsInGamepadPreferredMode()),
         "Quickslot controller bridge active: " .. tostring(rt.utilityWheelLayerActive)
             .. " | bindings: inherited from ESO gamepad actions",
         "Override installed: " .. tostring(rt.modeOverrideInstalled)

@@ -247,18 +247,21 @@ function ADDON:ApplyPrompts()
     self:InstallWhenReady("stackAllHook", InstallStackAllHook)
     self:InstallWhenReady("deathPromptHook", InstallDeathPromptHook)
 
-    KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = forceGamepadPrompts
     if not forceGamepadPrompts then
         RestoreStackAllMappings()
     end
-    -- These descriptors belong to ESO's keyboard menus, which the gamepad-first
-    -- policy never opens, so leave them untouched there.
+    -- Keep the strip's native platform layout, but force controller glyph
+    -- resolution on the keyboard HUD while Hybrid is active.
+    local baseStripStyle = IsInGamepadPreferredMode()
+        and KEYBIND_STRIP_GAMEPAD_STYLE or KEYBIND_STRIP_STANDARD_STYLE
     RemapKnownDescriptors(forceGamepadPrompts and not rt.menusGamepad)
     ApplyReticleFonts(forceGamepadPrompts)
     RefreshReticlePrompt()
     RefreshPlayerInteractionPrompt()
 
-    if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle then
-        KEYBIND_STRIP:SetStyle(KEYBIND_STRIP_STANDARD_STYLE)
+    if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle and ZO_ShallowTableCopy then
+        local stripStyle = ZO_ShallowTableCopy(baseStripStyle)
+        stripStyle.alwaysPreferGamepadMode = forceGamepadPrompts or IsInGamepadPreferredMode()
+        KEYBIND_STRIP:SetStyle(stripStyle)
     end
 end

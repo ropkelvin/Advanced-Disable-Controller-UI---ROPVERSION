@@ -10,7 +10,7 @@ ADDON.ADDON_NAME = "ESOHybridUI"
 ADDON.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
 -- Keep at 1: changing it makes ZO_SavedVars discard every user's saved settings.
 ADDON.SAVED_VARIABLES_VERSION = 1
-ADDON.VERSION = "4.1.6-beta"
+ADDON.VERSION = "4.1.7-beta"
 
 ADDON.MODE_GAMEPAD = "gamepad"
 ADDON.MODE_HYBRID = "hybrid"
@@ -49,6 +49,7 @@ ADDON.runtime = {
     -- Context depth counters (see Policy.lua). >0 means "answer this way".
     forceNativeModeDepth = 0,
     forceKeyboardWheelDepth = 0,
+    gamepadDialogName = nil,
 
     -- Cached copy of "is Hybrid selected" so the hot path never touches saved vars.
     hybrid = false,

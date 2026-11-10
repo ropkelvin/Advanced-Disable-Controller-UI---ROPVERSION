@@ -18,7 +18,7 @@
 --   "legacy" (3.x)      : base HUD -> false; only contexts recognized by
 --                         HybridWantsGamepad use native gamepad presentation.
 --   Depth scopes        : WithNativeGamepadMode / WithKeyboardWheelMode force an
---                         answer for the duration of one call (restored on error).
+--                         answer for the duration of one call.
 
 local ADDON = ESOHybridUI
 local rt = ADDON.runtime
@@ -50,6 +50,8 @@ local function RunWithDepth(depthKey, callback, ...)
     -- Do not use pcall/xpcall here. Some native ESO input paths call secure
     -- functions (for example StartSoulGemResurrection) while a mode scope is
     -- active. A protected-call boundary makes that call stack insecure.
+    -- The depth is restored on normal return; an unexpected callback error
+    -- propagates and cannot be caught here without breaking that secure call path.
     local results = PackResults(callback(...))
 
     rt[depthKey] = math.max(0, rt[depthKey] - 1)

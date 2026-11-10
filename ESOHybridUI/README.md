@@ -87,9 +87,9 @@ New diagnostics
 1. How you pick a slot on the keyboard quickslot wheel with a controller. ESO's radial menu
    supports stick input by default but I could not confirm the keyboard wheel enables it.
    Only cycle left/right is bridged.
-2. The keybind-strip remaps in `Prompts.lua` are addressed by position inside ESO's tables
-   and can shift in a game patch. `/esohybrid_debug on` logs each remap. The zone-stories
-   remap is probably a no-op (passes the whole table); left as in 3.3.8.
+2. Some keybind-strip remaps in `Prompts.lua` use positions in ESO-owned descriptor arrays
+   and can shift in a game patch. `/esohybrid_debug on` logs each remap. The Zone Stories
+   descriptor is a single descriptor object, not an array, so its remap is applied directly.
 3. Bridge binding mirroring (new) is untested; if it misbehaves, rebind the bridge actions in
    Controls > Add-Ons.
 4. The preferred-mode flip is still used to restyle the HUD. If you see flicker, send the

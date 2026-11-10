@@ -337,11 +337,36 @@ local function InstallMainMenuSystemHook()
     return true
 end
 
+-- Route SYSTEMS root-scene selection through ESO's native gamepad roots.
+-- ShowScene, PushScene, HideScene and IsShowing all resolve their platform root
+-- through GetRootScene; scoping this lookup avoids changing the Hybrid HUD answer.
+local function InstallSystemRootSceneHook()
+    local systems = SYSTEMS
+    if not systems or type(systems.GetRootScene) ~= "function" then
+        return false
+    end
+
+    local original = systems.GetRootScene
+    systems.GetRootScene = function(self, systemName, ...)
+        if rt.hybrid and rt.menusGamepad and ADDON:IsNativeGamepadMode() then
+            return ADDON:WithNativeGamepadMode(original, self, systemName, ...)
+        end
+        return original(self, systemName, ...)
+    end
+    return true
+end
+
+function ADDON:ApplySystemRouting()
+    self:InstallWhenReady("platformUISystemHook", InstallPlatformUISystemHook)
+    self:InstallWhenReady("mainMenuSystemHook", InstallMainMenuSystemHook)
+    self:InstallWhenReady("systemRootSceneHook", InstallSystemRootSceneHook)
+end
+
 -- ---------------------------------------------------------------------------
 -- Refresh / apply
 -- ---------------------------------------------------------------------------
 
-local APPLY_STEPS = { "ApplyPrompts", "ApplyDialogs", "ApplyUtilityWheel", "ApplyActionBar", "ApplyWorldMap" }
+local APPLY_STEPS = { "ApplySystemRouting", "ApplyPrompts", "ApplyDialogs", "ApplyUtilityWheel", "ApplyActionBar", "ApplyWorldMap" }
 local reportedStepErrors = {}
 
 function ADDON:ApplyAll()

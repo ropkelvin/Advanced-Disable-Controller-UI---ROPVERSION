@@ -168,6 +168,11 @@ local function InstallManagerHooks()
         if wheelType == ZO_INTERACTIVE_WHEEL_TYPE_UTILITY and WantsKeyboardQuickslot() then
             return AfterUtilityStart(ADDON:WithKeyboardWheelMode(originalStart, self, wheelType, ...))
         end
+        if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode()
+            and (wheelType == ZO_INTERACTIVE_WHEEL_TYPE_FISHING
+                or wheelType == ZO_INTERACTIVE_WHEEL_TYPE_TARGET_MARKER) then
+            return ADDON:WithNativeGamepadMode(originalStart, self, wheelType, ...)
+        end
         return originalStart(self, wheelType, ...)
     end
 

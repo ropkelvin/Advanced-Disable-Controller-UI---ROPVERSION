@@ -54,7 +54,7 @@ The keyboard Add-Ons panel is provided by LibAddonMenu. If LibGamepadOptions is 
 - **Controller glyphs on the action bar:** enables or disables controller glyphs in Hybrid.
 - **HUD prompt fonts:** adjusts interaction and stealth prompt font sizes.
 - **Advanced:** optional diagnostic logging, opt-in load announcement and command reference.
-- **Donation mail:** opens a mail draft addressed to the author. It does not attach or transfer gold.
+- **Donation mail:** opens a mail draft addressed to the author. It does not attach or transfer gold. The mail composer is keyboard-oriented and may not open correctly from every native Gamepad screen.
 
 ## Commands
 

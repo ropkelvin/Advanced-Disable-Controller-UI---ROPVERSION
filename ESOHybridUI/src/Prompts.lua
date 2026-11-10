@@ -205,19 +205,21 @@ local function ApplyReticleFonts(forceGamepadPrompts)
     -- Re-apply the correct native style when leaving Hybrid as well. Returning
     -- early here left the addon's custom fonts on the reticle/stealth icon after
     -- switching to full Gamepad mode.
-    local useGamepadStyle = forceGamepadPrompts or IsInGamepadPreferredMode()
-    local nativeFont = useGamepadStyle and "ZoFontGamepad42" or "ZoInteractionPrompt"
-    local nativeStealthFont = useGamepadStyle and "ZoFontGamepad36" or "ZoInteractionPrompt"
+    local nativeGamepadStyle = IsInGamepadPreferredMode()
+    local nativeFont = nativeGamepadStyle and "ZoFontGamepad42" or "ZoInteractionPrompt"
+    local nativeStealthFont = nativeGamepadStyle and "ZoFontGamepad36" or "ZoInteractionPrompt"
     local contextFont = forceGamepadPrompts and ADDON:GetFont("reticleContext") or nativeFont
 
     if RETICLE and RETICLE.ApplyPlatformStyle and ZO_ShallowTableCopy then
-        local sourceStyle = useGamepadStyle and KEYBIND_STRIP_GAMEPAD_STYLE or KEYBIND_STRIP_STANDARD_STYLE
+        -- Hybrid keeps the keyboard prompt layout and only changes glyph
+        -- resolution; full Gamepad mode uses ESO's native gamepad prompt style.
+        local sourceStyle = nativeGamepadStyle and KEYBIND_STRIP_GAMEPAD_STYLE or KEYBIND_STRIP_STANDARD_STYLE
         if sourceStyle then
             local keybindStyle = ZO_ShallowTableCopy(sourceStyle)
             if forceGamepadPrompts then
                 keybindStyle.nameFont = ADDON:GetFont("reticle")
             end
-            keybindStyle.alwaysPreferGamepadMode = useGamepadStyle
+            keybindStyle.alwaysPreferGamepadMode = forceGamepadPrompts or nativeGamepadStyle
             RETICLE:ApplyPlatformStyle({
                 font = contextFont,
                 keybindButtonStyle = keybindStyle,

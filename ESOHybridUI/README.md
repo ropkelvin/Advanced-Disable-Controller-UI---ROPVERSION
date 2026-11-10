@@ -1,8 +1,7 @@
-# ESO Hybrid UI 4.1.4-beta
+# ESO Hybrid UI 4.1.5-beta
 
 **AI-assisted development.** This is an AI-assisted revision of ESO Hybrid UI by ZOSPlsFix,
-inspired by Advanced Disable Controller UI (Lionas; contributions: jc28735250, DoriKyll). It has NOT been run in the game yet. Test it on a
-spare character first and report what `/esohybrid_dump` and `/esohybrid_trace report` show.
+inspired by Advanced Disable Controller UI (Lionas; contributions: jc28735250, DoriKyll). The compact Hybrid action-bar layout and quickslot-wheel cycle/select flow have been confirmed in game. The remaining test matrix below is still required before every menu and edge case can be considered verified.
 
 If you publish it, keep the AI disclosure at the start of the ESOUI description and the
 credits above (ESOUI requires both).
@@ -12,8 +11,8 @@ credits above (ESOUI requires both).
 ESO's Gamepad Mode stays **On** (controller is the input device). In Hybrid:
 
 * the HUD uses the keyboard layout (action bar, reticle, prompts) with controller glyphs;
-* the quickslot wheel and the player-interaction wheel use the keyboard presentation;
-* menus, map, loot, lockpicking, dialogs and the death screen stay native gamepad UI.
+* the quickslot wheel and the player-interaction wheel use the keyboard presentation; each can be disabled independently under Settings > Hybrid HUD;
+* menus, map, loot, lockpicking, dialogs and the death screen are routed to native gamepad UI through ESO's platform-selection paths.
 
 Switch with `/esohybrid`, the keybind, or the settings panel (keyboard Add-Ons panel or the
 native controller page if LibGamepadOptions is installed).
@@ -22,7 +21,7 @@ Install: copy the `ESOHybridUI` folder into `Documents/Elder Scrolls Online/live
 Requires LibAddonMenu-2.0 r43+. Optional: LibGamepadOptions, LibDebugLogger (+ DebugLogViewer).
 Then press "Apply settings" once in the addon settings.
 
-## New in 4.1.0 (read this first)
+## New in 4.1.5 (read this first)
 
 **Menu policy (Settings > "Menus opened from the HUD", or `/esohybrid_policy gamepad|legacy`).**
 ESO picks the keyboard or gamepad version of a menu, shop, bank, crafting station, housing
@@ -42,7 +41,7 @@ manifest. Chat commands and `/esohybrid_dump` / `/esohybrid_trace` output stay E
 
 **Wheel bridge bindings now follow the player.** Changes to the gamepad cycle bindings are
 mirrored onto the bridge actions as they happen (`EVENT_KEYBINDING_SET/CLEARED` +
-`BindKeyToAction`/`UnbindKeyFromAction`). Untested in game; ESO limits saved changed bindings.
+`BindKeyToAction`/`UnbindKeyFromAction`). The wheel cycle/select flow has been confirmed in game; automatic binding mirroring after rebinding still needs a dedicated test. ESO limits saved changed bindings.
 
 **Scene discovery.** `/esohybrid_trace on` now also records every scene shown and the answer
 ESO received, so unknown scene names (housing, photo mode, companion, crafting) can be read

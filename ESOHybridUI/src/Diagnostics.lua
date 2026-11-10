@@ -89,7 +89,8 @@ function ADDON:SetDebugLogging(enabled, silent)
 
     local logger = rt.logger
     if logger then
-        local level = enabled and LibDebugLogger and LibDebugLogger.LOG_LEVEL_DEBUG or nil
+        local loggerLevel = type(LibDebugLogger) == "table" and LibDebugLogger.LOG_LEVEL_DEBUG or nil
+        local level = enabled and loggerLevel or nil
         if type(logger.SetMinLevelOverride) == "function" then
             pcall(logger.SetMinLevelOverride, logger, level)
         end

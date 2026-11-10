@@ -47,26 +47,34 @@ end
 
 local function CopyGamepadDefaultBindings(sourceActionName, targetActionName)
     local sourceLayer, sourceCategory, sourceAction = GetActionIndicesFromName(sourceActionName)
-    local targetLayer = GetActionIndicesFromName(targetActionName)
+    local targetLayer, targetCategory, targetAction = GetActionIndicesFromName(targetActionName)
     if not sourceLayer or not targetLayer then
         return false
     end
 
-    local copiedAny = false
+    local foundBinding = false
     for bindingIndex = 1, GetMaxBindingsPerAction() do
-        -- Prefer the player's current binding, then ESO's default.
-        local key, mod1, mod2, mod3, mod4 =
-            GetActionBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
-        if not key or key == KEY_INVALID then
-            key, mod1, mod2, mod3, mod4 =
-                GetActionDefaultBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
-        end
-        if key and key ~= KEY_INVALID and IsKeyCodeGamepadKey(key) then
-            CreateDefaultActionBind(targetActionName, key, mod1, mod2, mod3, mod4)
-            copiedAny = true
+        -- Preserve a binding explicitly assigned to the bridge action. Otherwise
+        -- copy the player's live source binding (not merely a default binding)
+        -- into the active bridge action.
+        local targetKey = GetActionBindingInfo(targetLayer, targetCategory, targetAction, bindingIndex)
+        if targetKey and targetKey ~= KEY_INVALID then
+            foundBinding = true
+        else
+            local key, mod1, mod2, mod3, mod4 =
+                GetActionBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
+            if not key or key == KEY_INVALID then
+                key, mod1, mod2, mod3, mod4 =
+                    GetActionDefaultBindingInfo(sourceLayer, sourceCategory, sourceAction, bindingIndex)
+            end
+            if key and key ~= KEY_INVALID and IsKeyCodeGamepadKey(key) then
+                BindKeyToAction(targetLayer, targetCategory, targetAction, bindingIndex,
+                    key, mod1, mod2, mod3, mod4)
+                foundBinding = true
+            end
         end
     end
-    return copiedAny
+    return foundBinding
 end
 
 -- Keep the bridge actions in step with the player's own gamepad cycle bindings.

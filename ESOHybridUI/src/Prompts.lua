@@ -196,15 +196,6 @@ local function RefreshReticlePrompt()
     RETICLE.interactKeybindButton:SetKeybind("GAME_CAMERA_INTERACT", false, "GAMEPAD_JUMP_OR_INTERACT")
 end
 
-local function RefreshPlayerInteractionPrompt()
-    if not PLAYER_TO_PLAYER or not PLAYER_TO_PLAYER.actionKeybindButton then
-        return
-    end
-    -- Same action, so ESO resolves the user's configured gamepad binding
-    -- (including hold/chord combinations) instead of a generic A glyph.
-    PLAYER_TO_PLAYER.actionKeybindButton:SetKeybind("PLAYER_TO_PLAYER_INTERACT", false, nil)
-end
-
 local function ApplyReticleFonts(forceGamepadPrompts)
     -- Re-apply the correct native style when leaving Hybrid as well. Returning
     -- early here left the addon's custom fonts on the reticle/stealth icon after
@@ -263,7 +254,6 @@ function ADDON:ApplyPrompts()
     RemapKnownDescriptors(forceGamepadPrompts and not rt.menusGamepad)
     ApplyReticleFonts(forceGamepadPrompts)
     RefreshReticlePrompt()
-    RefreshPlayerInteractionPrompt()
 
     if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle and ZO_ShallowTableCopy then
         local stripStyle = ZO_ShallowTableCopy(baseStripStyle)

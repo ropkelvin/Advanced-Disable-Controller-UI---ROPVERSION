@@ -492,7 +492,7 @@ local function ShowWelcomeDialog()
             mainText = { text = GetString(SI_ESOHYBRIDUI_WELCOME_TEXT) },
             buttons = { { text = GetString(SI_ESOHYBRIDUI_WELCOME_BUTTON) } },
         })
-        return ZO_Dialogs_ShowDialog(dialogName)
+        return ZO_Dialogs_ShowDialog(dialogName, nil, nil, ADDON:IsNativeGamepadMode())
     end)
 
     if ok and dialogOrError then

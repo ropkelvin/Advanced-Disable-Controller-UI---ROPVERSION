@@ -114,7 +114,7 @@ end
 local MAX_TRACE_KEYS = 400
 
 local function NewTrace()
-    return { counts = {}, keys = 0, total = 0, overflow = 0, scenes = {} }
+    return { counts = {}, keys = 0, total = 0, overflow = 0, scenes = {}, systemRoutes = {} }
 end
 
 function ADDON:TraceModeQuery(answer)
@@ -162,6 +162,15 @@ function ADDON:TraceScene(name, answer)
     entry.answer = answer
 end
 
+function ADDON:TraceSystemRoute(method, systemName)
+    local trace = rt.trace
+    if not trace then
+        return
+    end
+    local key = tostring(method) .. " / " .. tostring(systemName)
+    trace.systemRoutes[key] = (trace.systemRoutes[key] or 0) + 1
+end
+
 function ADDON:SetTracing(enabled)
     rt.traceEnabled = enabled == true
     if rt.traceEnabled and not rt.trace then
@@ -196,6 +205,15 @@ function ADDON:ReportTrace()
         local entry = trace.scenes[name]
         self:Say(string.format("scene %s: shown %d x, gamepad answer when shown = %s",
             name, entry.count, tostring(entry.answer)))
+    end
+
+    local routeRows = {}
+    for key, count in pairs(trace.systemRoutes or {}) do
+        routeRows[#routeRows + 1] = { key = key, count = count }
+    end
+    table.sort(routeRows, function(a, b) return a.count > b.count end)
+    for index = 1, math.min(20, #routeRows) do
+        self:Say(string.format("system route %d x %s", routeRows[index].count, routeRows[index].key))
     end
 end
 

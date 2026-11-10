@@ -49,9 +49,20 @@ local function Finish(depthKey, ok, ...)
     return ...
 end
 
+local function PackResults(...)
+    return { n = select("#", ...), ... }
+end
+
 local function RunWithDepth(depthKey, callback, ...)
     rt[depthKey] = rt[depthKey] + 1
-    return Finish(depthKey, pcall(callback, ...))
+
+    -- Do not use pcall/xpcall here. Some native ESO input paths call secure
+    -- functions (for example StartSoulGemResurrection) while a mode scope is
+    -- active. A protected-call boundary makes that call stack insecure.
+    local results = PackResults(callback(...))
+
+    rt[depthKey] = math.max(0, rt[depthKey] - 1)
+    return unpack(results, 1, results.n)
 end
 
 -- Native gamepad answer: used for things that must look like ESO's gamepad UI.

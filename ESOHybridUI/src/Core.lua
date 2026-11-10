@@ -320,7 +320,7 @@ end
 -- SYSTEMS:GetObject selects the platform-specific object registered for a
 -- system. Resolve platform objects under native mode so menu systems launched
 -- from the keyboard-style Hybrid HUD receive their native gamepad controllers.
-local function InstallMainMenuSystemHook()
+local function InstallSystemObjectHook()
     local systems = SYSTEMS
     if not systems or type(systems.GetObject) ~= "function" then
         return false
@@ -357,7 +357,7 @@ end
 
 function ADDON:ApplySystemRouting()
     self:InstallWhenReady("platformUISystemHook", InstallPlatformUISystemHook)
-    self:InstallWhenReady("mainMenuSystemHook", InstallMainMenuSystemHook)
+    self:InstallWhenReady("mainMenuSystemHook", InstallSystemObjectHook)
     self:InstallWhenReady("systemRootSceneHook", InstallSystemRootSceneHook)
 end
 

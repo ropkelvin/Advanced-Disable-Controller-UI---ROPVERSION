@@ -48,7 +48,8 @@ end
 local function CopyGamepadDefaultBindings(sourceActionName, targetActionName)
     local sourceLayer, sourceCategory, sourceAction = GetActionIndicesFromName(sourceActionName)
     local targetLayer, targetCategory, targetAction = GetActionIndicesFromName(targetActionName)
-    if not sourceLayer or not targetLayer then
+    if not sourceLayer or not sourceCategory or not sourceAction
+        or not targetLayer or not targetCategory or not targetAction then
         return false
     end
 
@@ -58,7 +59,7 @@ local function CopyGamepadDefaultBindings(sourceActionName, targetActionName)
         -- copy the player's live source binding (not merely a default binding)
         -- into the active bridge action.
         local targetKey = GetActionBindingInfo(targetLayer, targetCategory, targetAction, bindingIndex)
-        if targetKey and targetKey ~= KEY_INVALID then
+        if targetKey and targetKey ~= KEY_INVALID and IsKeyCodeGamepadKey(targetKey) then
             foundBinding = true
         else
             local key, mod1, mod2, mod3, mod4 =
@@ -91,7 +92,8 @@ local BRIDGE_MIRRORS = {
 local function MirrorBinding(entry, bindingIndex)
     local sourceLayer, sourceCategory, sourceAction = GetActionIndicesFromName(entry.source)
     local targetLayer, targetCategory, targetAction = GetActionIndicesFromName(entry.target)
-    if not sourceLayer or not targetLayer then
+    if not sourceLayer or not sourceCategory or not sourceAction
+        or not targetLayer or not targetCategory or not targetAction then
         return
     end
 

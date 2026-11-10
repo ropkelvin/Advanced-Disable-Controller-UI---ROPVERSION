@@ -208,8 +208,16 @@ end
 
 local function IsShowingBaseHUDScene()
     local sceneManager = SCENE_MANAGER
-    return sceneManager ~= nil and sceneManager.IsShowingBaseScene ~= nil
+    return sceneManager ~= nil
+        and sceneManager.IsShowingBaseScene ~= nil
         and sceneManager:IsShowingBaseScene() == true
+        and sceneManager.GetHUDSceneName ~= nil
+        and sceneManager:GetHUDSceneName() == "hud"
+end
+
+local function DialogBusy()
+    return type(ZO_Dialogs_IsShowingDialog) == "function"
+        and ZO_Dialogs_IsShowingDialog() == true
 end
 
 local function WheelBusy()
@@ -236,6 +244,12 @@ local function TryPlatformRefresh()
     if WheelBusy() then
         rt.platformDirty = true
         SchedulePlatformRefresh(300)
+        return false
+    end
+    if DialogBusy() then
+        -- Preferred-mode changes make ESO re-evaluate the active dialog scene.
+        -- In particular, do not flip modes while a modal dialog is updating.
+        rt.platformDirty = true
         return false
     end
 

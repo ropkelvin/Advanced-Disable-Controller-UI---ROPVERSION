@@ -89,20 +89,18 @@ New diagnostics
 
 ## Known limits / unverified (please test)
 
-1. Quickslot wheel radial-stick selection and the cycle/select flow have been confirmed in game.
-   Automatic bridge-binding mirroring after changing controller bindings still needs a dedicated test.
+1. The 4.1.6 inherited quickslot bridge and the OFF -> native Gamepad wheel path need a fresh
+   in-game test, including custom controller rebinding.
 2. Some keybind-strip remaps in `Prompts.lua` use positions in ESO-owned descriptor arrays
    and can shift in a game patch. `/esohybrid_debug on` logs each remap. The Zone Stories
    descriptor is a single descriptor object, not an array, so its remap is applied directly.
-3. Bridge binding mirroring after rebinding is not yet runtime-verified; if it misbehaves, rebind
-   the bridge actions in Controls > Add-Ons.
-4. The preferred-mode flip is still used to restyle the HUD. If you see flicker, send the
+3. The preferred-mode flip is still used to restyle the HUD. If you see flicker, send the
    tracer report.
-5. Test ESO's built-in HUD layout editor while Hybrid is active: move a HUD element, save,
+4. Test ESO's built-in HUD layout editor while Hybrid is active: move a HUD element, save,
    exit the editor, and confirm the keyboard HUD retains the new position after reload. The
    base HUD is deliberately exposed to ESO as keyboard platform; this editor workflow still
    needs direct in-game confirmation.
-6. The donation button calls the keyboard mail composer, which may not open in gamepad UI.
+5. The donation button calls the keyboard mail composer, which may not open in gamepad UI.
 
 ## Test plan
 

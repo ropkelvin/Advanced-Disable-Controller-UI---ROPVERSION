@@ -165,6 +165,12 @@ function ADDON:InstallWhenReady(name, installer)
         return true
     end
 
+    -- Do not rerun a failed installer on every settings/scene refresh while
+    -- its player-activation retry is pending. Only actual attempts count.
+    if rt.retryRegistered[name] then
+        return false
+    end
+
     rt.attempts[name] = (rt.attempts[name] or 0) + 1
     local ok, result = pcall(installer)
     if ok and result ~= false then

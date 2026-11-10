@@ -1,7 +1,7 @@
-# ESO Hybrid UI 4.1.5-beta
+# ESO Hybrid UI 4.1.6-beta
 
 **AI-assisted development.** This is an AI-assisted revision of ESO Hybrid UI by ZOSPlsFix,
-inspired by Advanced Disable Controller UI (Lionas; contributions: jc28735250, DoriKyll). The compact Hybrid action-bar layout and quickslot-wheel cycle/select flow have been confirmed in game. The remaining test matrix below is still required before every menu and edge case can be considered verified.
+inspired by Advanced Disable Controller UI (Lionas; contributions: jc28735250, DoriKyll). The compact Hybrid action-bar layout and earlier quickslot-wheel cycle/select flow were confirmed in game; the 4.1.6 wheel binding implementation requires a fresh in-game test. The remaining test matrix below is still required before every menu and edge case can be considered verified.
 
 If you publish it, keep the AI disclosure at the start of the ESOUI description and the
 credits above (ESOUI requires both).
@@ -11,7 +11,7 @@ credits above (ESOUI requires both).
 ESO's Gamepad Mode stays **On** (controller is the input device). In Hybrid:
 
 * the HUD uses the keyboard layout (action bar, reticle, prompts) with controller glyphs;
-* the quickslot wheel and the player-interaction wheel use the keyboard presentation; each can be disabled independently under Settings > Hybrid HUD;
+* the quickslot wheel and the player-interaction wheel use the keyboard presentation when enabled; switching either option off explicitly opens ESO's native Gamepad wheel;
 * common UI-system menus and registered root scenes are routed to native gamepad versions; the map, loot, lockpicking, eligible dialogs and death prompt have their own native handling. ESO screens that bypass these platform-selection APIs still need individual verification.
 
 Switch with `/esohybrid`, the keybind, or the settings panel (keyboard Add-Ons panel or the
@@ -21,7 +21,7 @@ Install: copy the `ESOHybridUI` folder into `Documents/Elder Scrolls Online/live
 Requires LibAddonMenu-2.0 r43+. Optional: LibGamepadOptions, LibDebugLogger (+ DebugLogViewer).
 Then press "Apply settings" once in the addon settings.
 
-## New in 4.1.5 (read this first)
+## New in 4.1.6 (read this first)
 
 **Menu policy (Settings > "Menus opened from the HUD", or `/esohybrid_policy gamepad|legacy`).**
 ESO picks the keyboard or gamepad version of a menu, shop, bank, crafting station, housing
@@ -43,9 +43,11 @@ To add a language: copy it to `lang/<code>.lua`, use `SafeAddString(ID, "text", 
 `ZO_CreateStringId`, translate, and add `lang/$(language).lua` after `lang/en.lua` in the
 manifest. Chat commands and `/esohybrid_dump` / `/esohybrid_trace` output stay English.
 
-**Wheel bridge bindings now follow the player.** Changes to the gamepad cycle bindings are
-mirrored onto the bridge actions as they happen (`EVENT_KEYBINDING_SET/CLEARED` +
-`BindKeyToAction`/`UnbindKeyFromAction`). The wheel cycle/select flow has been confirmed in game; automatic binding mirroring after rebinding still needs a dedicated test. ESO limits saved changed bindings.
+**Quickslot controller bridge.** The bridge actions inherit ESO's native
+`UTILITY_WHEEL_GAMEPAD_CYCLE_LEFT/RIGHT` bindings through `Bindings.xml`. It no longer
+copies or mutates keybindings at runtime (ESO protects `BindKeyToAction` from addon code).
+The quickslot wheel still needs an in-game test on this revision, including custom controller
+rebinding and confirming that the OFF option opens the native Gamepad radial.
 
 **Scene discovery.** `/esohybrid_trace on` now also records every scene shown and the answer
 ESO received, so unknown scene names (housing, photo mode, companion, crafting) can be read
@@ -96,12 +98,16 @@ New diagnostics
    the bridge actions in Controls > Add-Ons.
 4. The preferred-mode flip is still used to restyle the HUD. If you see flicker, send the
    tracer report.
-5. The donation button calls the keyboard mail composer, which may not open in gamepad UI.
+5. Test ESO's built-in HUD layout editor while Hybrid is active: move a HUD element, save,
+   exit the editor, and confirm the keyboard HUD retains the new position after reload. The
+   base HUD is deliberately exposed to ESO as keyboard platform; this editor workflow still
+   needs direct in-game confirmation.
+6. The donation button calls the keyboard mail composer, which may not open in gamepad UI.
 
 ## Test plan
 
 Do the list once per menu policy (gamepad, then `/esohybrid_policy legacy`).
-Gamepad <-> Hybrid switch on the HUD and inside a menu; housing editor (enter, place, exit);
+Gamepad <-> Hybrid switch on the HUD and inside a menu; built-in HUD layout editor (move, save, reload, verify keyboard HUD position); housing editor (enter, place, exit);
 photo/screenshot mode (enter and exit with the controller); companion menu and companion
 ultimate glyph; crafting stations, store, bank, guild bank, fence; open/close inventory, map, mail,
 crafting, store, bank; loot; lockpick; quickslot wheel (cycle, select, close); player wheel;

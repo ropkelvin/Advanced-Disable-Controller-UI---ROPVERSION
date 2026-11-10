@@ -1,8 +1,9 @@
 -- Dialogs built while Hybrid is active get ESO's native gamepad presentation and
--- controller glyphs. Only the construction call runs under the native answer;
--- every argument and return value of the original function is preserved.
+-- controller glyphs. The policy also keeps that answer while the dialog remains
+-- visible, because ESO updateFn callbacks may query it on every frame.
 
 local ADDON = ESOHybridUI
+local rt = ADDON.runtime
 
 local function InstallDialogWrapper()
     local original = _G.ZO_Dialogs_ShowDialog
@@ -18,10 +19,19 @@ local function InstallDialogWrapper()
             end
         end
 
+        local dialog
         if ADDON:ShouldShowControllerPrompts() and isGamepad == true then
-            return ADDON:WithNativeGamepadMode(original, name, data, textParams, isGamepad, ...)
+            dialog = ADDON:WithNativeGamepadMode(original, name, data, textParams, isGamepad, ...)
+        else
+            dialog = original(name, data, textParams, isGamepad, ...)
         end
-        return original(name, data, textParams, isGamepad, ...)
+
+        -- Only mark a dialog that ESO actually created. A queued dialog is nil
+        -- here and becomes tracked when ESO later calls this wrapper to show it.
+        if dialog and isGamepad == true then
+            rt.gamepadDialogName = name
+        end
+        return dialog
     end
     return true
 end

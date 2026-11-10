@@ -212,8 +212,16 @@ function ADDON:ReportTrace()
         routeRows[#routeRows + 1] = { key = key, count = count }
     end
     table.sort(routeRows, function(a, b) return a.count > b.count end)
+    local printedRoutes = {}
     for index = 1, math.min(20, #routeRows) do
-        self:Say(string.format("system route %d x %s", routeRows[index].count, routeRows[index].key))
+        local row = routeRows[index]
+        self:Say(string.format("system route %d x %s", row.count, row.key))
+        printedRoutes[row.key] = true
+    end
+    for _, row in ipairs(routeRows) do
+        if not printedRoutes[row.key] and row.key:lower():find("bank", 1, true) then
+            self:Say(string.format("bank-related system route %d x %s", row.count, row.key))
+        end
     end
 end
 
@@ -295,7 +303,7 @@ function ADDON:RegisterDiagnosticCommands()
         local value = string.lower(tostring(argument or "")):match("^%s*(.-)%s*$")
         if value == "on" then
             ADDON:SetTracing(true)
-            ADDON:Say("Tracer on. Open and close menus, use the quickslot wheel, then /esohybrid_trace report.")
+            ADDON:Say("Tracer on. Open and close the bank, use a few bank actions, then /esohybrid_trace report.")
         elseif value == "off" then
             ADDON:SetTracing(false)
             ADDON:Say("Tracer off (data kept until /esohybrid_trace reset).")

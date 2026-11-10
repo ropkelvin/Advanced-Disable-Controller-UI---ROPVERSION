@@ -4,7 +4,7 @@
 -- its selected platform when StartInteraction runs, so each wheel must be
 -- started under the platform that should own it. The optional controller bridge
 -- uses native inherited keybindings rather than mutating protected bindings.
--- Fishing and target-marker wheels keep ESO's native presentation.
+-- Fishing, target-marker, and player-interaction wheels keep ESO's native presentation.
 
 local ADDON = ESOHybridUI
 local rt = ADDON.runtime
@@ -105,28 +105,8 @@ local function InstallManagerHooks()
     return true
 end
 
-local function InstallPlayerWheelHook()
-    local playerToPlayerClass = ZO_PlayerToPlayer
-    if not playerToPlayerClass or type(playerToPlayerClass.StartInteraction) ~= "function" then
-        return false
-    end
-
-    local originalStart = playerToPlayerClass.StartInteraction
-    playerToPlayerClass.StartInteraction = function(self, ...)
-        if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
-            if ADDON:GetSettings().hybridPlayerWheel ~= false then
-                return ADDON:WithKeyboardWheelMode(originalStart, self, ...)
-            end
-            return ADDON:WithNativeGamepadMode(originalStart, self, ...)
-        end
-        return originalStart(self, ...)
-    end
-    return true
-end
-
 function ADDON:ApplyUtilityWheel()
     self:InstallWhenReady("utilityWheelHooks", InstallManagerHooks)
-    self:InstallWhenReady("playerWheelHook", InstallPlayerWheelHook)
     self:InstallWhenReady("wheelCleanup", function()
         -- Never leave the bridge layer behind across a zone change or logout.
         EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_WheelCleanup", EVENT_PLAYER_DEACTIVATED, RemoveBridgeLayer)

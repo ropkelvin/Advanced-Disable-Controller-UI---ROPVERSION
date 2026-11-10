@@ -414,26 +414,14 @@ local function OnGamepadPreferredModeChanged()
     ADDON:ApplyAll()
 end
 
--- ESO re-applies the action bar style whenever the bar is rebuilt: weapon/bar
--- swap, teleport, entering or leaving a house, any loading screen. Outside our
--- scopes the gamepad-first policy answers "gamepad", so the bar comes back with
--- gamepad sizes (enlarged slots, overlapping, glyph row pushed down). Restyle it
--- again through the same refresh that produces the correct Hybrid look.
-local function RequestBarRestyle(delay)
-    if not rt.initialized or not rt.hybrid then
-        return
-    end
-    rt.platformDirty = true
-    SchedulePlatformRefresh(delay)
-end
-
-local function OnBarSwapped()
-    RequestBarRestyle(350)
-end
-
+-- The Hybrid policy now answers "keyboard" on the base HUD itself, so
+-- weapon swaps do not need a delayed corrective restyle. Keep one refresh after
+-- player activation so controls created during loading receive the active policy.
 local function OnPlayerActivated()
-    -- Scene changes: ESO finishes building the HUD a moment after activation.
-    RequestBarRestyle(1200)
+    if rt.initialized and rt.hybrid then
+        rt.platformDirty = true
+        SchedulePlatformRefresh(250)
+    end
 end
 
 local function OnSceneStateChanged(scene, _, newState)
@@ -444,10 +432,10 @@ local function OnSceneStateChanged(scene, _, newState)
         local name = scene and scene.GetName and scene:GetName() or SCENE_MANAGER:GetCurrentSceneName()
         ADDON:TraceScene(name, IsInGamepadPreferredMode())
     end
-    -- Legacy policy answers differently inside menus, so shared HUD pieces may
-    -- have been restyled: owe a refresh once the base HUD is back. The gamepad-first
-    -- policy never changes its answer outside its own scopes, so it needs none.
-    if rt.hybrid and not rt.menusGamepad and newState == SCENE_SHOWN and not IsShowingBaseHUDScene() then
+
+    -- A native menu may temporarily use gamepad presentation. Refresh shared HUD
+    -- styling only once the base HUD is visible again.
+    if rt.hybrid then
         rt.platformDirty = true
     end
     if rt.platformDirty then
@@ -494,23 +482,8 @@ local function RegisterFirstActivation()
         end
         zo_callLater(ShowWelcomeDialog, 1500)
 
-        -- After /reloadui the action bar is built in gamepad style (the refresh in
-        -- OnAddonLoaded ran before any HUD scene existed and was only marked
-        -- pending). Re-run the platform refresh once the HUD is really up; a
-        -- second pass catches a bar that finished building later.
-        local function RefreshAfterLoad()
-            if not rt.initialized or not rt.hybrid then
-                return
-            end
-            rt.platformDirty = true
-            if rt.isRefreshing then
-                SchedulePlatformRefresh(800)
-            else
-                TryPlatformRefresh()
-            end
-        end
-        zo_callLater(RefreshAfterLoad, 2000)
-        zo_callLater(RefreshAfterLoad, 6000)
+        -- OnPlayerActivated performs the single post-load refresh after the HUD
+        -- exists. The mode policy is already correct while controls are built.
     end)
 end
 
@@ -568,7 +541,6 @@ local function OnAddonLoaded(_, addonName)
     EVENT_MANAGER:RegisterForEvent(name .. "_LockpickFailed", EVENT_LOCKPICK_FAILED, OnLockpickEnd)
     EVENT_MANAGER:RegisterForEvent(name .. "_ModeChanged", EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, OnGamepadPreferredModeChanged)
 
-    EVENT_MANAGER:RegisterForEvent(name .. "_BarSwap", EVENT_ACTIVE_WEAPON_PAIR_CHANGED, OnBarSwapped)
     EVENT_MANAGER:RegisterForEvent(name .. "_Activated", EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
 
     if SCENE_MANAGER and SCENE_MANAGER.RegisterCallback then

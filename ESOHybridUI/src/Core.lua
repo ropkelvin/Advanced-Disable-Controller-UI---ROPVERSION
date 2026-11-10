@@ -317,10 +317,9 @@ local function InstallPlatformUISystemHook()
     return true
 end
 
--- The main-menu system is selected through SYSTEMS:GetObject("mainMenu"),
--- not ZO_UI_SYSTEM_MANAGER. Resolve that object under native mode too, so
--- Inventory/Character/Skills/etc. open their native gamepad scenes from the
--- keyboard-style Hybrid HUD.
+-- SYSTEMS:GetObject selects the platform-specific object registered for a
+-- system. Resolve platform objects under native mode so menu systems launched
+-- from the keyboard-style Hybrid HUD receive their native gamepad controllers.
 local function InstallMainMenuSystemHook()
     local systems = SYSTEMS
     if not systems or type(systems.GetObject) ~= "function" then

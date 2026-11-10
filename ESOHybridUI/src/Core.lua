@@ -329,7 +329,7 @@ local function InstallMainMenuSystemHook()
 
     local original = systems.GetObject
     systems.GetObject = function(self, systemName, ...)
-        if systemName == "mainMenu" and rt.hybrid and rt.menusGamepad and ADDON:IsNativeGamepadMode() then
+        if rt.hybrid and rt.menusGamepad and ADDON:IsNativeGamepadMode() then
             return ADDON:WithNativeGamepadMode(original, self, systemName, ...)
         end
         return original(self, systemName, ...)

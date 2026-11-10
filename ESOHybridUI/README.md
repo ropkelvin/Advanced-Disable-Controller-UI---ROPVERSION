@@ -1,4 +1,4 @@
-# ESO Hybrid UI 4.1.0-beta
+# ESO Hybrid UI 4.1.4-beta
 
 **AI-assisted development.** This is an AI-assisted revision of ESO Hybrid UI by ZOSPlsFix,
 inspired by Advanced Disable Controller UI (Lionas; contributions: jc28735250, DoriKyll). It has NOT been run in the game yet. Test it on a

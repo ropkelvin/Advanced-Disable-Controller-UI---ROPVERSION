@@ -39,16 +39,7 @@ function ADDON:IsHybrid()
     return rt.hybrid == true
 end
 
--- Re-run `callback` with a forced answer. The depth counter is restored on every
--- exit path and the callback's own return values are passed straight through.
-local function Finish(depthKey, ok, ...)
-    rt[depthKey] = math.max(0, rt[depthKey] - 1)
-    if not ok then
-        error((...), 0)
-    end
-    return ...
-end
-
+-- Re-run a callback with a forced answer and preserve all return values.
 local function PackResults(...)
     return { n = select("#", ...), ... }
 end

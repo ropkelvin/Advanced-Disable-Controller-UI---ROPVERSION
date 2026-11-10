@@ -12,7 +12,7 @@ ESO's Gamepad Mode stays **On** (controller is the input device). In Hybrid:
 
 * the HUD uses the keyboard layout (action bar, reticle, prompts) with controller glyphs;
 * the quickslot wheel and the player-interaction wheel use the keyboard presentation; each can be disabled independently under Settings > Hybrid HUD;
-* menus, map, loot, lockpicking, dialogs and the death screen are routed to native gamepad UI through ESO's platform-selection paths.
+* common UI-system menus and registered root scenes are routed to native gamepad versions; the map, loot, lockpicking, eligible dialogs and death prompt have their own native handling. ESO screens that bypass these platform-selection APIs still need individual verification.
 
 Switch with `/esohybrid`, the keybind, or the settings panel (keyboard Add-Ons panel or the
 native controller page if LibGamepadOptions is installed).
@@ -29,9 +29,11 @@ editor or photo mode at the moment it is opened, and that moment is normally spe
 base HUD (`ZO_UISystemManager:OpenPlatformUISystem`, `SYSTEMS:GetObject`). 3.x/4.0 answered
 "keyboard" on the HUD, so those could open as KEYBOARD versions (3.x even carries remaps for
 keyboard store/inventory/bank scenes). The default, `gamepad`, keeps the base HUD keyboard-style while the addon's platform-routing
-hooks resolve ESO UI-system objects and root scenes as native gamepad versions. Dialogs that
-declare `gamepadInfo` are also sent to the gamepad dialog template unless the caller explicitly
-requests keyboard. The quickslot and player wheels are built inside short keyboard scopes.
+hooks resolve `SYSTEMS` UI objects, registered root scenes and `ZO_UISystemManager` requests
+as native gamepad versions. Dialogs that declare `gamepadInfo` are sent to the gamepad dialog
+template unless the caller explicitly requests keyboard. The quickslot and player wheels are
+built inside short keyboard scopes. ESO code that bypasses these selectors may still need a
+dedicated hook; the test plan covers those special-case entry points.
 `legacy` keeps the older 3.x prompt-remapping behavior, with the housing editor and screenshot
 HUD treated as native contexts.
 Which one is right for HUD stability is decided by testing: use `/esohybrid_policy` to A/B.

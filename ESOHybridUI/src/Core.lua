@@ -292,6 +292,25 @@ SchedulePlatformRefresh = function(delay)
     end, delay or 100)
 end
 
+-- Open platform-selected menus with ESO's native gamepad implementation,
+-- while leaving the base HUD in keyboard mode. The UI-system manager chooses
+-- keyboardOpen/gamepadOpen at this exact call site, before the menu scene exists.
+local function InstallPlatformUISystemHook()
+    local manager = ZO_UI_SYSTEM_MANAGER
+    if not manager or type(manager.OpenPlatformUISystem) ~= "function" then
+        return false
+    end
+
+    local original = manager.OpenPlatformUISystem
+    manager.OpenPlatformUISystem = function(self, system, ...)
+        if rt.hybrid and rt.menusGamepad and ADDON:IsNativeGamepadMode() then
+            return ADDON:WithNativeGamepadMode(original, self, system, ...)
+        end
+        return original(self, system, ...)
+    end
+    return true
+end
+
 -- ---------------------------------------------------------------------------
 -- Refresh / apply
 -- ---------------------------------------------------------------------------
@@ -520,6 +539,7 @@ local function OnAddonLoaded(_, addonName)
     ADDON:RegisterDiagnosticCommands()
     ADDON:RefreshSettingsCache()
     ADDON:InstallModeOverride()
+    ADDON:InstallWhenReady("platformUISystemHook", InstallPlatformUISystemHook)
 
     local name = ADDON.ADDON_NAME
     EVENT_MANAGER:RegisterForEvent(name .. "_LockpickBegin", EVENT_BEGIN_LOCKPICK, OnLockpickBegin)

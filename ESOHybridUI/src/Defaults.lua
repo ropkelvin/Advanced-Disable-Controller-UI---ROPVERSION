@@ -10,7 +10,7 @@ ADDON.ADDON_NAME = "ESOHybridUI"
 ADDON.SAVED_VARIABLES = "ESOHybridUI_SavedVariables"
 -- Keep at 1: changing it makes ZO_SavedVars discard every user's saved settings.
 ADDON.SAVED_VARIABLES_VERSION = 1
-ADDON.VERSION = "4.1.5-beta"
+ADDON.VERSION = "4.1.6-beta"
 
 ADDON.MODE_GAMEPAD = "gamepad"
 ADDON.MODE_HYBRID = "hybrid"
@@ -65,11 +65,8 @@ ADDON.runtime = {
     attempts = {},
     retryRegistered = {},
 
-    -- Wheel bridge state.
+    -- Active only while the keyboard-style quickslot wheel is open.
     utilityWheelLayerActive = false,
-    utilityWheelDefaultsCopied = false,
-    utilityWheelLeftCopied = false,
-    utilityWheelRightCopied = false,
 
     -- Prompt bookkeeping. Weak keys so we never keep a dead descriptor alive.
     promptOriginals = setmetatable({}, { __mode = "k" }),

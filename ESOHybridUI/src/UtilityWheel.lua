@@ -1,9 +1,9 @@
 -- Hybrid quickslot (utility) wheel.
 --
--- ESO has separate keyboard and gamepad wheel classes. ZO_InteractiveWheel_Manager
--- decides which one to use from IsInGamepadPreferredMode() at the moment
--- StartInteraction runs, and its gamepad cycle actions are gated on the same
--- answer. In Hybrid we therefore:
+-- ESO has separate keyboard and gamepad wheel classes. The manager caches
+-- its selected platform when StartInteraction runs; cycle/stop operations must
+-- therefore stay in the same keyboard scope as the utility wheel was opened in.
+-- In Hybrid we therefore:
 --   1. start the utility wheel under the "keyboard" answer -> keyboard wheel;
 --   2. push a short-lived action layer that re-exposes the controller's cycle
 --      buttons while that wheel is open;

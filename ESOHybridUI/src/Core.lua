@@ -311,6 +311,26 @@ local function InstallPlatformUISystemHook()
     return true
 end
 
+-- The main-menu system is selected through SYSTEMS:GetObject("mainMenu"),
+-- not ZO_UI_SYSTEM_MANAGER. Resolve that object under native mode too, so
+-- Inventory/Character/Skills/etc. open their native gamepad scenes from the
+-- keyboard-style Hybrid HUD.
+local function InstallMainMenuSystemHook()
+    local systems = SYSTEMS
+    if not systems or type(systems.GetObject) ~= "function" then
+        return false
+    end
+
+    local original = systems.GetObject
+    systems.GetObject = function(self, systemName, ...)
+        if systemName == "mainMenu" and rt.hybrid and rt.menusGamepad and ADDON:IsNativeGamepadMode() then
+            return ADDON:WithNativeGamepadMode(original, self, systemName, ...)
+        end
+        return original(self, systemName, ...)
+    end
+    return true
+end
+
 -- ---------------------------------------------------------------------------
 -- Refresh / apply
 -- ---------------------------------------------------------------------------
@@ -540,6 +560,7 @@ local function OnAddonLoaded(_, addonName)
     ADDON:RefreshSettingsCache()
     ADDON:InstallModeOverride()
     ADDON:InstallWhenReady("platformUISystemHook", InstallPlatformUISystemHook)
+    ADDON:InstallWhenReady("mainMenuSystemHook", InstallMainMenuSystemHook)
 
     local name = ADDON.ADDON_NAME
     EVENT_MANAGER:RegisterForEvent(name .. "_LockpickBegin", EVENT_BEGIN_LOCKPICK, OnLockpickBegin)

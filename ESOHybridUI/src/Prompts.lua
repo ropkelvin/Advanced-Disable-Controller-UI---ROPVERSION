@@ -33,6 +33,10 @@ local function RestoreSavedValues()
                 object[key] = value
             end
         end
+        -- Drop the snapshot after restoration. If ESO rebuilds or updates a
+        -- descriptor before the next Hybrid/Legacy switch, the next apply must
+        -- capture the current native value rather than this stale snapshot.
+        rt.promptOriginals[object] = nil
     end
 end
 

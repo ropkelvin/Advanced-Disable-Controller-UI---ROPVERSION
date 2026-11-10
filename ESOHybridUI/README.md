@@ -28,10 +28,12 @@ ESO picks the keyboard or gamepad version of a menu, shop, bank, crafting statio
 editor or photo mode at the moment it is opened, and that moment is normally spent on the
 base HUD (`ZO_UISystemManager:OpenPlatformUISystem`, `SYSTEMS:GetObject`). 3.x/4.0 answered
 "keyboard" on the HUD, so those could open as KEYBOARD versions (3.x even carries remaps for
-keyboard store/inventory/bank scenes). The new default, `gamepad`, answers with the game's own
-value everywhere except inside the scopes where the addon deliberately builds keyboard things
-(the HUD restyle at login/mode change, the quickslot wheel, the player wheel). `legacy` keeps
-the 3.x behavior, now also treating `housingEditorHud` and `gamepadScreenshotMode` as native.
+keyboard store/inventory/bank scenes). The default, `gamepad`, keeps the base HUD keyboard-style while the addon's platform-routing
+hooks resolve ESO UI-system objects and root scenes as native gamepad versions. Dialogs that
+declare `gamepadInfo` are also sent to the gamepad dialog template unless the caller explicitly
+requests keyboard. The quickslot and player wheels are built inside short keyboard scopes.
+`legacy` keeps the older 3.x prompt-remapping behavior, with the housing editor and screenshot
+HUD treated as native contexts.
 Which one is right for HUD stability is decided by testing: use `/esohybrid_policy` to A/B.
 
 **Localization.** All user-facing text is in `lang/en.lua` (string ids `SI_ESOHYBRIDUI_*`).
@@ -83,14 +85,13 @@ New diagnostics
 
 ## Known limits / unverified (please test)
 
-1. How you pick a slot on the keyboard quickslot wheel with a controller. ESO's radial menu
-   supports stick input by default but I could not confirm the keyboard wheel enables it.
-   Only cycle left/right is bridged.
+1. Quickslot wheel radial-stick selection and the cycle/select flow have been confirmed in game.
+   Automatic bridge-binding mirroring after changing controller bindings still needs a dedicated test.
 2. Some keybind-strip remaps in `Prompts.lua` use positions in ESO-owned descriptor arrays
    and can shift in a game patch. `/esohybrid_debug on` logs each remap. The Zone Stories
    descriptor is a single descriptor object, not an array, so its remap is applied directly.
-3. Bridge binding mirroring (new) is untested; if it misbehaves, rebind the bridge actions in
-   Controls > Add-Ons.
+3. Bridge binding mirroring after rebinding is not yet runtime-verified; if it misbehaves, rebind
+   the bridge actions in Controls > Add-Ons.
 4. The preferred-mode flip is still used to restyle the HUD. If you see flicker, send the
    tracer report.
 5. The donation button calls the keyboard mail composer, which may not open in gamepad UI.

@@ -51,11 +51,11 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_ACCOUNT_TOOLTIP", "Use the same settings on al
 -- Settings: Hybrid HUD features
 ZO_CreateStringId("SI_ESOHYBRIDUI_HEADER_HYBRID_HUD", "Hybrid HUD")
 ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_NAME", "Keyboard-style quickslot wheel")
-ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_TOOLTIP", "In Hybrid, open the quickslot wheel in ESO's keyboard presentation. Turn off if a game update breaks the wheel.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_TOOLTIP", "On: the quickslot wheel uses the keyboard radial layout in Hybrid and keeps controller cycling. Off: ESO uses its native gamepad quickslot wheel. Applies the next time the wheel is opened.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_PLAYERWHEEL_NAME", "Keyboard-style player interaction wheel")
-ZO_CreateStringId("SI_ESOHYBRIDUI_PLAYERWHEEL_TOOLTIP", "In Hybrid, open the player-to-player interaction wheel in the keyboard presentation.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_PLAYERWHEEL_TOOLTIP", "On: the player-to-player interaction wheel uses the keyboard presentation in Hybrid. Off: ESO uses its native gamepad wheel. Applies the next time the player wheel is opened.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_GLYPHS_NAME", "Controller glyphs on the action bar")
-ZO_CreateStringId("SI_ESOHYBRIDUI_GLYPHS_TOOLTIP", "In Hybrid, show controller button glyphs on the keyboard-layout action bar.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_GLYPHS_TOOLTIP", "On: show controller button glyphs on the compact keyboard-layout action bar in Hybrid. Off: use the normal keyboard-layout action-bar labels. This setting refreshes the action-bar labels immediately.")
 
 -- Settings: HUD prompt fonts
 ZO_CreateStringId("SI_ESOHYBRIDUI_HEADER_PROMPTS", "HUD prompts")

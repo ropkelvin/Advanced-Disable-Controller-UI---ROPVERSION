@@ -96,6 +96,13 @@ local function HybridWantsGamepad()
         rt.gamepadDialogName = nil
     end
 
+    -- ESO's built-in HUD editor uses IsInGamepadPreferredMode() to choose
+    -- which saved layout to edit. Hybrid displays the Keyboard HUD, so keep the
+    -- editor on that same layout instead of writing offsets to gamepadElements.
+    if HUD_EDITOR_SCENE_KEYBOARD and HUD_EDITOR_SCENE_KEYBOARD:IsShowing() then
+        return false
+    end
+
     -- Loot has a dedicated native scene, but ESO can request the keyboard one.
     if GetInteractionType() == INTERACTION_LOOT then
         return true

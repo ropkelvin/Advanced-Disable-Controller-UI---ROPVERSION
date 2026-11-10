@@ -323,6 +323,9 @@ local function InstallPlatformUISystemHook()
 
     local original = manager.OpenPlatformUISystem
     manager.OpenPlatformUISystem = function(self, system, ...)
+        if rt.traceEnabled then
+            ADDON:TraceSystemRoute("OpenPlatformUISystem", system)
+        end
         if rt.hybrid and rt.menusGamepad and ADDON:IsNativeGamepadMode() then
             return ADDON:WithNativeGamepadMode(original, self, system, ...)
         end
@@ -342,6 +345,9 @@ local function InstallSystemObjectHook()
 
     local original = systems.GetObject
     systems.GetObject = function(self, systemName, ...)
+        if rt.traceEnabled then
+            ADDON:TraceSystemRoute("GetObject", systemName)
+        end
         if rt.hybrid and rt.menusGamepad and ADDON:IsNativeGamepadMode() then
             return ADDON:WithNativeGamepadMode(original, self, systemName, ...)
         end
@@ -361,6 +367,9 @@ local function InstallSystemRootSceneHook()
 
     local original = systems.GetRootScene
     systems.GetRootScene = function(self, systemName, ...)
+        if rt.traceEnabled then
+            ADDON:TraceSystemRoute("GetRootScene", systemName)
+        end
         if rt.hybrid and rt.menusGamepad and ADDON:IsNativeGamepadMode() then
             return ADDON:WithNativeGamepadMode(original, self, systemName, ...)
         end

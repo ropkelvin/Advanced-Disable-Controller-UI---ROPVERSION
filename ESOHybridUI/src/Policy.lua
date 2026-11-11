@@ -68,12 +68,9 @@ function ADDON:WithKeyboardWheelMode(callback, ...)
     return RunWithDepth("forceKeyboardWheelDepth", callback, ...)
 end
 
-local function WorldMapShowing()
-    if WORLD_MAP_SCENE and WORLD_MAP_SCENE:IsShowing() then
-        return true
-    end
-    -- The native map is a separate scene object; guarded because the global is
-    -- not part of any documented contract.
+-- Only the native map is a gamepad context. The keyboard map must never be
+-- treated as gamepad UI: doing so creates a mixed scene/input state.
+local function GamepadWorldMapShowing()
     local gamepadMap = _G.GAMEPAD_WORLD_MAP_SCENE
     return gamepadMap ~= nil and gamepadMap:IsShowing() == true
 end
@@ -115,8 +112,9 @@ local function HybridWantsGamepad()
     if rt.isLockpicking then
         return true
     end
-    -- Opening the map does not necessarily enter UI mode.
-    if WorldMapShowing() then
+    -- The map does not necessarily enter UI mode; recognize only its native
+    -- gamepad scene, never the separate keyboard worldMap scene.
+    if GamepadWorldMapShowing() then
         return true
     end
     -- UI mode alone is not enough: ESO also enters UI mode on focus loss while

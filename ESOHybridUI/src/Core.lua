@@ -242,8 +242,9 @@ local function TryPlatformRefresh()
         return false
     end
     if WheelBusy() then
+        -- Do not poll while a wheel is open. Keep the refresh dirty and let the
+        -- next real scene/UI transition request another attempt.
         rt.platformDirty = true
-        SchedulePlatformRefresh(300)
         return false
     end
     if DialogBusy() then
@@ -464,7 +465,10 @@ local function OnGamepadPreferredModeChanged()
     end
     ADDON:LogDebug("Preferred-mode event. Native gamepad preference:", tostring(ADDON:IsNativeGamepadMode()))
     ADDON:InstallModeOverride()
-    ADDON:ApplyAll()
+    -- Only the prompt presentation depends on this event. System routing,
+    -- dialogs, wheels and map hooks are installed once; re-running every module
+    -- here needlessly walks the action bar and re-registers keybind labels.
+    ADDON:ApplyPrompts()
 end
 
 -- The Hybrid policy now answers "keyboard" on the base HUD itself, so

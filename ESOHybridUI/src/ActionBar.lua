@@ -67,7 +67,9 @@ local function RegisterControllerActionGlyph(button)
     end
 
     local useControllerGlyphs = UseControllerGlyphs()
-    if button.esoHybridUIRegisteredGlyphMode == useControllerGlyphs then
+    local nativeGamepadMode = ADDON:IsNativeGamepadMode()
+    if button.esoHybridUIRegisteredGlyphMode == useControllerGlyphs
+        and button.esoHybridUIRegisteredNativeMode == nativeGamepadMode then
         return
     end
 
@@ -113,6 +115,7 @@ local function RegisterControllerActionGlyph(button)
         button.buttonText, keyboardActionName, HIDE_UNBOUND, gamepadActionName,
         onUltimateChanged, useControllerGlyphs)
     button.esoHybridUIRegisteredGlyphMode = useControllerGlyphs
+    button.esoHybridUIRegisteredNativeMode = nativeGamepadMode
 end
 
 -- One bad button must never abort the rest.

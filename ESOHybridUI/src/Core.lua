@@ -465,10 +465,10 @@ local function OnGamepadPreferredModeChanged()
     end
     ADDON:LogDebug("Preferred-mode event. Native gamepad preference:", tostring(ADDON:IsNativeGamepadMode()))
     ADDON:InstallModeOverride()
-    -- Only the prompt presentation depends on this event. System routing,
-    -- dialogs, wheels and map hooks are installed once; re-running every module
-    -- here needlessly walks the action bar and re-registers keybind labels.
+    -- Only visible prompt/action-bar presentation depends on this event.
+    -- System routing, dialogs, wheels and map hooks are installed once.
     ADDON:ApplyPrompts()
+    ADDON:ApplyActionBar()
 end
 
 -- The Hybrid policy now answers "keyboard" on the base HUD itself, so

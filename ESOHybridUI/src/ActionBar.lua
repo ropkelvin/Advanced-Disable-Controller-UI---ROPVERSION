@@ -66,6 +66,11 @@ local function RegisterControllerActionGlyph(button)
         return
     end
 
+    local useControllerGlyphs = UseControllerGlyphs()
+    if button.hybridGlyphRegisteredMode == useControllerGlyphs then
+        return
+    end
+
     local slotNum = button:GetSlot()
     local hotbarCategory = button:GetHotbarCategory()
     local keyboardActionName, gamepadActionName
@@ -106,7 +111,8 @@ local function RegisterControllerActionGlyph(button)
     local HIDE_UNBOUND = false
     ZO_Keybindings_RegisterLabelForBindingUpdate(
         button.buttonText, keyboardActionName, HIDE_UNBOUND, gamepadActionName,
-        onUltimateChanged, UseControllerGlyphs())
+        onUltimateChanged, useControllerGlyphs)
+    button.hybridGlyphRegisteredMode = useControllerGlyphs
 end
 
 -- One bad button must never abort the rest.

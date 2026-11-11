@@ -17,7 +17,7 @@ local function SetNativeUltimateKeysHidden(button, hidden)
 end
 
 local function CreateHybridUltimateKey(button, side, keyCode)
-    local field = "hybrid" .. side .. "Key"
+    local field = "esoHybridUI" .. side .. "Key"
     if button[field] then
         return button[field]
     end
@@ -56,8 +56,8 @@ local function SetHybridUltimateGlyphs(button, visible)
         CreateHybridUltimateKey(button, "Right", rightCode):SetHidden(false)
         SetNativeUltimateKeysHidden(button, true)
     else
-        if button.hybridLeftKey then button.hybridLeftKey:SetHidden(true) end
-        if button.hybridRightKey then button.hybridRightKey:SetHidden(true) end
+        if button.esoHybridUILeftKey then button.esoHybridUILeftKey:SetHidden(true) end
+        if button.esoHybridUIRightKey then button.esoHybridUIRightKey:SetHidden(true) end
     end
 end
 
@@ -67,7 +67,7 @@ local function RegisterControllerActionGlyph(button)
     end
 
     local useControllerGlyphs = UseControllerGlyphs()
-    if button.hybridGlyphRegisteredMode == useControllerGlyphs then
+    if button.esoHybridUIRegisteredGlyphMode == useControllerGlyphs then
         return
     end
 
@@ -112,7 +112,7 @@ local function RegisterControllerActionGlyph(button)
     ZO_Keybindings_RegisterLabelForBindingUpdate(
         button.buttonText, keyboardActionName, HIDE_UNBOUND, gamepadActionName,
         onUltimateChanged, useControllerGlyphs)
-    button.hybridGlyphRegisteredMode = useControllerGlyphs
+    button.esoHybridUIRegisteredGlyphMode = useControllerGlyphs
 end
 
 -- One bad button must never abort the rest.

@@ -12,30 +12,48 @@ end
 
 local function SaveAndSet(object, key, value)
     if type(object) ~= "table" then
-        return
+        return false
     end
+
     local saved = rt.promptOriginals
     if saved[object] == nil then
         saved[object] = {}
     end
-    if saved[object][key] == nil then
-        saved[object][key] = object[key] == nil and NIL_VALUE or object[key]
+
+    local entry = saved[object][key]
+    if entry == nil then
+        entry = {
+            original = object[key] == nil and NIL_VALUE or object[key],
+            applied = value,
+        }
+        saved[object][key] = entry
+    elseif object[key] ~= entry.applied then
+        -- Another addon or ESO changed this property after our last write.
+        -- Respect that newer value instead of competing for ownership.
+        ADDON:LogDebug("Prompt property changed by another owner; leaving it alone:", key)
+        return false
+    else
+        entry.applied = value
     end
+
     object[key] = value
+    return true
 end
 
 local function RestoreSavedValues()
     for object, values in pairs(rt.promptOriginals) do
-        for key, value in pairs(values) do
-            if value == NIL_VALUE then
-                object[key] = nil
+        for key, entry in pairs(values) do
+            -- Restore only while the property still contains the value we set.
+            if object[key] == entry.applied then
+                if entry.original == NIL_VALUE then
+                    object[key] = nil
+                else
+                    object[key] = entry.original
+                end
             else
-                object[key] = value
+                ADDON:LogDebug("Prompt restore skipped; property is now owned elsewhere:", key)
             end
         end
-        -- Drop the snapshot after restoration. If ESO rebuilds or updates a
-        -- descriptor before the next Hybrid/Legacy switch, the next apply must
-        -- capture the current native value rather than this stale snapshot.
         rt.promptOriginals[object] = nil
     end
 end
@@ -94,7 +112,9 @@ end
 
 local function RestoreStackAllMappings()
     for descriptor, original in pairs(rt.stackAllOriginals) do
-        descriptor.keybind = original
+        if descriptor.keybind == "UI_SHORTCUT_LEFT_STICK" then
+            descriptor.keybind = original
+        end
         rt.stackAllOriginals[descriptor] = nil
     end
 end
@@ -113,7 +133,9 @@ local function InstallStackAllHook()
             for _, descriptor in ipairs(group) do
                 local original = rt.stackAllOriginals[descriptor]
                 if original then
-                    descriptor.keybind = original
+                    if descriptor.keybind == "UI_SHORTCUT_LEFT_STICK" then
+                        descriptor.keybind = original
+                    end
                     rt.stackAllOriginals[descriptor] = nil
                 end
             end

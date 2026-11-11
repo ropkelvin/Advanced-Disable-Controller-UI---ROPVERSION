@@ -1,27 +1,10 @@
--- Hybrid keeps ESO's native gamepad world map: the Map button and every direct
--- map-open call are routed through the native gamepad scene.
+-- Keep direct world-map opens on ESO's native gamepad map in Hybrid.
+--
+-- The Map button already resolves the native gamepad main-menu object through
+-- Core.lua's SYSTEMS:GetObject hook. Only direct calls to ESO's map helper need
+-- this narrow compatibility hook.
 
 local ADDON = ESOHybridUI
-
-local function InstallMapCategoryHook()
-    local mainMenu = MAIN_MENU_KEYBOARD
-    if not mainMenu or not mainMenu.ToggleCategory then
-        return false
-    end
-
-    ZO_PreHook(mainMenu, "ToggleCategory", function(_, category)
-        if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() and category == MENU_CATEGORY_MAP then
-            -- The dedicated Map button runs through the keyboard main menu in
-            -- Hybrid; bypass its keyboard scene selection.
-            ADDON:WithNativeGamepadMode(function()
-                SCENE_MANAGER:Show("gamepad_worldMap")
-            end)
-            return true
-        end
-        return false
-    end)
-    return true
-end
 
 local function InstallMapSceneHook()
     local originalShowWorldMap = _G.ZO_WorldMap_ShowWorldMap
@@ -29,8 +12,8 @@ local function InstallMapSceneHook()
         return false
     end
 
-    -- ESO's function only selects/shows a scene and returns nothing, so a
-    -- pre-hook can safely run it under the native answer and suppress the original.
+    -- The native helper selects its scene from IsInGamepadPreferredMode().
+    -- Run it under the real gamepad preference, without changing the HUD policy.
     ZO_PreHook("ZO_WorldMap_ShowWorldMap", function(...)
         if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
             ADDON:WithNativeGamepadMode(originalShowWorldMap, ...)
@@ -43,5 +26,4 @@ end
 
 function ADDON:ApplyWorldMap()
     self:InstallWhenReady("mapSceneHook", InstallMapSceneHook)
-    self:InstallWhenReady("mapCategoryHook", InstallMapCategoryHook)
 end

@@ -112,10 +112,15 @@ local function HybridWantsGamepad()
     if rt.isLockpicking then
         return true
     end
-    -- The map does not necessarily enter UI mode; recognize only its native
-    -- gamepad scene, never the separate keyboard worldMap scene.
+    -- The map does not necessarily enter UI mode. If both scenes overlap
+    -- during a transition, the native gamepad scene takes priority.
     if GamepadWorldMapShowing() then
         return true
+    end
+    -- Never let the keyboard worldMap scene fall through to the generic
+    -- "in UI mode" test below and masquerade as a gamepad context.
+    if WORLD_MAP_SCENE and WORLD_MAP_SCENE:IsShowing() then
+        return false
     end
     -- UI mode alone is not enough: ESO also enters UI mode on focus loss while
     -- showing its base HUD-UI scene. Require a real menu/overlay scene.

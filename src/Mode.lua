@@ -10,12 +10,13 @@ function ADDON:ApplyMode()
         return
     end
 
-    local hybrid = self:IsHybrid()
-    local nativeGamepad = self:IsNativeGamepadMode()
+    local shouldUseKeyboardPresentation = self:IsActive()
+        and self:IsHybrid()
+        and self:IsNativeGamepadMode()
+        and not IsLockpickActive()
 
-    -- Preserve ESO's real setting. Hybrid changes only the UI-preference query;
-    -- it never turns off the controller or changes the user's game setting.
-    if hybrid and nativeGamepad and not IsLockpickActive() then
+    -- Do not touch ESO's mode query outside the active world.
+    if shouldUseKeyboardPresentation then
         _G.IsInGamepadPreferredMode = function()
             return false
         end
@@ -40,6 +41,22 @@ function ADDON:SetMode(mode)
     self.saved.mode = mode
     self:ApplyMode()
     self:Print("Mode changed to " .. (mode == "hybrid" and "Hybrid" or "Pure Gamepad") .. ". Reopen the active menu to apply its layout.")
+end
+
+local function InstallLockpickHook()
+    if rt.lockpickHookInstalled or not LOCK_PICK or not LOCK_PICK.SetHidden then
+        return
+    end
+
+    -- The stock EVENT_BEGIN_LOCKPICK handler calls SetHidden(false), which
+    -- chooses the keyboard/gamepad lockpick scene. Set the exception before
+    -- that method makes its scene choice, rather than relying on event order.
+    ZO_PreHook(LOCK_PICK, "SetHidden", function(_, hidden)
+        rt.lockPicking = not hidden
+        ADDON:ApplyMode()
+    end)
+
+    rt.lockpickHookInstalled = true
 end
 
 function ADDON:InitializeMode()
@@ -69,6 +86,7 @@ function ADDON:InitializeMode()
         if requested == "" or requested == "status" then
             local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName() or "unknown"
             self:Print("Mode=" .. self.saved.mode
+                .. " | InWorld=" .. tostring(self:IsActive())
                 .. " | ESO Gamepad Mode=" .. tostring(self:IsNativeGamepadMode())
                 .. " | UI preference=" .. tostring(IsInGamepadPreferredMode())
                 .. " | Scene=" .. tostring(sceneName)
@@ -79,5 +97,6 @@ function ADDON:InitializeMode()
         end
     end
 
+    InstallLockpickHook()
     self:ApplyMode()
 end

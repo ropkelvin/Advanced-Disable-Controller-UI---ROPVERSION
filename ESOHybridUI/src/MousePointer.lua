@@ -59,7 +59,7 @@ local function OnSceneStateChanged(scene, _, newState)
     if newState == SCENE_SHOWING or newState == SCENE_SHOWN then
         AttachToScene(scene)
         ADDON:TraceScenePresentation(scene and scene.GetName and scene:GetName())
-    elseif newState == SCENE_HIDDEN then
+    elseif newState == SCENE_HIDDEN and MOUSE_POINTER_FRAGMENT then
         if scene and scene.RemoveTemporaryFragment then
             scene:RemoveTemporaryFragment(MOUSE_POINTER_FRAGMENT)
         end
@@ -113,8 +113,9 @@ function ADDON:DumpMousePointerDiagnostics()
         .. " fragment=" .. tostring(fragmentShowing)
         .. " cursor=" .. tostring(cursor ~= nil)
         .. " visible=" .. tostring(control ~= nil and not control:IsHidden()))
-    self:Say("Directional owner=" .. tostring(DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(LibMousePointer))
-        .. " managerHook=" .. tostring(rt.mousePointerSceneInputHookInstalled))
+    self:Say("Directional owner=" .. tostring(DIRECTIONAL_INPUT and LibMousePointer
+        and DIRECTIONAL_INPUT:IsListening(LibMousePointer)))
+    self:Say("Scene-manager input hook=" .. tostring(rt.mousePointerSceneInputHookInstalled))
 end
 
 function ADDON:ApplyMousePointer()
@@ -132,8 +133,6 @@ function ADDON:ApplyMousePointer()
     return true
 end
 
--- Scene lifecycle is authoritative; these events cover mode changes while a
--- menu remains open and the initial player activation.
 EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_PointerModeChanged",
     EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, function()
         zo_callLater(function() ADDON:ApplyMousePointer() end, 50)

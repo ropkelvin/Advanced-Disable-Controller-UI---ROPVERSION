@@ -39,7 +39,6 @@ function ADDON:WithKeyboardWheelMode(callback, ...)
     return RunWithDepth("forceKeyboardWheelDepth", callback, ...)
 end
 
--- Used for selecting a keyboard implementation before its scene exists.
 function ADDON:WithKeyboardPresentationMode(callback, ...)
     return RunWithDepth("forceKeyboardPresentationDepth", callback, ...)
 end
@@ -55,16 +54,13 @@ local function IsNativeSceneAlreadyActive()
         or not sceneManager.IsShowingBaseScene or sceneManager:IsShowingBaseScene() then
         return false
     end
-    local sceneName = sceneManager:GetCurrentSceneName()
-    local presentation = ADDON:GetScenePresentation(sceneName)
+    local presentation = ADDON:GetScenePresentation(sceneManager:GetCurrentSceneName())
     return presentation == ADDON.SCENE_PRESENTATION_NATIVE
         or presentation == ADDON.SCENE_PRESENTATION_SPECIAL
 end
 
 local function HybridWantsGamepad()
     if IsShowingGamepadDialog() then return true end
-
-    -- These workflows contain native/protected input paths and remain ESO-owned.
     if rt.isLockpicking then return true end
     if GetInteractionType and INTERACTION_LOOT and GetInteractionType() == INTERACTION_LOOT then
         return true
@@ -80,10 +76,6 @@ local function HybridWantsGamepad()
             return true
         end
     end
-
-    -- Preserve explicitly native scenes reached by direct ESO routes. During
-    -- platform selection the current scene is still the HUD, so this does not
-    -- prevent a keyboard menu from being selected.
     return IsNativeSceneAlreadyActive()
 end
 
@@ -97,8 +89,6 @@ local function IsGamepadUIAllowed()
     elseif not rt.hybrid then
         answer = RealAnswer()
     else
-        -- Hybrid selects keyboard presentation by default. The physical gamepad
-        -- remains enabled in ESO settings and the pointer owns UI navigation.
         answer = RealAnswer() and HybridWantsGamepad() or false
     end
 
@@ -143,5 +133,12 @@ end
 function ADDON:RefreshSettingsCache()
     local settings = self:GetSettings()
     rt.hybrid = settings.mode == ADDON.MODE_HYBRID
+
+    -- One-time migration: profiles created by the previous branch defaulted to
+    -- native Gamepad menus. This branch's default is keyboard menus + pointer.
+    if rt.hybrid and settings._keyboardPointerRoutingVersion ~= 1 then
+        settings.menuPolicy = ADDON.POLICY_LEGACY
+        settings._keyboardPointerRoutingVersion = 1
+    end
     rt.menusGamepad = settings.menuPolicy ~= ADDON.POLICY_LEGACY
 end

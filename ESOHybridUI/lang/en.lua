@@ -51,7 +51,10 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_ACCOUNT_TOOLTIP", "Use the same settings on al
 -- Settings: Hybrid HUD features
 ZO_CreateStringId("SI_ESOHYBRIDUI_HEADER_HYBRID_HUD", "Hybrid HUD")
 ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_NAME", "Keyboard-style quickslot wheel")
-ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_TOOLTIP", "On: the quickslot wheel uses the keyboard radial layout in Hybrid and keeps controller cycling. Off: ESO uses its native gamepad quickslot wheel. Applies the next time the wheel is opened.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_TOOLTIP", "On: the quickslot wheel uses the keyboard radial layout in Hybrid and keeps controller cycling. To open it with a controller, assign a Gamepad button as a secondary binding to Quickslot Wheel (ACTION_BUTTON_9) under Settings > Controls > Keybindings > Combat. ESO Hybrid UI does not change your keybindings. Off: ESO uses its native gamepad quickslot wheel. Applies the next time the wheel is opened.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_REMINDER_NAME", "Show controller quickslot setup reminder")
+ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_REMINDER_TOOLTIP", "Show one chat reminder per login when Hybrid is active and the keyboard-style quickslot wheel is enabled. The reminder explains how to assign a Gamepad secondary binding to Quickslot Wheel (ACTION_BUTTON_9).")
+ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_BINDING_REMINDER", "ESO Hybrid UI: To open the keyboard-style quickslot wheel with your controller, go to Settings > Controls > Keybindings > Combat, select Quickslot Wheel (ACTION_BUTTON_9), and assign a Gamepad button as a secondary binding. Your keybindings are not changed by the addon.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_GLYPHS_NAME", "Controller glyphs on the action bar")
 ZO_CreateStringId("SI_ESOHYBRIDUI_GLYPHS_TOOLTIP", "On: show controller button glyphs on the compact keyboard-layout action bar in Hybrid. Off: use the normal keyboard-layout action-bar labels. This setting refreshes the action-bar labels immediately.")
 
@@ -91,5 +94,5 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_MAIL_UNAVAILABLE", "The mail composer is not a
 
 -- First-install dialog
 ZO_CreateStringId("SI_ESOHYBRIDUI_WELCOME_TITLE", "Welcome to ESO Hybrid UI")
-ZO_CreateStringId("SI_ESOHYBRIDUI_WELCOME_TEXT", "Open ESO Hybrid UI settings and click Apply Recommended ESO Settings once. This turns on Gamepad Mode, gamepad keybind display, keyboard chat and the mouse cursor when chat receives focus. Then choose Gamepad or Hybrid. You can apply the settings again later if needed.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_WELCOME_TEXT", "Open ESO Hybrid UI settings and click Apply Recommended ESO Settings once. This turns on Gamepad Mode, gamepad keybind display, keyboard chat and the mouse cursor when chat receives focus. Then choose Gamepad or Hybrid. For Hybrid's keyboard-style quickslot wheel, assign a Gamepad secondary binding to Quickslot Wheel (ACTION_BUTTON_9) under Settings > Controls > Keybindings > Combat. You can apply the recommended settings again later if needed.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_WELCOME_BUTTON", "Got it")

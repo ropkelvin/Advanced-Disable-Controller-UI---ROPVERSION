@@ -41,7 +41,7 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_STATUS_KEYBOARD_CONTROLLER", "keyboard UI + co
 
 -- Settings: how menus opened from the HUD are chosen
 ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_NAME", "Menus opened from the HUD")
-ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_TOOLTIP", "Gamepad: prefer ESO's native gamepad versions for UI-system objects and registered root scenes; direct special-case screens can still follow ESO's own routing. Legacy: the older 3.x behaviour, where ESO may choose keyboard menus from the HUD. Switch to Legacy only if the default policy causes a specific compatibility problem.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_TOOLTIP", "Applies only to Hybrid mode. Gamepad: prefer ESO's native gamepad versions for UI-system objects and registered root scenes; direct special-case screens can still follow ESO's own routing. Legacy: the older 3.x behaviour, where ESO may choose keyboard menus from the HUD.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_GAMEPAD", "Gamepad (recommended)")
 ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_LEGACY", "Legacy")
 ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_CHANGED", "Menu policy: <<1>>")
@@ -83,7 +83,7 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_DEBUG_OFF", "Diagnostic logging disabled.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_DEBUG_NEED_LIB", "Install LibDebugLogger and DebugLogViewer to keep logs; messages are shown in chat until then.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_ANNOUNCE_NAME", "Announce load in chat")
 ZO_CreateStringId("SI_ESOHYBRIDUI_ANNOUNCE_TOOLTIP", "Print one chat line when the addon loads. Off by default.")
-ZO_CreateStringId("SI_ESOHYBRIDUI_ANNOUNCE_LOADED", "<<1>> loaded. /esohybrid switches Gamepad and Hybrid.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_ANNOUNCE_LOADED", "<<1>> loaded. /esohybrid cycles Gamepad, Hybrid and Keyboard UI + Controller.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_COMMANDS_TEXT", "Chat commands: /esohybrid, /esohybrid_policy gamepad|legacy, /esohybrid_debug on|off, /esohybrid_dump, /esohybrid_trace on|off|report|reset.")
 
 -- Settings: support
@@ -96,5 +96,5 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_MAIL_UNAVAILABLE", "The mail composer is not a
 
 -- First-install dialog
 ZO_CreateStringId("SI_ESOHYBRIDUI_WELCOME_TITLE", "Welcome to ESO Hybrid UI")
-ZO_CreateStringId("SI_ESOHYBRIDUI_WELCOME_TEXT", "Open ESO Hybrid UI settings and click Apply Recommended ESO Settings once. This turns on Gamepad Mode, gamepad keybind display, keyboard chat and the mouse cursor when chat receives focus. Then choose Gamepad or Hybrid. For Hybrid's keyboard-style quickslot wheel, assign a Gamepad secondary binding to Quickslot Wheel (ACTION_BUTTON_9) under Settings > Controls > Keybindings > Combat. You can apply the recommended settings again later if needed.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_WELCOME_TEXT", "Open ESO Hybrid UI settings and click Apply Recommended ESO Settings once. This turns on Gamepad Mode, gamepad keybind display, keyboard chat and the mouse cursor when chat receives focus. Then choose Gamepad, Hybrid or Keyboard UI + Controller. For Hybrid's keyboard-style quickslot wheel, assign a Gamepad secondary binding to Quickslot Wheel (ACTION_BUTTON_9) under Settings > Controls > Keybindings > Combat. You can apply the recommended settings again later if needed.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_WELCOME_BUTTON", "Got it")

@@ -67,16 +67,36 @@ function ADDON:ApplyMode()
         rt.modeOverrideConflict = false
     end
 
-    -- ESO's public HUD manager exposes this refresh specifically to reapply
-    -- the active keyboard/gamepad HUD element anchors after a mode change.
-    if modeQueryChanged and HUD_MANAGER and HUD_MANAGER.PropagateSettings then
-        HUD_MANAGER:PropagateSettings()
-        rt.hudRefreshPending = false
+    -- A mode-query change needs an anchor refresh, but HUD_MANAGER's
+    -- PropagateSettings callback assumes ZO_HUDTracker_Manager has already
+    -- registered both platform HUD elements. During early player activation
+    -- those fields can still be nil. Defer until ESO's add-ons-loaded setup
+    -- has completed rather than firing callbacks into a half-built HUD.
+    if modeQueryChanged then
+        rt.hudRefreshPending = true
     end
+    self:TryRefreshHUDSettings()
 
     if self.RefreshSceneController then
         self:RefreshSceneController()
     end
+end
+
+function ADDON:TryRefreshHUDSettings()
+    if not rt.hudRefreshPending then
+        return true
+    end
+
+    if not HUD_MANAGER or not HUD_MANAGER.PropagateSettings
+        or not HUD_TRACKER_MANAGER
+        or not HUD_TRACKER_MANAGER.keyboardHUDElement
+        or not HUD_TRACKER_MANAGER.gamepadHUDElement then
+        return false
+    end
+
+    HUD_MANAGER:PropagateSettings()
+    rt.hudRefreshPending = false
+    return true
 end
 
 function ADDON:SetMode(mode)
@@ -114,6 +134,13 @@ function ADDON:InitializeMode()
     if self.saved.mode ~= "gamepad" then
         self.saved.mode = "hybrid"
     end
+
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_ADD_ONS_LOADED, function()
+        -- HUD_MANAGER initializes HUD tracker elements during this event.
+        -- Our handler runs after ESO's UI initialization handler has had the
+        -- opportunity to register the keyboard and gamepad tracker elements.
+        self:TryRefreshHUDSettings()
+    end)
 
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, function()
         self:ApplyMode()

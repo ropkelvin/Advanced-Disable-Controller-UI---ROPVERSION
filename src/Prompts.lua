@@ -9,7 +9,8 @@ local wrapperGetPreferredKeyType
 local wrapperShouldShowGamepadKeybind
 
 function ADDON:ApplyPromptPresentation()
-    local hybridPrompts = self:IsActive() and self:IsHybrid() and self:IsNativeGamepadMode()
+    local hybridPrompts = self:IsActive() and self:IsHybrid()
+        and self:IsNativeGamepadMode() and not self:IsRestrictedSceneActive()
 
     if KEYBIND_STRIP_STANDARD_STYLE then
         if not rt.originalPromptStyleCaptured then
@@ -46,7 +47,8 @@ function ADDON:InitializePrompts()
 
         if originalShouldUseGamepadAction then
             wrapperShouldUseGamepadAction = function(alwaysPreferGamepadMode, ...)
-                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode()
+                    and not ADDON:IsRestrictedSceneActive() then
                     return true
                 end
                 return originalShouldUseGamepadAction(alwaysPreferGamepadMode, ...)

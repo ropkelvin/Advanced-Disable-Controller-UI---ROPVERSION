@@ -23,7 +23,8 @@ local function IsPointerScene(sceneName)
 end
 
 local function ShouldUsePointer(sceneName)
-    return ADDON:IsHybrid()
+    return ADDON:IsActive()
+        and ADDON:IsHybrid()
         and ADDON.saved.pointerEnabled
         and ADDON:IsNativeGamepadMode()
         and MOUSE_POINTER_FRAGMENT ~= nil
@@ -41,17 +42,17 @@ function ADDON:ApplyPointerToScene(sceneName, makeActive)
     end
 
     local shouldAttach = ShouldUsePointer(sceneName)
+    rt.pointerScenes = rt.pointerScenes or {}
+
     if shouldAttach then
-        scene:AddFragment(MOUSE_POINTER_FRAGMENT)
-        rt.pointerScenes = rt.pointerScenes or {}
-        rt.pointerScenes[sceneName] = scene
-    else
-        if MOUSE_POINTER_FRAGMENT then
-            scene:RemoveFragment(MOUSE_POINTER_FRAGMENT)
+        -- Do not claim or later remove a fragment another addon already owns.
+        if not scene:HasFragment(MOUSE_POINTER_FRAGMENT) then
+            scene:AddFragment(MOUSE_POINTER_FRAGMENT)
+            rt.pointerScenes[sceneName] = scene
         end
-        if rt.pointerScenes then
-            rt.pointerScenes[sceneName] = nil
-        end
+    elseif rt.pointerScenes[sceneName] then
+        scene:RemoveFragment(MOUSE_POINTER_FRAGMENT)
+        rt.pointerScenes[sceneName] = nil
     end
 
     if makeActive then
@@ -65,16 +66,17 @@ function ADDON:RefreshSceneController()
         return
     end
 
-    local shouldRunPointer = self:IsHybrid()
+    local shouldRunPointer = self:IsActive()
+        and self:IsHybrid()
         and self.saved.pointerEnabled
         and self:IsNativeGamepadMode()
         and MOUSE_POINTER_FRAGMENT ~= nil
 
     if not shouldRunPointer and rt.pointerScenes then
-        for _, scene in pairs(rt.pointerScenes) do
+        for sceneName, scene in pairs(rt.pointerScenes) do
             scene:RemoveFragment(MOUSE_POINTER_FRAGMENT)
+            rt.pointerScenes[sceneName] = nil
         end
-        rt.pointerScenes = {}
     end
 
     local sceneName = SCENE_MANAGER:GetCurrentSceneName()
@@ -91,33 +93,26 @@ local function InstallSceneHooks()
         return
     end
 
-    -- Add the fragment before the scene begins showing. This hook does not
-    -- replace scene routing or change ESO's scene transition behaviour.
     if SCENE_MANAGER.Show then
         ZO_PreHook(SCENE_MANAGER, "Show", function(_, sceneName)
-            if type(sceneName) == "string" then
+            if ADDON:IsActive() and type(sceneName) == "string" then
                 ADDON:ApplyPointerToScene(sceneName, false)
             end
         end)
     end
 
-    -- Track the actual top scene after ESO has processed the state transition.
     if SCENE_MANAGER.OnSceneStateChange then
         ZO_PostHook(SCENE_MANAGER, "OnSceneStateChange", function(_, scene, oldState, newState)
-            if not scene or not scene.GetName then
+            if not ADDON:IsActive() or not scene or not scene.GetName then
                 return
             end
 
             if newState == SCENE_SHOWING or newState == SCENE_SHOWN then
-                ADDON:ApplyPointerToScene(scene:GetName(), true)
-            elseif newState == SCENE_HIDDEN then
-                if string.lower(scene:GetName()) == "lockpickkeyboard"
-                    or string.lower(scene:GetName()) == "lockpickgamepad" then
-                    rt.lockPicking = false
-                    ADDON:ApplyMode()
-                end
-                ADDON:RefreshSceneController()
+                ADDON:ApplyPointerToScene(scene:GetName(), false)
             end
+
+            -- Only the actual top scene owns the pointer and stick routing.
+            ADDON:RefreshSceneController()
         end)
     end
 
@@ -131,9 +126,9 @@ local function InstallDirectionalInputHook()
     end
 
     ZO_PreHook(ZO_IngameSceneManager, "UpdateDirectionalInput", function()
-        if ADDON:IsHybrid() and rt.pointerScene and DIRECTIONAL_INPUT then
-            -- LibMousePointer owns the left stick while its fragment is active.
-            -- Keep the right stick consumed by the UI so it cannot rotate the camera.
+        if ADDON:IsActive() and ADDON:IsHybrid() and rt.pointerScene and DIRECTIONAL_INPUT then
+            -- The pointer library must consume the left stick first. HUI only
+            -- keeps the right stick from leaking through to camera rotation.
             DIRECTIONAL_INPUT:Consume(ZO_DI_RIGHT_STICK)
             return true
         end

@@ -79,9 +79,37 @@ end
 -- input from leaking through in menus without touching the HUD or right stick.
 local IsPointerEnabled
 
+-- ESO's UI-mode handler normally consumes both sticks before camera and
+-- movement processing. In this mode the pointer owns LEFT; RIGHT is left
+-- untouched so the normal camera handler can still receive it.
+local function InstallSceneManagerInputHook()
+    local sceneManagerClass = ZO_IngameSceneManager
+    if not sceneManagerClass or type(sceneManagerClass.UpdateDirectionalInput) ~= "function" then
+        return false
+    end
+    if rt.mousePointerSceneInputHookInstalled then
+        return true
+    end
+
+    ZO_PreHook(sceneManagerClass, "UpdateDirectionalInput", function()
+        if IsPointerEnabled() then
+            return true
+        end
+        return false
+    end)
+
+    rt.mousePointerSceneInputHookInstalled = true
+    return true
+end
+
+-- Hook LibMousePointer's actual directional-input callback. The library
+-- activates itself with DIRECTIONAL_INPUT, so this is the method the input
+-- manager invokes (not Cursor_Gamepad:UpdateDirectionalInput directly).
+-- Keep its cursor, hit-testing and click implementation; replace only stick
+-- movement while the pointer is enabled.
 local function InstallPointerInputHook()
-    local cursorClass = LibMousePointer and LibMousePointer.Cursor_Gamepad
-    if not cursorClass or type(cursorClass.UpdateDirectionalInput) ~= "function" then
+    local pointer = LibMousePointer
+    if not pointer or type(pointer.UpdateDirectionalInput) ~= "function" then
         return false
     end
     if rt.mousePointerInputHookInstalled then
@@ -89,12 +117,15 @@ local function InstallPointerInputHook()
     end
 
     local moveStartTimestamp = 0
-    ZO_PreHook(cursorClass, "UpdateDirectionalInput", function(cursor)
+    ZO_PreHook(pointer, "UpdateDirectionalInput", function(lib)
         if not IsPointerEnabled() then
             return false
         end
 
-        DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK)
+        local cursor = lib.gamepadCursor
+        if not cursor or not cursor.control then
+            return true
+        end
 
         local dx = ZO_Gamepad_GetLeftStickEasedX()
         local dy = ZO_Gamepad_GetLeftStickEasedY()
@@ -104,6 +135,8 @@ local function InstallPointerInputHook()
             moveStartTimestamp = GetGameTimeMilliseconds()
             return true
         end
+
+        DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK)
 
         local frameDelta = GetFrameDeltaNormalizedForTargetFramerate()
         local magnitude = frameDelta * 3
@@ -187,6 +220,7 @@ end
 
 function ADDON:ApplyMousePointer()
     InstallLockpickInputHook()
+    InstallSceneManagerInputHook()
     InstallPointerInputHook()
 
     if not SCENE_MANAGER then

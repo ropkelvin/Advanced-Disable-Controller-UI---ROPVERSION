@@ -99,10 +99,15 @@ local function BuildControls(isGamepad)
         type = "dropdown",
         name = GetString(SI_ESOHYBRIDUI_MODE_NAME),
         tooltip = GetString(SI_ESOHYBRIDUI_MODE_TOOLTIP),
-        choices = { GetString(SI_ESOHYBRIDUI_MODE_GAMEPAD), GetString(SI_ESOHYBRIDUI_MODE_HYBRID) },
-        choicesValues = { ADDON.MODE_GAMEPAD, ADDON.MODE_HYBRID },
+        choices = { GetString(SI_ESOHYBRIDUI_MODE_GAMEPAD), GetString(SI_ESOHYBRIDUI_MODE_HYBRID),
+            GetString(SI_ESOHYBRIDUI_MODE_KEYBOARD_CONTROLLER) },
+        choicesValues = { ADDON.MODE_GAMEPAD, ADDON.MODE_HYBRID, ADDON.MODE_KEYBOARD_CONTROLLER },
         default = ADDON.MODE_HYBRID,
-        getFunc = function() return ADDON:IsHybrid() and ADDON.MODE_HYBRID or ADDON.MODE_GAMEPAD end,
+        getFunc = function()
+            local mode = ADDON:GetSettings().mode
+            if mode == ADDON.MODE_KEYBOARD_CONTROLLER then return mode end
+            return mode == ADDON.MODE_HYBRID and mode or ADDON.MODE_GAMEPAD
+        end,
         setFunc = function(value) ADDON:SetMode(value) end,
     })
 

@@ -71,70 +71,11 @@ local function InstallLockpickInputHook()
     return true
 end
 
--- LibMousePointer's native cursor reads the left stick. In Keyboard UI + Controller
--- that stick is reserved for character movement, so route the cursor through the
--- right stick instead. The library already registers itself with DIRECTIONAL_INPUT
--- when its fragment is shown; wrapping its callback preserves that native priority
--- arbitration and consumes the right stick before it can reach the game camera.
-local POINTER_CURSOR_SPEED = 3
-local POINTER_CURSOR_ACCELERATION_MS = 250
-
-local function UpdatePointerFromRightStick(pointer)
-    local cursor = pointer.gamepadCursor
-    if not cursor or not cursor.cursorId then
-        return
-    end
-
-    if not DIRECTIONAL_INPUT:IsAvailable(ZO_DI_RIGHT_STICK) then
-        return
-    end
-
-    local dx, dy = DIRECTIONAL_INPUT:GetXY(ZO_DI_RIGHT_STICK)
-    dx, dy = zo_clampLength2D(dx, dy, 1.5)
-
-    local now = GetGameTimeMilliseconds()
-    if dx == 0 and dy == 0 then
-        rt.mousePointerMoveStartTimestamp = now
-    elseif not rt.mousePointerMoveStartTimestamp then
-        rt.mousePointerMoveStartTimestamp = now
-    end
-
-    local frameDelta = GetFrameDeltaNormalizedForTargetFramerate()
-    local elapsed = now - rt.mousePointerMoveStartTimestamp
-    local magnitude = frameDelta * POINTER_CURSOR_SPEED
-        * zo_clamp(elapsed / POINTER_CURSOR_ACCELERATION_MS, 1, 8)
-    dx = dx * magnitude
-    dy = -dy * magnitude
-
-    cursor.control:SetAnchor(CENTER, GuiRoot, TOPLEFT, cursor.x + dx, cursor.y + dy)
-    local clampedX, clampedY = cursor.control:GetCenter()
-    if clampedX ~= cursor.x or clampedY ~= cursor.y then
-        cursor.x, cursor.y = clampedX, clampedY
-        cursor.directionalX = cursor.x + dx
-        cursor.directionalY = cursor.y + dy
-    end
-
-    cursor:UpdateCursorInfo()
-end
-
-local function InstallPointerDirectionalInputAdapter()
-    if not LibMousePointer or type(LibMousePointer.UpdateDirectionalInput) ~= "function"
-        or rt.mousePointerDirectionalAdapterInstalled then
-        return false
-    end
-
-    rt.mousePointerOriginalDirectionalUpdate = LibMousePointer.UpdateDirectionalInput
-    LibMousePointer.UpdateDirectionalInput = function(pointer)
-        if rt.keyboardController and ADDON:IsNativeGamepadMode() then
-            UpdatePointerFromRightStick(pointer)
-        else
-            rt.mousePointerOriginalDirectionalUpdate(pointer)
-        end
-    end
-
-    rt.mousePointerDirectionalAdapterInstalled = true
-    return true
-end
+-- LibMousePointer already implements cursor movement through ESO's
+-- DIRECTIONAL_INPUT arbitration using ZO_DI_LEFT_STICK. Keep that native
+-- implementation: while a keyboard-style UI scene is open, the left stick
+-- navigates the pointer; in the HUD it remains available for character
+-- movement. Do not redirect the right stick, which remains the camera input.
 
 local function IsPointerScene(scene)
     if not scene or not scene.GetName then

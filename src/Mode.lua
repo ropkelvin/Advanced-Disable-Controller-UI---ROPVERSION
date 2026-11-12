@@ -5,16 +5,20 @@ local function IsLockpickActive()
     return rt.lockPicking == true
 end
 
-local function IsHUIKeyboardPresentationPreferredMode()
-    if ADDON:IsActive()
-        and ADDON:IsHybrid()
-        and ADDON:IsGamepadModeOn()
-        and not IsLockpickActive()
-        and not rt.modeOverrideConflict
-        and not ADDON:IsRestrictedSceneActive() then
-        return false
+local IsHUIKeyboardPresentationPreferredMode = ADDON.HUIPreferredModeWrapper
+if not IsHUIKeyboardPresentationPreferredMode then
+    IsHUIKeyboardPresentationPreferredMode = function()
+        if ADDON:IsActive()
+            and ADDON:IsHybrid()
+            and ADDON:IsGamepadModeOn()
+            and not IsLockpickActive()
+            and not rt.modeOverrideConflict
+            and not ADDON:IsRestrictedSceneActive() then
+            return false
+        end
+        return ADDON.NativeIsInGamepadPreferredMode()
     end
-    return ADDON.NativeIsInGamepadPreferredMode()
+    ADDON.HUIPreferredModeWrapper = IsHUIKeyboardPresentationPreferredMode
 end
 
 function ADDON:ApplyMode()

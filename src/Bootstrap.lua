@@ -34,6 +34,14 @@ function ADDON:IsNativeGamepadMode()
         and self.NativeIsInGamepadPreferredMode() == true
 end
 
+-- "Gamepad Mode: On" is a distinct setting from Auto. In Auto,
+-- IsInGamepadPreferredMode() can be true only because the last input was a
+-- controller, which is not the fixed mode HUI requires.
+function ADDON:IsGamepadModeOn()
+    return tonumber(GetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE))
+        == INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
+end
+
 function ADDON:IsHybrid()
     return self.saved and self.saved.mode == "hybrid"
 end
@@ -65,7 +73,7 @@ local function OnPlayerActivated()
     ADDON:InitializePrompts()
     ADDON:InitializeSettings()
 
-    if ADDON:IsHybrid() and not ADDON:IsNativeGamepadMode()
+    if ADDON:IsHybrid() and not ADDON:IsGamepadModeOn()
         and not ADDON.runtime.gamepadSettingWarningShown then
         ADDON:Print("Hybrid requires ESO Gamepad Mode to be On in Controls settings.")
         ADDON.runtime.gamepadSettingWarningShown = true

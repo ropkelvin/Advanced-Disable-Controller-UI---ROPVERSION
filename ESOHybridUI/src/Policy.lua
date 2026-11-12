@@ -85,7 +85,20 @@ local NATIVE_HUD_SCENES = {
 }
 
 -- Legacy policy only: does the current context want ESO's native gamepad presentation?
+local function IsShowingGamepadDialog()
+    -- RECALL_CONFIRM is a native Gamepad-capable dialog whose updateFn calls
+    -- ZO_Dialogs_UpdateButtonState only when IsInGamepadPreferredMode() is false.
+    -- A Gamepad dialog has no keyboard Button1 child, so keep the native answer
+    -- stable for its full lifetime even if the map scene is transitioning away.
+    return type(ZO_Dialogs_IsShowing) == "function"
+        and ZO_Dialogs_IsShowing("RECALL_CONFIRM") == true
+end
+
 local function HybridWantsGamepad()
+    if IsShowingGamepadDialog() then
+        return true
+    end
+
     -- ESO's built-in HUD editor uses IsInGamepadPreferredMode() to choose
     -- which saved layout to edit. Hybrid displays the Keyboard HUD, so keep the
     -- editor on that same layout instead of writing offsets to gamepadElements.

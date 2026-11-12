@@ -142,6 +142,8 @@ local function BuildControls(isGamepad)
     add(Checkbox(SI_ESOHYBRIDUI_WHEEL_REMINDER_NAME, SI_ESOHYBRIDUI_WHEEL_REMINDER_TOOLTIP,
         "hybridQuickslotBindingReminder", true))
     add(Checkbox(SI_ESOHYBRIDUI_GLYPHS_NAME, SI_ESOHYBRIDUI_GLYPHS_TOOLTIP, "hybridActionBarGlyphs", true, refresh))
+    add(Checkbox(SI_ESOHYBRIDUI_MOUSE_POINTER_NAME, SI_ESOHYBRIDUI_MOUSE_POINTER_TOOLTIP,
+        "keyboardControllerMousePointer", true, refresh))
 
     add({ type = "header", name = GetString(SI_ESOHYBRIDUI_HEADER_PROMPTS) })
     add(FontDropdown(SI_ESOHYBRIDUI_FONT_RETICLE_NAME, SI_ESOHYBRIDUI_FONT_RETICLE_TOOLTIP, "reticle"))

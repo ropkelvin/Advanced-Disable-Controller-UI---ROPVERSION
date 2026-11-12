@@ -418,11 +418,25 @@ function ADDON:Refresh()
     TryPlatformRefresh()
 end
 
+function ADDON:MaybeRemindQuickslotBinding()
+    local settings = GetSettings()
+    if rt.quickslotBindingReminderShown or not rt.hybrid
+        or settings.hybridQuickslotWheel == false
+        or settings.hybridQuickslotBindingReminder == false then
+        return false
+    end
+
+    rt.quickslotBindingReminderShown = true
+    self:Say(GetString(SI_ESOHYBRIDUI_WHEEL_BINDING_REMINDER))
+    return true
+end
+
 function ADDON:SetMode(mode)
     local settings = GetSettings()
     settings.mode = mode == ADDON.MODE_HYBRID and ADDON.MODE_HYBRID or ADDON.MODE_GAMEPAD
     self:LogInfo("UI mode:", settings.mode)
     self:Refresh()
+    self:MaybeRemindQuickslotBinding()
 end
 
 function ADDON:SetMenuPolicy(policy)
@@ -546,6 +560,7 @@ local function RegisterFirstActivation()
             ADDON:Say(zo_strformat(SI_ESOHYBRIDUI_ANNOUNCE_LOADED, ADDON.VERSION))
         end
         zo_callLater(ShowWelcomeDialog, 1500)
+        ADDON:MaybeRemindQuickslotBinding()
 
         -- OnPlayerActivated performs the single post-load refresh after the HUD
         -- exists. The mode policy is already correct while controls are built.

@@ -154,6 +154,19 @@ local function InstallShoulderConflictHook()
     rt.mainMenuNavigationConflictHookInstalled = true
 end
 
+function ADDON:RefreshMainMenuNavigation()
+    if not rt.mainMenuNavigationInitialized then
+        return
+    end
+
+    local fragment = MAIN_MENU_KEYBOARD and MAIN_MENU_KEYBOARD.categoryBarFragment
+    if fragment and fragment:IsShowing() and CanUseNavigation() then
+        ActivateNavigation()
+    else
+        self:DeactivateMainMenuNavigation()
+    end
+end
+
 function ADDON:InitializeMainMenuNavigation()
     if rt.mainMenuNavigationInitialized then
         return

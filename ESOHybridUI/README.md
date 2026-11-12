@@ -1,4 +1,4 @@
-# ESO Hybrid UI 4.2.2-beta
+# ESO Hybrid UI 4.2.3-beta
 
 **AI-assisted development disclosure:** AI tools were used during development and review. The addon is maintained and tested by its author. Please report compatibility issues with the ESO game version and a diagnostic dump.
 
@@ -22,6 +22,10 @@ ESO Hybrid UI provides three controller-first interface modes while keeping ESO'
 5. Choose **Hybrid** or **Keyboard UI + Controller** as the interface mode.
 
 The addon folder must be named exactly `ESOHybridUI` and contain `ESOHybridUI.txt`.
+
+## 4.2.3-beta changes
+
+- Routed LibMousePointer cursor movement to the right stick in Keyboard UI + Controller, using ESO's DIRECTIONAL_INPUT priority system so the stick no longer reaches player/camera input.
 
 ## 4.2.2-beta changes
 
@@ -58,7 +62,7 @@ The **Menus opened from the HUD** policy defaults to **Gamepad**. The **Legacy**
 - Uses the keyboard-style quickslot radial; assign a Gamepad secondary binding to Quickslot Wheel (ACTION_BUTTON_9) under Settings > Controls > Keybindings > Combat to open it from the controller.
 - Uses the keyboard-style action bar; ESO's paired Gamepad action bindings remain responsible for combat actions.
 - Uses ESO's left and right shoulder controller bindings to move backward and forward through the visible, enabled keyboard main-menu categories. The addon delegates each selection to ESO's keyboard main-menu handler, preserving its normal scene and confirmation flow.
-- When LibMousePointer is installed and the setting is enabled, attaches its pointer fragment temporarily to active keyboard-style UI scenes (not the base HUD). This provides mouse-style targeting for controls that expose mouse hit-testing.
+- When LibMousePointer is installed and the setting is enabled, attaches its pointer fragment temporarily to active keyboard-style UI scenes (not the base HUD). The right stick moves the pointer through ESO's directional-input arbitration; the left stick remains available for character movement. This provides mouse-style targeting for controls that expose mouse hit-testing.
 - Reuses ESO's native lockpick virtual-cursor calculation with the controller's left stick, so keyboard-style lockpicking does not lose the native Gamepad movement input merely because the UI presentation is keyboard-style.
 - Adds three unassigned actions under Settings > Controls > Keybindings > General: pointer left click, pointer right click and pointer reset. Assign buttons yourself; the addon does not steal A/B/X/Y or alter existing bindings.
 

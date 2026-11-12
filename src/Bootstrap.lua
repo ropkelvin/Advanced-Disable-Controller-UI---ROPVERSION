@@ -1,4 +1,4 @@
--- HUI: clean keyboard-presentation / native-controller-input foundation.
+-- HUI: keyboard-presentation / native-controller-input foundation.
 ESOHybridUI = ESOHybridUI or {}
 local ADDON = ESOHybridUI
 
@@ -12,6 +12,7 @@ ADDON.defaults = {
 
 ADDON.runtime = {
     initialized = false,
+    inWorld = false,
     lockPicking = false,
     pointerScene = false,
     pointerHookInstalled = false,
@@ -20,11 +21,17 @@ ADDON.runtime = {
     originalPromptStyle = nil,
 }
 
--- Capture ESO's actual setting before HUI changes the presentation query.
+-- Keep ESO's original query. HUI changes presentation only while the player
+-- is active in the world, never during pregame, character select, or loading.
 ADDON.NativeIsInGamepadPreferredMode = IsInGamepadPreferredMode
 
+function ADDON:IsActive()
+    return self.runtime.inWorld == true
+end
+
 function ADDON:IsNativeGamepadMode()
-    return self.NativeIsInGamepadPreferredMode and self.NativeIsInGamepadPreferredMode() == true
+    return self.NativeIsInGamepadPreferredMode
+        and self.NativeIsInGamepadPreferredMode() == true
 end
 
 function ADDON:IsHybrid()
@@ -50,6 +57,30 @@ function ADDON:InitializeSavedVariables()
     )
 end
 
+local function OnPlayerActivated()
+    ADDON.runtime.inWorld = true
+    ADDON:ApplyMode()
+    ADDON:InitializeSceneController()
+    ADDON:InitializePrompts()
+    ADDON:InitializeSettings()
+
+    if ADDON:IsHybrid() and not ADDON:IsNativeGamepadMode() then
+        ADDON:Print("Hybrid requires ESO Gamepad Mode to be On in Controls settings.")
+    end
+end
+
+local function OnPlayerDeactivated()
+    ADDON.runtime.inWorld = false
+    ADDON.runtime.lockPicking = false
+    ADDON:ApplyMode()
+    if ADDON.RestorePrompts then
+        ADDON:RestorePrompts()
+    end
+    if ADDON.RefreshSceneController then
+        ADDON:RefreshSceneController()
+    end
+end
+
 local function OnAddonLoaded(_, addonName)
     if addonName ~= ADDON.name then
         return
@@ -58,17 +89,16 @@ local function OnAddonLoaded(_, addonName)
     EVENT_MANAGER:UnregisterForEvent(ADDON.name, EVENT_ADD_ON_LOADED)
     ADDON:InitializeSavedVariables()
     ADDON:InitializeMode()
-    ADDON:InitializeSceneController()
-    ADDON:InitializePrompts()
-    ADDON:InitializeSettings()
-    ADDON.runtime.initialized = true
 
-    ADDON:Print("Loaded. Current mode: " .. ADDON.saved.mode)
-    if ADDON:IsHybrid() and not ADDON:IsNativeGamepadMode() then
-        ADDON:Print("Hybrid requires ESO Gamepad Mode to be On in the game's Controls settings.")
-    elseif ADDON:IsHybrid() and not MOUSE_POINTER_FRAGMENT then
-        ADDON:Print("LibMousePointer is missing. Keyboard UI will load, but controller pointer support is unavailable.")
+    EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
+    EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_PLAYER_DEACTIVATED, OnPlayerDeactivated)
+
+    -- /reloadui while already in the world may not require another transition.
+    if IsPlayerActivated and IsPlayerActivated() then
+        OnPlayerActivated()
     end
+
+    ADDON.runtime.initialized = true
 end
 
 EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)

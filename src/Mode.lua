@@ -6,7 +6,14 @@ local function IsLockpickActive()
 end
 
 local function IsHUIKeyboardPresentationPreferredMode()
-    return false
+    if ADDON:IsActive()
+        and ADDON:IsHybrid()
+        and ADDON:IsNativeGamepadMode()
+        and not IsLockpickActive()
+        and not ADDON:IsRestrictedSceneActive() then
+        return false
+    end
+    return ADDON.NativeIsInGamepadPreferredMode()
 end
 
 function ADDON:ApplyMode()
@@ -18,6 +25,7 @@ function ADDON:ApplyMode()
         and self:IsHybrid()
         and self:IsNativeGamepadMode()
         and not IsLockpickActive()
+        and not self:IsRestrictedSceneActive()
 
     -- Do not touch ESO's mode query outside the active world.
     local modeQueryChanged = false

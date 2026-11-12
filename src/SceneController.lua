@@ -167,6 +167,9 @@ local function InstallSceneHooks()
                     -- Restore native presentation before the restricted scene
                     -- is resolved/shown. Do not touch that scene afterwards.
                     ADDON:ApplyMode()
+                    if ADDON.RestorePrompts then
+                        ADDON:RestorePrompts()
+                    end
                 end
                 return
             end
@@ -198,6 +201,7 @@ local function InstallSceneHooks()
                 if UpdateRestrictedSceneState() then
                     ADDON:ApplyMode()
                     ADDON:RefreshSceneController()
+                    ADDON:InitializePrompts()
                 end
                 return
             end
@@ -206,6 +210,7 @@ local function InstallSceneHooks()
                 if UpdateRestrictedSceneState() then
                     ADDON:ApplyMode()
                     ADDON:RefreshSceneController()
+                    ADDON:InitializePrompts()
                 end
                 return
             end

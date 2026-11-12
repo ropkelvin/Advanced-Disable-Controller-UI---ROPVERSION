@@ -138,8 +138,13 @@ local function InstallDirectionalInputHook()
 
     ZO_PreHook(ZO_IngameSceneManager, "UpdateDirectionalInput", function()
         if ADDON:IsActive() and ADDON:IsHybrid() and rt.pointerScene and DIRECTIONAL_INPUT then
-            -- The pointer library must consume the left stick first. HUI only
-            -- keeps the right stick from leaking through to camera rotation.
+            -- Only bypass ESO's "consume both sticks" method after an earlier
+            -- UI input owner has already consumed the left stick. This is the
+            -- fail-safe: if the pointer has not claimed it, ESO consumes both
+            -- sticks normally and the player cannot move behind the menu.
+            if DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK) then
+                return false
+            end
             DIRECTIONAL_INPUT:Consume(ZO_DI_RIGHT_STICK)
             return true
         end

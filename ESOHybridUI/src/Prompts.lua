@@ -136,8 +136,10 @@ local function InstallAutonomousKeybindButtonHook()
     rt.keybindButtonSetKeybindOriginal = originalSetKeybind
 
     mixin.SetKeybind = function(button, keybind, showUnbound, gamepadPreferredKeybind, alwaysPreferGamepadMode, showAsHold)
-        -- The two Hybrid wheels intentionally retain keyboard-style bindings.
-        if ADDON:ShouldShowControllerPrompts() and rt.forceKeyboardWheelDepth == 0 then
+        -- Wheel presentation and key glyph selection are independent. Hybrid
+        -- wheels keep their keyboard-style layout, but their native keybind
+        -- buttons should still display the controller action glyphs.
+        if ADDON:ShouldShowControllerPrompts() then
             alwaysPreferGamepadMode = true
         end
 

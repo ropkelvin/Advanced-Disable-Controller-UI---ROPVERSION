@@ -4,6 +4,17 @@
             <Action name="ESOHYBRIDUI_TOGGLE_UI">
                 <Down>ESOHybridUI:ToggleUI()</Down>
             </Action>
+            <!-- These actions intentionally have no default button assignment.
+                 Players can bind them without us stealing A/B/X/Y from native UI actions. -->
+            <Action name="ESOHYBRIDUI_POINTER_CLICK">
+                <Down>if ESOHybridUI and ESOHybridUI:InvokeMousePointerClick(MOUSE_BUTTON_INDEX_LEFT) then return true end return false</Down>
+            </Action>
+            <Action name="ESOHYBRIDUI_POINTER_RIGHT_CLICK">
+                <Down>if ESOHybridUI and ESOHybridUI:InvokeMousePointerClick(MOUSE_BUTTON_INDEX_RIGHT) then return true end return false</Down>
+            </Action>
+            <Action name="ESOHYBRIDUI_POINTER_RESET">
+                <Down>if ESOHybridUI and ESOHybridUI:ResetMousePointer() then return true end return false</Down>
+            </Action>
         </Category>
         <Category name="SI_KEYBINDINGS_CATEGORY_GENERAL">
             <!-- ADCUI-style category navigation: reuse ESO's native shoulder

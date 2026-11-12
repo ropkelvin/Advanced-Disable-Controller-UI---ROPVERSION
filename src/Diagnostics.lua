@@ -91,8 +91,12 @@ local function GetDirectionalState()
         owners[#owners + 1] = ownerName
     end
 
+    local pointerListening = LibMousePointer
+        and DIRECTIONAL_INPUT.IsListening
+        and DIRECTIONAL_INPUT:IsListening(LibMousePointer)
     return "leftAvailable=" .. tostring(DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK))
         .. ",rightAvailable=" .. tostring(DIRECTIONAL_INPUT:IsAvailable(ZO_DI_RIGHT_STICK))
+        .. ",pointerListening=" .. tostring(pointerListening)
         .. ",owners=" .. table.concat(owners, ";")
 end
 

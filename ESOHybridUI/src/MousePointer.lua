@@ -169,6 +169,12 @@ local function IsPointerScene(scene)
         return false
     end
 
+    -- Lockpicking has its own ESO virtual cursor, adapted above. Do not attach
+    -- the general mouse pointer there or one stick would drive two cursors.
+    if scene == LOCK_PICK_SCENE or scene == LOCK_PICK_GAMEPAD_SCENE then
+        return false
+    end
+
     local name = scene:GetName()
     return name ~= "hud" and name ~= "hudui"
 end

@@ -73,10 +73,7 @@ local function OnPlayerActivated()
     ADDON.runtime.inWorld = true
     ADDON:InitializeLockpickHook()
     ADDON:ApplyMode()
-    if ADDON.runtime.hudRefreshPending and HUD_MANAGER and HUD_MANAGER.PropagateSettings then
-        HUD_MANAGER:PropagateSettings()
-        ADDON.runtime.hudRefreshPending = false
-    end
+    ADDON:TryRefreshHUDSettings()
     ADDON:InitializeSceneController()
     ADDON:InitializePrompts()
     ADDON:InitializeSettings()

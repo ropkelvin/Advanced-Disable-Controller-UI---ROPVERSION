@@ -32,6 +32,10 @@ After changing modes, close and reopen the active menu so ESO can select the mat
 
 - **Advanced Disable Controller UI (ADCUI)** by **Lionas**: studied for its global keyboard-presentation override and lockpicking exception. HUI is a clean implementation and does not copy ADCUI source code. [Source repository](https://github.com/Lionas/Advanced-Disable-Controller-UI).
 - **LibMousePointer** by **Votan**: required external library providing the pointer fragment and cursor click API. [ESOUI page](https://www.esoui.com/downloads/info4518-libmousepointer.html).
+- [ESO scene manager](https://github.com/esoui/esoui/blob/live/esoui/ingame/scenes/ingamescenemanager.lua) — confirms ESO consumes both sticks in UI mode by default.
+- [ESO directional input](https://github.com/esoui/esoui/blob/live/esoui/libraries/zo_directionalinput/zo_directionalinput.lua) — confirms the input-owner ordering and `IsAvailable`/`Consume` behaviour used by HUI's fail-safe.
+- [ESO keybinding utilities](https://github.com/esoui/esoui/blob/live/esoui/libraries/utility/keybindingutils.lua) — confirms the three keybinding functions HUI wraps for controller prompts.
+- [ESO HUD manager](https://github.com/esoui/esoui/blob/live/esoui/ingame/hud/hudmanager.lua) — confirms `HUD_MANAGER:PropagateSettings()` refreshes active HUD element anchors.
 - ESO UI source, published by ZeniMax for reference: [ESOUI source repository](https://github.com/esoui/esoui).
 
 ## Architecture

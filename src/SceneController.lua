@@ -127,6 +127,24 @@ function ADDON:RefreshSceneController()
     end
 end
 
+local function UpdateRestrictedSceneState()
+    local restrictedActive = IsRestrictedSceneName(SCENE_MANAGER:GetCurrentSceneName())
+    if not restrictedActive and rt.restrictedScenes then
+        for name, restrictedScene in pairs(rt.restrictedScenes) do
+            if restrictedScene:IsShowing() then
+                restrictedActive = true
+                break
+            else
+                rt.restrictedScenes[name] = nil
+            end
+        end
+    end
+
+    local wasRestricted = rt.restrictedSceneActive == true
+    rt.restrictedSceneActive = restrictedActive
+    return wasRestricted and not restrictedActive
+end
+
 local function InstallSceneHooks()
     if not SCENE_MANAGER or rt.pointerHookInstalled then
         return
@@ -146,11 +164,16 @@ local function InstallSceneHooks()
                 end
                 if not rt.restrictedSceneActive then
                     rt.restrictedSceneActive = true
+                    -- Restore native presentation before the restricted scene
+                    -- is resolved/shown. Do not touch that scene afterwards.
                     ADDON:ApplyMode()
                 end
+                return
             end
 
-            ADDON:ApplyPointerToScene(sceneName, false)
+            if not rt.restrictedSceneActive then
+                ADDON:ApplyPointerToScene(sceneName, false)
+            end
         end)
     end
 
@@ -168,23 +191,23 @@ local function InstallSceneHooks()
                 else
                     rt.restrictedScenes[sceneName] = scene
                 end
-            end
 
-            local restrictedActive = IsRestrictedSceneName(SCENE_MANAGER:GetCurrentSceneName())
-            if not restrictedActive and rt.restrictedScenes then
-                for name, restrictedScene in pairs(rt.restrictedScenes) do
-                    if restrictedScene:IsShowing() then
-                        restrictedActive = true
-                        break
-                    else
-                        rt.restrictedScenes[name] = nil
-                    end
+                -- The pre-show hook already restored native mode. While a
+                -- restricted scene (or its overlay stack) is active, do not
+                -- attach/remove fragments or refresh controls inside it.
+                if UpdateRestrictedSceneState() then
+                    ADDON:ApplyMode()
+                    ADDON:RefreshSceneController()
                 end
+                return
             end
 
-            if restrictedActive ~= rt.restrictedSceneActive then
-                rt.restrictedSceneActive = restrictedActive
-                ADDON:ApplyMode()
+            if rt.restrictedSceneActive then
+                if UpdateRestrictedSceneState() then
+                    ADDON:ApplyMode()
+                    ADDON:RefreshSceneController()
+                end
+                return
             end
 
             if newState == SCENE_SHOWING or newState == SCENE_SHOWN then

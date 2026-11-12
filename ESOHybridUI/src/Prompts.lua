@@ -188,11 +188,25 @@ local function InstallDeathPromptHook()
     return true
 end
 
-local function RefreshReticlePrompt()
+local function RefreshReticlePrompt(forceGamepadPrompts)
     if not RETICLE or not RETICLE.interactKeybindButton then
         return
     end
-    RETICLE.interactKeybindButton:SetKeybind("GAME_CAMERA_INTERACT", false, "GAMEPAD_JUMP_OR_INTERACT")
+    -- The fourth SetKeybind argument forces the gamepad binding for this
+    -- control only. Do not wrap ESO's global keybinding resolvers: they also
+    -- run inside protected inventory and resurrection callbacks.
+    RETICLE.interactKeybindButton:SetKeybind(
+        "GAME_CAMERA_INTERACT", false, "GAMEPAD_JUMP_OR_INTERACT", forceGamepadPrompts)
+end
+
+local function RefreshPlayerInteractionPrompt(forceGamepadPrompts)
+    if not PLAYER_TO_PLAYER or not PLAYER_TO_PLAYER.actionKeybindButton then
+        return
+    end
+    -- Keep the player's configured interaction binding, but resolve its
+    -- controller glyph locally instead of changing global keybinding policy.
+    PLAYER_TO_PLAYER.actionKeybindButton:SetKeybind(
+        "PLAYER_TO_PLAYER_INTERACT", false, nil, forceGamepadPrompts)
 end
 
 local function ApplyReticleFonts(forceGamepadPrompts)
@@ -251,7 +265,8 @@ function ADDON:ApplyPrompts()
         and KEYBIND_STRIP_GAMEPAD_STYLE or KEYBIND_STRIP_STANDARD_STYLE
     RemapKnownDescriptors(forceGamepadPrompts and not rt.menusGamepad)
     ApplyReticleFonts(forceGamepadPrompts)
-    RefreshReticlePrompt()
+    RefreshReticlePrompt(forceGamepadPrompts)
+    RefreshPlayerInteractionPrompt(forceGamepadPrompts)
 
     if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle and ZO_ShallowTableCopy then
         local stripStyle = ZO_ShallowTableCopy(baseStripStyle)

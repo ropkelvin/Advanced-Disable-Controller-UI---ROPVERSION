@@ -58,7 +58,8 @@ function ADDON:InitializePrompts()
 
         if originalGetPreferredKeyType then
             wrapperGetPreferredKeyType = function(alwaysPreferGamepadMode, ...)
-                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode()
+                    and not ADDON:IsRestrictedSceneActive() then
                     return PREFERRED_INPUT_DEVICE_TYPE_GAMEPAD
                 end
                 return originalGetPreferredKeyType(alwaysPreferGamepadMode, ...)

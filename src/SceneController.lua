@@ -107,7 +107,8 @@ function ADDON:RefreshSceneController()
 
     local shouldRunPointer = self:IsHybrid()
         and self.saved.pointerEnabled
-        and self:IsNativeGamepadMode()
+        and self:IsGamepadModeOn()
+        and not rt.modeOverrideConflict
         and not self:IsRestrictedSceneActive()
         and MOUSE_POINTER_FRAGMENT ~= nil
 
@@ -287,19 +288,22 @@ local function InstallPointerKeybindConflictHook()
 end
 
 local function InstallDirectionalInputHook()
-    if not ZO_IngameSceneManager or not ZO_IngameSceneManager.UpdateDirectionalInput
-        or rt.directionalHookInstalled then
+    -- ZO_IngameSceneManager is a local class in ESO's ingame scene-manager
+    -- source, not a global. Hook the live SCENE_MANAGER instance instead.
+    -- The stock instance owns UpdateDirectionalInput and consumes both sticks
+    -- while in UI mode; HUI only skips that consume-both-sticks path after
+    -- LibMousePointer has already consumed the left stick.
+    if rt.directionalHookInstalled then
+        return
+    end
+    if not SCENE_MANAGER or not SCENE_MANAGER.UpdateDirectionalInput then
+        ADDON:RecordDiagnostic("DIRECTIONAL_HOOK_UNAVAILABLE",
+            "SCENE_MANAGER.UpdateDirectionalInput missing")
         return
     end
 
-    ZO_PreHook(ZO_IngameSceneManager, "UpdateDirectionalInput", function()
+    ZO_PreHook(SCENE_MANAGER, "UpdateDirectionalInput", function()
         if ADDON:IsActive() and ADDON:IsHybrid() and rt.pointerScene and DIRECTIONAL_INPUT then
-            -- LibMousePointer's cursor calls GetXY(ZO_DI_LEFT_STICK), which
-            -- consumes the left stick through DIRECTIONAL_INPUT. Its high-tier
-            -- pointer control is ordered ahead of CLIENT_INPUT. Only then do
-            -- we bypass ESO's default consume-both-sticks handler and consume
-            -- the right stick here. If the left stick is still available, let
-            -- ESO's original handler consume both sticks as normal.
             if DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK) then
                 return false
             end
@@ -310,6 +314,8 @@ local function InstallDirectionalInputHook()
     end)
 
     rt.directionalHookInstalled = true
+    ADDON:RecordDiagnostic("DIRECTIONAL_HOOK_INSTALLED",
+        "target=SCENE_MANAGER.UpdateDirectionalInput")
 end
 
 function ADDON:InitializeSceneController()

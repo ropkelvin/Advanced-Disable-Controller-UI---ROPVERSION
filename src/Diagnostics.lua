@@ -79,8 +79,14 @@ local function GetDirectionalState()
         local ownerName = "owner" .. tostring(index)
         if object == LibMousePointer then
             ownerName = "LibMousePointer"
-        elseif control and control.GetName then
-            ownerName = control:GetName() or ownerName
+        elseif object == SCENE_MANAGER then
+            ownerName = "SCENE_MANAGER"
+        else
+            local controlName = control and control.GetName and control:GetName()
+            ownerName = (controlName or ownerName)
+                .. ":" .. type(object)
+                .. ":update=" .. type(object and object.UpdateDirectionalInput)
+                .. ":ref=" .. SafeString(object)
         end
         owners[#owners + 1] = ownerName
     end
@@ -124,6 +130,11 @@ local function BuildSample()
     if scene and MOUSE_POINTER_FRAGMENT and scene.HasFragment then
         hasPointerFragment = tostring(scene:HasFragment(MOUSE_POINTER_FRAGMENT))
     end
+    local sceneState = scene and scene.GetState and scene:GetState() or "unavailable"
+    local sceneShowing = scene and scene.IsShowing and scene:IsShowing() or false
+    local fragmentShowing = MOUSE_POINTER_FRAGMENT
+        and MOUSE_POINTER_FRAGMENT.IsShowing
+        and MOUSE_POINTER_FRAGMENT:IsShowing() or false
 
     return "mode=" .. SafeString(ADDON.saved.mode)
         .. ",active=" .. tostring(ADDON:IsActive())
@@ -133,6 +144,10 @@ local function BuildSample()
         .. ",modeConflict=" .. tostring(rt.modeOverrideConflict)
         .. ",restricted=" .. tostring(ADDON:IsRestrictedSceneActive())
         .. ",scene=" .. SafeString(sceneName)
+        .. ",sceneState=" .. SafeString(sceneState)
+        .. ",sceneShowing=" .. tostring(sceneShowing)
+        .. ",pointerFragmentShowing=" .. tostring(fragmentShowing)
+        .. ",sceneManagerDirectionalMethod=" .. type(SCENE_MANAGER and SCENE_MANAGER.UpdateDirectionalInput)
         .. ",pointerScene=" .. tostring(rt.pointerScene)
         .. ",pointerSceneName=" .. SafeString(rt.pointerSceneName)
         .. ",pointerEnabled=" .. tostring(ADDON.saved.pointerEnabled)

@@ -420,8 +420,8 @@ end
 
 function ADDON:MaybeRemindQuickslotBinding()
     local settings = GetSettings()
-    if rt.quickslotBindingReminderShown or not rt.hybrid
-        or settings.hybridQuickslotWheel == false
+    if rt.quickslotBindingReminderShown or not rt.keyboardUI
+        or (rt.hybrid and settings.hybridQuickslotWheel == false)
         or settings.hybridQuickslotBindingReminder == false then
         return false
     end

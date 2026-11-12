@@ -72,8 +72,22 @@ local function GetDirectionalState()
         return "directionalInput=unavailable"
     end
 
+    local owners = {}
+    for index, object in ipairs(DIRECTIONAL_INPUT.inputObjects or {}) do
+        local control = DIRECTIONAL_INPUT.inputControls
+            and DIRECTIONAL_INPUT.inputControls[index]
+        local ownerName = "owner" .. tostring(index)
+        if object == LibMousePointer then
+            ownerName = "LibMousePointer"
+        elseif control and control.GetName then
+            ownerName = control:GetName() or ownerName
+        end
+        owners[#owners + 1] = ownerName
+    end
+
     return "leftAvailable=" .. tostring(DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK))
         .. ",rightAvailable=" .. tostring(DIRECTIONAL_INPUT:IsAvailable(ZO_DI_RIGHT_STICK))
+        .. ",owners=" .. table.concat(owners, ";")
 end
 
 local function AppendEntry(kind, detail)
@@ -122,6 +136,13 @@ local function BuildSample()
         .. ",pointerScene=" .. tostring(rt.pointerScene)
         .. ",pointerSceneName=" .. SafeString(rt.pointerSceneName)
         .. ",pointerEnabled=" .. tostring(ADDON.saved.pointerEnabled)
+        .. ",pointerHookInstalled=" .. tostring(rt.pointerHookInstalled)
+        .. ",directionalHookInstalled=" .. tostring(rt.directionalHookInstalled)
+        .. ",promptHooksInstalled=" .. tostring(rt.promptHooksInstalled)
+        .. ",lockPicking=" .. tostring(rt.lockPicking)
+        .. ",hudRefreshPending=" .. tostring(rt.hudRefreshPending)
+        .. ",keyboardTrackerReady=" .. tostring(HUD_TRACKER_MANAGER and HUD_TRACKER_MANAGER.keyboardHUDElement ~= nil)
+        .. ",gamepadTrackerReady=" .. tostring(HUD_TRACKER_MANAGER and HUD_TRACKER_MANAGER.gamepadHUDElement ~= nil)
         .. ",sceneHasPointerFragment=" .. hasPointerFragment
         .. "," .. GetPointerState()
         .. "," .. GetDirectionalState()

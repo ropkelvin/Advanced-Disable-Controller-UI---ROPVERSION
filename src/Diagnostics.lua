@@ -36,11 +36,24 @@ local function GetPointerState()
         controlVisible = tostring(not cursor.control:IsHidden())
     end
 
+    local hitControl = cursor.mouseOverControl
+    local hitName = hitControl and hitControl.GetName and hitControl:GetName() or "nil"
+    local hasOnClicked = hitControl and hitControl.GetHandler
+        and hitControl:GetHandler("OnClicked") ~= nil
+    local hasOnMouseDown = hitControl and hitControl.GetHandler
+        and hitControl:GetHandler("OnMouseDown") ~= nil
+    local hasOnMouseUp = hitControl and hitControl.GetHandler
+        and hitControl:GetHandler("OnMouseUp") ~= nil
+
     return "library=ready"
         .. ",cursorId=" .. SafeString(cursor.cursorId)
         .. ",cursorVisible=" .. controlVisible
         .. ",x=" .. SafeString(cursor.x)
         .. ",y=" .. SafeString(cursor.y)
+        .. ",hitControl=" .. SafeString(hitName)
+        .. ",hitOnClicked=" .. tostring(hasOnClicked)
+        .. ",hitOnMouseDown=" .. tostring(hasOnMouseDown)
+        .. ",hitOnMouseUp=" .. tostring(hasOnMouseUp)
 end
 
 local function GetPrimaryKeybindState()

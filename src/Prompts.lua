@@ -22,7 +22,8 @@ function ADDON:ApplyPromptPresentation()
     end
 
     local hybridPrompts = self:IsHybrid()
-        and self:IsGamepadModeOn() and not self:IsRestrictedSceneActive()
+        and self:IsGamepadModeOn() and not rt.modeOverrideConflict
+        and not self:IsRestrictedSceneActive()
 
     if KEYBIND_STRIP_STANDARD_STYLE then
         if not rt.originalPromptStyleCaptured then
@@ -89,6 +90,7 @@ function ADDON:InitializePrompts()
         if originalShouldUseGamepadAction then
             wrapperShouldUseGamepadAction = function(alwaysPreferGamepadMode, ...)
                 if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsGamepadModeOn()
+                    and not rt.modeOverrideConflict
                     and not ADDON:IsRestrictedSceneActive() then
                     return true
                 end

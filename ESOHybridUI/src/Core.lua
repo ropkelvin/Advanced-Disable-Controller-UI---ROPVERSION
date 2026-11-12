@@ -408,8 +408,11 @@ end
 
 function ADDON:Refresh()
     self:LogDebug("Refreshing UI presentation.")
-    self:InstallModeOverride()
+    -- Update the selected mode before installing/restoring the global policy.
+    -- Otherwise a Hybrid -> Gamepad switch sees the stale Hybrid flag and leaves
+    -- the addon wrapper installed in native Gamepad mode.
     self:RefreshSettingsCache()
+    self:InstallModeOverride()
     self:ApplyAll()
     rt.platformDirty = true
     TryPlatformRefresh()

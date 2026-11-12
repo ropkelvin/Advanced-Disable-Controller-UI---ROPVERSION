@@ -12,6 +12,7 @@ lang/en.lua
 src/Defaults.lua
 src/Diagnostics.lua
 src/Policy.lua
+src/ScenePolicy.lua
 src/Core.lua
 src/Prompts.lua
 src/Dialogs.lua

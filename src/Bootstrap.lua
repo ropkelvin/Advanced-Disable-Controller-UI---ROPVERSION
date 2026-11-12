@@ -78,9 +78,6 @@ local function OnPlayerDeactivated()
     ADDON.runtime.restrictedSceneActive = false
     ADDON.runtime.restrictedScenes = {}
     ADDON:ApplyMode()
-    if ADDON.RestorePrompts then
-        ADDON:RestorePrompts()
-    end
     if ADDON.RefreshSceneController then
         ADDON:RefreshSceneController()
     end

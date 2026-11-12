@@ -10,21 +10,24 @@ ADDON.defaults = {
     debug = false,
 }
 
-ADDON.runtime = {
-    initialized = false,
-    inWorld = false,
-    modeOverrideConflict = false,
-    lockPicking = false,
-    pointerScene = false,
-    pointerHookInstalled = false,
-    directionalHookInstalled = false,
-    promptHooksInstalled = false,
-    originalPromptStyle = nil,
-}
+-- Preserve the runtime table across /reloadui so installed wrappers and
+-- scene hooks keep referencing the same state object.
+ADDON.runtime = ADDON.runtime or {}
+local runtime = ADDON.runtime
+runtime.initialized = runtime.initialized or false
+runtime.inWorld = runtime.inWorld or false
+runtime.modeOverrideConflict = runtime.modeOverrideConflict or false
+runtime.lockPicking = runtime.lockPicking or false
+runtime.pointerScene = runtime.pointerScene or false
+runtime.pointerHookInstalled = runtime.pointerHookInstalled or false
+runtime.directionalHookInstalled = runtime.directionalHookInstalled or false
+runtime.promptHooksInstalled = runtime.promptHooksInstalled or false
 
 -- Keep ESO's original query. HUI changes presentation only while the player
 -- is active in the world, never during pregame, character select, or loading.
-ADDON.NativeIsInGamepadPreferredMode = IsInGamepadPreferredMode
+if not ADDON.NativeIsInGamepadPreferredMode then
+    ADDON.NativeIsInGamepadPreferredMode = IsInGamepadPreferredMode
+end
 
 function ADDON:IsActive()
     return self.runtime.inWorld == true

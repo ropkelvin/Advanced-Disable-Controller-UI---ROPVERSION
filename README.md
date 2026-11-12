@@ -27,6 +27,7 @@ LibMousePointer provides the scene pointer fragment and an optional `UI_SHORTCUT
 - `/hui` — show current mode and runtime state
 - `/hui hybrid` — keyboard UI + controller input
 - `/hui gamepad` — native Gamepad UI
+- `/huidebug` — capture 90 seconds of scene, pointer, directional-input owner, keybind, mode and HUD state into account-wide SavedVariables. Reproduce the issue during the capture; when it finishes, run `/reloadui` to flush the log, then upload `Documents\\Elder Scrolls Online\\live\\SavedVariables\\ESOHybridUI.lua` (Steam installations use the same SavedVariables location unless Documents is redirected). The log is stored under `ESOHybridUISavedVariables.diagnostics`.
 
 After changing modes, close and reopen the active menu so ESO can select the matching keyboard or Gamepad scene.
 
@@ -47,6 +48,7 @@ After changing modes, close and reopen the active menu so ESO can select the mat
 - `SceneController.lua`: pointer fragment attachment and directional-input ownership for the current top scene.
 - `Prompts.lua`: gamepad keybind and glyph preference wrappers, activated in-world and pass-through while inactive.
 - `Settings.lua`: optional LibAddonMenu settings.
+- `Diagnostics.lua`: timed `/huidebug` capture stored in SavedVariables; it does not attempt unsupported arbitrary file writes.
 
 ## Safety boundaries
 

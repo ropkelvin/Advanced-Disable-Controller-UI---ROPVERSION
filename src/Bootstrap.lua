@@ -70,6 +70,10 @@ local function OnPlayerActivated()
     ADDON.runtime.inWorld = true
     ADDON:InitializeLockpickHook()
     ADDON:ApplyMode()
+    if ADDON.runtime.hudRefreshPending and HUD_MANAGER and HUD_MANAGER.PropagateSettings then
+        HUD_MANAGER:PropagateSettings()
+        ADDON.runtime.hudRefreshPending = false
+    end
     ADDON:InitializeSceneController()
     ADDON:InitializePrompts()
     ADDON:InitializeSettings()
@@ -89,6 +93,7 @@ local function OnPlayerDeactivated()
     ADDON.runtime.lockPicking = false
     ADDON.runtime.restrictedSceneActive = false
     ADDON.runtime.restrictedScenes = {}
+    ADDON.runtime.hudRefreshPending = true
 end
 
 local function OnAddonLoaded(_, addonName)

@@ -22,7 +22,7 @@ function ADDON:ApplyPromptPresentation()
     end
 
     local hybridPrompts = self:IsHybrid()
-        and self:IsNativeGamepadMode() and not self:IsRestrictedSceneActive()
+        and self:IsGamepadModeOn() and not self:IsRestrictedSceneActive()
 
     if KEYBIND_STRIP_STANDARD_STYLE then
         if not rt.originalPromptStyleCaptured then
@@ -88,7 +88,7 @@ function ADDON:InitializePrompts()
 
         if originalShouldUseGamepadAction then
             wrapperShouldUseGamepadAction = function(alwaysPreferGamepadMode, ...)
-                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode()
+                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsGamepadModeOn()
                     and not ADDON:IsRestrictedSceneActive() then
                     return true
                 end
@@ -99,7 +99,7 @@ function ADDON:InitializePrompts()
 
         if originalGetPreferredKeyType then
             wrapperGetPreferredKeyType = function(alwaysPreferGamepadMode, ...)
-                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode()
+                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsGamepadModeOn()
                     and not ADDON:IsRestrictedSceneActive() then
                     return PREFERRED_INPUT_DEVICE_TYPE_GAMEPAD
                 end
@@ -110,7 +110,7 @@ function ADDON:InitializePrompts()
 
         if originalShouldShowGamepadKeybind then
             wrapperShouldShowGamepadKeybind = function(alwaysPreferGamepadMode, ...)
-                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode()
+                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsGamepadModeOn()
                     and not ADDON:IsRestrictedSceneActive() then
                     return true
                 end

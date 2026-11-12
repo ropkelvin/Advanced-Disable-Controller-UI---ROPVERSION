@@ -248,40 +248,53 @@ local function InstallPointerKeybindConflictHook()
     local pointerClickDescriptor = LibMousePointer.keybindButton
     local pointerClickKeybind = pointerClickDescriptor.keybind
 
-    -- LibMousePointer uses UI_SHORTCUT_PRIMARY for cursor clicks. Some native
-    -- keyboard scenes also register UI_SHORTCUT_PRIMARY (for example the
-    -- Notifications scene's Accept Request action). ESO's keybind strip treats
-    -- that as a duplicate and evaluates descriptor.name while reporting it;
-    -- the Notifications name callback assumes a selected row and can nil-index.
-    -- When a real scene descriptor claims the same key, remove only the
-    -- library's click descriptor first. The pointer fragment and cursor remain
-    -- active; that scene's native primary action keeps ownership of the key.
+    local function UnwrapDescriptor(value)
+        if type(value) == "userdata" then
+            return value.keybindButtonDescriptor
+        end
+        return value
+    end
+
+    local function GetExistingDescriptor(keybindStrip, stateIndex)
+        local state = keybindStrip.GetKeybindState
+            and keybindStrip:GetKeybindState(stateIndex)
+        local existing = state and state.individualButtons
+            and state.individualButtons[pointerClickKeybind]
+        existing = UnwrapDescriptor(existing)
+        if existing then
+            return existing
+        end
+        return UnwrapDescriptor(keybindStrip.keybinds
+            and keybindStrip.keybinds[pointerClickKeybind])
+    end
+
+    -- LibMousePointer uses UI_SHORTCUT_PRIMARY for cursor clicks. Native
+    -- keyboard scenes can also claim that key (for example Notifications).
+    -- Handle both registration orders: if the pointer was added first, remove
+    -- only its descriptor before the native descriptor is processed; if the
+    -- native descriptor was added first, suppress the library descriptor.
+    -- This avoids duplicate-key processing while preserving the scene's
+    -- native action. The cursor fragment itself remains active.
     ZO_PreHook(KEYBIND_STRIP, "AddKeybindButton", function(keybindStrip, descriptor, stateIndex)
-        if not descriptor
-            or descriptor == pointerClickDescriptor
-            or descriptor.keybind ~= pointerClickKeybind then
+        if not descriptor or descriptor.keybind ~= pointerClickKeybind then
             return false
         end
 
-        local state = keybindStrip:GetKeybindState(stateIndex)
-        if state then
-            if state.individualButtons
-                and state.individualButtons[pointerClickKeybind] == pointerClickDescriptor then
-                keybindStrip:RemoveKeybindButton(pointerClickDescriptor, stateIndex)
+        local existingDescriptor = GetExistingDescriptor(keybindStrip, stateIndex)
+        local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
+
+        if descriptor == pointerClickDescriptor then
+            if existingDescriptor and existingDescriptor ~= pointerClickDescriptor then
+                ADDON:RecordDiagnostic("POINTER_PRIMARY_SUPPRESSED",
+                    "scene=" .. tostring(sceneName))
+                return true
             end
             return false
         end
 
-        local existing = keybindStrip.keybinds
-            and keybindStrip.keybinds[pointerClickKeybind]
-        local existingDescriptor = existing
-        if type(existing) == "userdata" then
-            existingDescriptor = existing.keybindButtonDescriptor
-        end
-
         if existingDescriptor == pointerClickDescriptor then
-            ADDON:RecordDiagnostic("POINTER_PRIMARY_CONFLICT", "scene=" .. tostring(
-                SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()))
+            ADDON:RecordDiagnostic("POINTER_PRIMARY_CONFLICT",
+                "scene=" .. tostring(sceneName))
             keybindStrip:RemoveKeybindButton(pointerClickDescriptor, stateIndex)
         end
         return false
@@ -289,7 +302,6 @@ local function InstallPointerKeybindConflictHook()
 
     rt.pointerKeybindConflictHookInstalled = true
 end
-
 local function InstallDirectionalInputHook()
     -- ZO_IngameSceneManager is a local class in ESO's ingame scene-manager
     -- source, not a global. Hook the live SCENE_MANAGER instance instead.

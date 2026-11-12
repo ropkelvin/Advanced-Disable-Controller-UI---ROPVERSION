@@ -6,6 +6,71 @@
 local ADDON = ESOHybridUI
 local rt = ADDON.runtime
 
+
+-- ESO's keyboard lockpick template normally enables its virtual cursor only
+-- when IsInGamepadPreferredMode() is true. This mode deliberately reports
+-- keyboard presentation, so reuse ESO's own native lockpick cursor calculation
+-- with the real controller stick input. This is the narrow approach used by
+-- EnhancedGamepadUI, updated to the current ESO method and fields.
+local STARTING_NORMALIZED_LOCKPICK_X = 0.53
+local GAMEPAD_LOCKPICK_SPEED_FACTOR = 3.5
+
+local function UpdateKeyboardControllerLockpick(lockpick)
+    if not lockpick.virtualMouseX then
+        lockpick.virtualMouseX = zo_lerp(
+            lockpick.lockpickLowerBound,
+            lockpick.lockpickUpperBound,
+            STARTING_NORMALIZED_LOCKPICK_X)
+        lockpick.virtualNormalizedMouseX = STARTING_NORMALIZED_LOCKPICK_X
+        lockpick:OnVirtualLockpickPositionChanged()
+        return true
+    end
+
+    local deltaX = ZO_Gamepad_GetLeftStickEasedX() * GAMEPAD_LOCKPICK_SPEED_FACTOR
+    if deltaX == 0 and not IsConsoleUI() then
+        deltaX = GetUIMouseDeltas()
+    end
+    deltaX = deltaX * GetFrameDeltaNormalizedForTargetFramerate()
+
+    if deltaX ~= 0 then
+        local clampedX = zo_clamp(
+            lockpick.virtualMouseX + deltaX,
+            lockpick.lockpickLowerBound,
+            lockpick.lockpickUpperBound)
+
+        if clampedX ~= lockpick.virtualMouseX then
+            lockpick.virtualMouseX = clampedX
+            lockpick.virtualNormalizedMouseX =
+                (clampedX - lockpick.lockpickLowerBound)
+                / (lockpick.lockpickUpperBound - lockpick.lockpickLowerBound)
+            lockpick:OnVirtualLockpickPositionChanged()
+        end
+    end
+
+    return true
+end
+
+local function InstallLockpickInputHook()
+    local lockpickClass = ZO_Lockpick
+    if not lockpickClass or type(lockpickClass.UpdateVirtualMousePosition) ~= "function" then
+        return false
+    end
+
+    if rt.keyboardControllerLockpickHookInstalled then
+        return true
+    end
+
+    ZO_PreHook(lockpickClass, "UpdateVirtualMousePosition", function(lockpick)
+        if rt.keyboardController and ADDON:IsNativeGamepadMode() then
+            return UpdateKeyboardControllerLockpick(lockpick)
+        end
+        return false
+    end)
+
+    rt.keyboardControllerLockpickHookInstalled = true
+    return true
+end
+
 local function IsPointerScene(scene)
     if not scene or not scene.GetName then
         return false
@@ -63,6 +128,8 @@ function ADDON:ResetMousePointer()
 end
 
 function ADDON:ApplyMousePointer()
+    InstallLockpickInputHook()
+
     if not SCENE_MANAGER then
         return false
     end

@@ -82,17 +82,13 @@ local function OnPlayerActivated()
 end
 
 local function OnPlayerDeactivated()
+    -- EVENT_PLAYER_DEACTIVATED is raised as the loading screen is shown.
+    -- Only update internal state here; all presentation hooks become pass-through
+    -- while inactive. Do not touch scenes, controls, or HUD during loading.
     ADDON.runtime.inWorld = false
     ADDON.runtime.lockPicking = false
     ADDON.runtime.restrictedSceneActive = false
     ADDON.runtime.restrictedScenes = {}
-    ADDON:ApplyMode()
-    if ADDON.RestorePrompts then
-        ADDON:RestorePrompts()
-    end
-    if ADDON.RefreshSceneController then
-        ADDON:RefreshSceneController()
-    end
 end
 
 local function OnAddonLoaded(_, addonName)

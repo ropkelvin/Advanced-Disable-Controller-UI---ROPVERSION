@@ -101,7 +101,7 @@ local function BuildControls(isGamepad)
         tooltip = GetString(SI_ESOHYBRIDUI_MODE_TOOLTIP),
         choices = { GetString(SI_ESOHYBRIDUI_MODE_GAMEPAD), GetString(SI_ESOHYBRIDUI_MODE_HYBRID) },
         choicesValues = { ADDON.MODE_GAMEPAD, ADDON.MODE_HYBRID },
-        default = ADDON.MODE_GAMEPAD,
+        default = ADDON.MODE_HYBRID,
         getFunc = function() return ADDON:IsHybrid() and ADDON.MODE_HYBRID or ADDON.MODE_GAMEPAD end,
         setFunc = function(value) ADDON:SetMode(value) end,
     })

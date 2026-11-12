@@ -74,9 +74,6 @@ function ADDON:ApplyMode()
         rt.hudRefreshPending = false
     end
 
-    if self.ApplyPromptPresentation then
-        self:ApplyPromptPresentation()
-    end
     if self.RefreshSceneController then
         self:RefreshSceneController()
     end

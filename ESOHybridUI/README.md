@@ -1,83 +1,89 @@
 # ESO Hybrid UI 4.2.1-beta
 
-**AI-assisted development disclosure:** AI tools were used during development and review. The addon is maintained and tested by its author. Please report compatibility issues with the ESO game version and a diagnostic dump.
+**AI-assisted development disclosure:** AI tools were used during development and review. The addon is maintained by its author. In-game validation is required for every supported scene and ESO update.
 
-ESO Hybrid UI provides a controller-first interface that keeps ESO's Gamepad Mode enabled while offering a compact keyboard-layout HUD in Hybrid mode.
+ESO Hybrid UI keeps ESO's actual Gamepad Mode enabled while selecting keyboard-layout UI for ordinary menus. In Hybrid mode, the left stick moves a controller-operated pointer in keyboard scenes; on the gameplay HUD it returns to normal character movement. The right stick remains camera control.
 
 ## Requirements
 
 - The Elder Scrolls Online PC client.
 - **LibAddonMenu-2.0 r43 or newer** (required).
-- ESO's **Gamepad Mode must be set to On**, not Auto. Auto can switch input presentation unexpectedly.
-- Optional: LibGamepadOptions for the native controller settings page.
-- Optional: LibDebugLogger (and DebugLogViewer) for persistent diagnostic logs.
+- ESO **Gamepad Mode: On**, not Auto.
+- **LibMousePointer** (optional but recommended; provides the cursor, hit-testing and click support).
+- LibGamepadOptions (optional native controller settings page).
+- LibDebugLogger (optional persistent diagnostic logs).
 
 ## Installation
 
 1. Install LibAddonMenu-2.0 r43 or newer.
-2. Extract the `ESOHybridUI` folder into `Documents/Elder Scrolls Online/live/AddOns/`.
-3. Start ESO and enable ESO Hybrid UI in the Add-Ons menu.
-4. Open the addon settings and press **Apply settings** once. This applies the recommended controller, keybind-display and chat settings; it does not change them automatically on every login.
-5. Choose **Hybrid** as the interface mode.
-
-The addon folder must be named exactly `ESOHybridUI` and contain `ESOHybridUI.txt`.
+2. Install LibMousePointer for controller pointer support.
+3. Extract the `ESOHybridUI` folder into `Documents/Elder Scrolls Online/live/AddOns/`.
+4. Enable ESO Hybrid UI and its optional libraries in the Add-Ons menu.
+5. Open addon settings and press **Apply settings** once.
+6. Select **Hybrid**.
 
 ## Interface modes
 
 ### Gamepad
 
-Uses ESO's normal Gamepad UI without the Hybrid presentation policy.
+Uses ESO's normal native Gamepad UI without the Hybrid presentation policy.
 
 ### Hybrid
 
-- Keeps the compact keyboard-layout HUD and action bar.
-- Can display controller glyphs on the action bar and HUD prompts.
-- Routes supported platform-selected menus and dialogs to ESO's native Gamepad UI.
-- Keeps the native Gamepad world map, loot and lockpicking interfaces.
-- Uses the keyboard-style quickslot wheel by default, with controller cycling bridged to ESO's native wheel actions.
-- The player-interaction wheel also appears keyboard-style in the current Hybrid setup. This uses ESO's normal interaction path; the addon deliberately does not replace the resurrection interaction function.
-- The built-in HUD layout editor edits the keyboard HUD layout.
+- Keeps the compact keyboard-layout HUD and controller glyphs.
+- Selects keyboard-layout UI for ordinary menu scenes.
+- Attaches LibMousePointer to keyboard-pointer scenes; left stick moves the cursor and the library supplies hit-testing and click behavior.
+- Leaves right-stick camera control available while the pointer is active.
+- Uses keyboard-style world map and menu presentation, with the native scene retained as a fallback for explicitly Gamepad-only routes.
+- Retains native ESO handling for loot, lockpicking, death/resurrection and other protected workflows.
+- Uses the keyboard-style quickslot wheel by default with controller cycling; the player-interaction wheel retains its current keyboard-style presentation.
+- Keeps LB/RB category navigation for the keyboard main menu.
+- Does not synthesize protected inventory, trade or resurrection operations.
 
-The **Keyboard-style quickslot wheel** setting can be turned off to use ESO's native Gamepad quickslot radial instead. The player-interaction wheel has no separate setting.
+The **Menu presentation** setting selects either **Keyboard UI + controller pointer** (default) or **Native Gamepad menus** as a compatibility fallback. The **Controller pointer in keyboard menus** setting can disable pointer attachment. The keyboard-style quickslot wheel can be disabled separately.
 
-The **Menus opened from the HUD** policy defaults to **Gamepad**. The **Legacy** option retains the older routing behaviour and is intended only as a compatibility fallback.
+## Controller pointer controls
+
+LibMousePointer adds a controller select action when `UI_SHORTCUT_PRIMARY` is available in the active keybind strip. If another screen already uses that action, use the addon's user-bindable actions under Settings > Controls > Keybindings:
+
+- Pointer click
+- Pointer right-click
+- Reset pointer position
+
+These actions do not take over A/B/X/Y by default. Main-menu LB/RB category actions inherit ESO's existing shoulder bindings.
 
 ## Settings
 
-The keyboard Add-Ons panel is provided by LibAddonMenu. If LibGamepadOptions is installed, the same settings are also available from its native controller settings page.
-
-- **Apply settings:** explicitly applies the recommended ESO input and chat settings.
+- **Apply settings:** explicitly applies recommended ESO input and chat settings.
 - **Interface mode:** switches between Gamepad and Hybrid.
-- **Menus opened from the HUD:** selects the default Gamepad routing policy or Legacy behaviour.
-- **Account-wide settings:** shares the addon settings across characters on the current megaserver.
-- **Keyboard-style quickslot wheel:** chooses the keyboard or native Gamepad quickslot radial in Hybrid.
-- **Controller glyphs on the action bar:** enables or disables controller glyphs in Hybrid.
-- **HUD prompt fonts:** adjusts interaction and stealth prompt font sizes.
-- **Advanced:** optional diagnostic logging, opt-in load announcement and command reference.
-- **Donation mail:** opens a mail draft addressed to the author. It does not attach or transfer gold. The mail composer is keyboard-oriented and may not open correctly from every native Gamepad screen.
+- **Menu presentation:** selects keyboard-pointer menus or the native Gamepad fallback.
+- **Controller pointer in keyboard menus:** enables or disables LibMousePointer attachment.
+- **Account-wide settings:** shares configuration across characters on the current megaserver.
+- **Keyboard-style quickslot wheel:** selects the keyboard or native Gamepad radial.
+- **Controller glyphs on the action bar:** toggles controller glyphs in Hybrid.
+- **HUD prompt fonts:** adjusts interaction and stealth prompt fonts.
+- **Advanced:** diagnostic logging, load announcement and command reference.
 
 ## Commands
 
 - `/esohybrid` — toggle Gamepad / Hybrid.
-- `/esohybrid_status` — show the current interface mode.
-- `/esohybrid_policy gamepad|legacy` — change the menu-routing policy.
+- `/esohybrid_status` — show current interface mode.
+- `/esohybrid_policy gamepad|legacy` — select native Gamepad or keyboard-pointer menu routing.
 - `/esohybrid_settings` — open addon settings.
 - `/esohybrid_debug on|off` — enable or disable diagnostic logging.
 - `/esohybrid_dump` — print a diagnostic snapshot.
+- `/esohybrid_pointer` — print pointer and directional-input diagnostics.
 - `/esohybrid_trace on|off|report|reset` — trace platform queries, scenes and UI-system routing.
 - `/esohybrid_sv` — show SavedVariables initialization status.
 
-## Compatibility notes and known limitations
+## Compatibility and validation
 
-ESO's UI platform selection is handled through several internal systems. Hybrid uses targeted hooks around those selection points; a game update or another addon that replaces the same functions can affect compatibility.
+ESO chooses platform-specific UI through several separate paths: `IsInGamepadPreferredMode()`, UI-system routing, `SYSTEMS:GetObject()`, root-scene lookup, direct scene opens and scene-specific fragments. Hybrid scopes the platform query rather than copying ADCUI's unconditional global override.
 
-- Not every special-purpose screen necessarily uses the same platform-selection path. The Event Pursuit HUD entry has been observed opening its keyboard presentation in Hybrid, even when the page opened directly from the Gamepad UI uses the native Gamepad presentation.
-- Some prompt remaps refer to ESO-owned keybind descriptor positions. A game update can change those descriptors; diagnostic logging records the remaps.
-- The quickslot controller bridge inherits ESO's own controller bindings. Custom controller rebinding should be checked after changing those bindings.
-- The menu policy and special-case screens should be retested after major ESO updates.
+Keyboard scenes can still contain controls that are focus-driven, keyboard-only, protected, or not mouse-hit-testable. LibMousePointer makes mouse-enabled controls operable, but it does not magically convert every focus model or protected callback. Unknown keyboard scenes receive pointer presentation by default; special native scenes remain explicitly classified. Third-party addon windows may need their own adapter.
 
-If reporting a problem, include the ESO API version, the action that triggered it, whether the issue occurs in Gamepad or Hybrid mode, and the output of `/esohybrid_dump`. For routing problems, enable `/esohybrid_trace on`, reproduce the issue, then include `/esohybrid_trace report`.
+When reporting a problem, include the ESO API version, the scene/action, `/esohybrid_dump`, `/esohybrid_pointer`, and `/esohybrid_trace report` after reproducing the issue. This branch has passed automated Lua syntax, manifest and ZIP packaging checks; it still requires in-game validation with a controller.
 
 ## Credits
 
-ESO Hybrid UI is an AI-assisted revision inspired by **Advanced Disable Controller UI** by **Lionas**, with contributions by **jc28735250** and **DoriKyll**. Credit is given for the original addon concept and inspiration; this project is maintained as a separate implementation.
+ESO Hybrid UI is inspired by **Advanced Disable Controller UI** by **Lionas**, with contributions by **jc28735250** and **DoriKyll**. The original ADCUI source was reviewed for its platform-selection technique; this project uses a separate scene-aware implementation.

@@ -109,55 +109,23 @@ end
 -- getters here; doing so bypasses directional-input priority and deadzone rules.
 local function InstallPointerInputHook()
     local pointer = LibMousePointer
-    if not pointer or type(pointer.UpdateDirectionalInput) ~= "function" then
+    if not pointer or type(pointer.UpdateDirectionalInput) ~= "function"
+        or type(ZO_PostHook) ~= "function" then
         return false
     end
     if rt.mousePointerInputHookInstalled then
         return true
     end
 
-    local moveStartTimestamp = GetGameTimeMilliseconds()
-    ZO_PreHook(pointer, "UpdateDirectionalInput", function(lib)
-        if not IsPointerFragmentActive() then
-            return false
+    -- Leave cursor movement to LibMousePointer's own Cursor_Gamepad handler.
+    -- It already uses DIRECTIONAL_INPUT:IsAvailable/GetXY and owns its speed,
+    -- deadzone, bounds and hit-testing. Consume LEFT after it has processed the
+    -- frame so the same stick cannot also move the character.
+    ZO_PostHook(pointer, "UpdateDirectionalInput", function()
+        if IsPointerFragmentActive()
+            and DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK) then
+            DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK)
         end
-
-        local cursor = lib.gamepadCursor
-        if not cursor or not cursor.control then
-            return true
-        end
-
-        if not DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK) then
-            moveStartTimestamp = GetGameTimeMilliseconds()
-            return true
-        end
-
-        local dx, dy = DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)
-        dx, dy = zo_clampLength2D(dx, dy, 1.5)
-
-        if dx == 0 and dy == 0 then
-            moveStartTimestamp = GetGameTimeMilliseconds()
-            return true
-        end
-
-        DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK)
-
-        local frameDelta = GetFrameDeltaNormalizedForTargetFramerate()
-        local heldMilliseconds = GetGameTimeMilliseconds() - moveStartTimestamp
-        local acceleration = zo_clamp(heldMilliseconds / 250, 1, 8)
-        local magnitude = frameDelta * 3 * acceleration
-        dx = dx * magnitude
-        dy = -dy * magnitude
-
-        cursor.control:SetAnchor(CENTER, GuiRoot, TOPLEFT, cursor.x + dx, cursor.y + dy)
-        local clampedX, clampedY = cursor.control:GetCenter()
-        if clampedX ~= cursor.x or clampedY ~= cursor.y then
-            cursor.x, cursor.y = clampedX, clampedY
-            cursor.directionalX = cursor.x + dx
-            cursor.directionalY = cursor.y + dy
-            cursor:UpdateCursorInfo()
-        end
-        return true
     end)
 
     rt.mousePointerInputHookInstalled = true

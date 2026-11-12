@@ -13,7 +13,7 @@
 -- Keybindings screen (ids fixed by Bindings.xml / ESO naming rules)
 ZO_CreateStringId("SI_KEYBINDINGS_CATEGORY_ESO_HYBRID_UI", "ESO Hybrid UI")
 ZO_CreateStringId("SI_KEYBINDINGS_CATEGORY_ESO_HYBRID_UI_WHEEL", "ESO Hybrid UI: utility wheel bridge")
-ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Toggle gamepad / hybrid UI")
+ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Cycle interface modes")
 ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_LEFT", "Cycle utility wheel left (controller)")
 ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_RIGHT", "Cycle utility wheel right (controller)")
 
@@ -31,11 +31,13 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_RECOMMENDED_APPLIED", "Recommended ESO setting
 
 -- Settings: interface mode
 ZO_CreateStringId("SI_ESOHYBRIDUI_MODE_NAME", "Interface mode")
-ZO_CreateStringId("SI_ESOHYBRIDUI_MODE_TOOLTIP", "Gamepad: ESO's full controller interface. Hybrid: compact keyboard-layout HUD and quickslot wheel with controller glyphs; menus, map, loot and lockpicking stay native gamepad UI. ESO's Gamepad Mode must be On, not Auto.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_MODE_TOOLTIP", "Gamepad: ESO's native controller interface. Hybrid: keyboard-layout HUD and quickslot wheel with native Gamepad menus where supported. Keyboard UI + Controller: keep ESO's normal keyboard UI and layouts throughout, while using controller input and glyphs wherever ESO exposes a usable Gamepad action. Requires ESO Gamepad Mode On, not Auto.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_MODE_GAMEPAD", "Gamepad")
 ZO_CreateStringId("SI_ESOHYBRIDUI_MODE_HYBRID", "Hybrid")
+ZO_CreateStringId("SI_ESOHYBRIDUI_MODE_KEYBOARD_CONTROLLER", "Keyboard UI + Controller")
 ZO_CreateStringId("SI_ESOHYBRIDUI_STATUS_GAMEPAD", "native gamepad UI")
 ZO_CreateStringId("SI_ESOHYBRIDUI_STATUS_HYBRID", "hybrid UI")
+ZO_CreateStringId("SI_ESOHYBRIDUI_STATUS_KEYBOARD_CONTROLLER", "keyboard UI + controller mode")
 
 -- Settings: how menus opened from the HUD are chosen
 ZO_CreateStringId("SI_ESOHYBRIDUI_POLICY_NAME", "Menus opened from the HUD")
@@ -51,7 +53,7 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_ACCOUNT_TOOLTIP", "Use the same settings on al
 -- Settings: Hybrid HUD features
 ZO_CreateStringId("SI_ESOHYBRIDUI_HEADER_HYBRID_HUD", "Hybrid HUD")
 ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_NAME", "Keyboard-style quickslot wheel")
-ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_TOOLTIP", "On: the quickslot wheel uses the keyboard radial layout in Hybrid and keeps controller cycling. To open it with a controller, assign a Gamepad button as a secondary binding to Quickslot Wheel (ACTION_BUTTON_9) under Settings > Controls > Keybindings > Combat. ESO Hybrid UI does not change your keybindings. Off: ESO uses its native gamepad quickslot wheel. Applies the next time the wheel is opened.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_TOOLTIP", "In Hybrid, On uses the keyboard radial layout with controller cycling. Keyboard UI + Controller always keeps the keyboard radial layout. To open it with a controller, assign a Gamepad button as a secondary binding to Quickslot Wheel (ACTION_BUTTON_9) under Settings > Controls > Keybindings > Combat. ESO Hybrid UI does not change your keybindings. In Hybrid, Off uses ESO's native Gamepad wheel.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_REMINDER_NAME", "Show controller quickslot setup reminder")
 ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_REMINDER_TOOLTIP", "Show one chat reminder each time the addon loads when Hybrid is active and the keyboard-style quickslot wheel is enabled. The reminder explains how to assign a Gamepad secondary binding to Quickslot Wheel (ACTION_BUTTON_9).")
 ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_BINDING_REMINDER", "ESO Hybrid UI: To open the keyboard-style quickslot wheel with your controller, go to Settings > Controls > Keybindings > Combat, select Quickslot Wheel (ACTION_BUTTON_9), and assign a Gamepad button as a secondary binding. Your keybindings are not changed by the addon.")

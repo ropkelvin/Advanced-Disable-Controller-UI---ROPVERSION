@@ -1,4 +1,4 @@
-# ESO Hybrid UI 4.2.1-beta
+# ESO Hybrid UI 4.2.2-beta
 
 **AI-assisted development disclosure:** AI tools were used during development and review. The addon is maintained and tested by its author. Please report compatibility issues with the ESO game version and a diagnostic dump.
 
@@ -10,7 +10,7 @@ ESO Hybrid UI provides three controller-first interface modes while keeping ESO'
 - **LibAddonMenu-2.0 r43 or newer** (required).
 - ESO's **Gamepad Mode must be set to On**, not Auto. Auto can switch input presentation unexpectedly.
 - Optional: LibGamepadOptions for the native controller settings page.
-- Optional: LibMousePointer for controller-operated pointer navigation and mouse clicks in keyboard-style UI scenes.
+- Optional: [LibMousePointer](https://www.esoui.com/downloads/info4518-LibMousePointer.html) for controller-operated pointer navigation and mouse clicks in keyboard-style UI scenes.
 - Optional: LibDebugLogger (and DebugLogViewer) for persistent diagnostic logs.
 
 ## Installation
@@ -22,6 +22,12 @@ ESO Hybrid UI provides three controller-first interface modes while keeping ESO'
 5. Choose **Hybrid** or **Keyboard UI + Controller** as the interface mode.
 
 The addon folder must be named exactly `ESOHybridUI` and contain `ESOHybridUI.txt`.
+
+## 4.2.2-beta changes
+
+- Added optional LibMousePointer scene integration and configurable pointer left-click, right-click and reset actions.
+- Added controller left-stick movement to the keyboard lockpick virtual cursor using ESO's current native lockpick calculation.
+- Added a repository audit of all 305 action definitions in ESO's global bindings file.
 
 ## Interface modes
 

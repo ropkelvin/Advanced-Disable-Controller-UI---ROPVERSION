@@ -159,8 +159,30 @@ local function IsGamepadUIAllowed()
 end
 
 function ADDON:InstallModeOverride()
+    -- Full Gamepad mode must use ESO's original global directly. Leaving even a
+    -- pass-through addon wrapper installed puts addon Lua in native UI call paths,
+    -- including keybind dispatch for protected inventory actions.
+    if not rt.hybrid then
+        if not rt.modeOverrideInstalled then
+            return true
+        end
+
+        if _G.IsInGamepadPreferredMode == rt.overrideFunction then
+            _G.IsInGamepadPreferredMode = rt.originalIsInGamepadPreferredMode
+            rt.modeOverrideInstalled = false
+            rt.overrideReplacedWarned = false
+            return true
+        end
+
+        -- Another addon replaced our wrapper. Do not overwrite its newer owner.
+        if not rt.overrideReplacedWarned then
+            rt.overrideReplacedWarned = true
+            self:LogWarn("IsInGamepadPreferredMode is no longer owned by Hybrid UI; leaving the newer implementation untouched.")
+        end
+        return false
+    end
+
     if rt.modeOverrideInstalled then
-        -- Never fight another addon for the global; report it once per change.
         if _G.IsInGamepadPreferredMode ~= rt.overrideFunction then
             if not rt.overrideReplacedWarned then
                 rt.overrideReplacedWarned = true

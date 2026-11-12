@@ -59,6 +59,7 @@ end
 
 local function OnPlayerActivated()
     ADDON.runtime.inWorld = true
+    ADDON:InitializeLockpickHook()
     ADDON:ApplyMode()
     ADDON:InitializeSceneController()
     ADDON:InitializePrompts()

@@ -2,7 +2,7 @@
 
 **AI-assisted development disclosure:** AI tools were used to generate and review portions of this addon. The implementation is still being audited and has not yet been fully verified in the live ESO client. Do not treat this development build as a stable release.
 
-**Required dependency:** [LibMousePointer by Votan](https://www.esoui.com/downloads/info4518-libmousepointer.html). **Optional dependency:** LibAddonMenu-2.0.
+**Required dependency:** [LibMousePointer by Votan](https://www.esoui.com/downloads/info4518-libmousepointer.html), minimum `AddOnVersion 10000` (library version 1.0.0 in the inspected source). **Optional dependency:** LibAddonMenu-2.0.
 
 HUI is a clean rebuild of ESOHybridUI around one initial goal: keep ESO's native Gamepad input enabled while presenting the keyboard UI.
 
@@ -22,7 +22,7 @@ Only these two modes are exposed in this first stage. Additional modes can be ad
 
 ## Controls
 
-LibMousePointer provides the scene pointer fragment and an optional `UI_SHORTCUT_PRIMARY` click binding when that keybind is unused. If a screen already owns the shortcut, it needs a screen-specific click adapter. HUI does not replace protected ESO actions or synthesize keyboard/mouse events.
+LibMousePointer provides the scene pointer fragment and an optional `UI_SHORTCUT_PRIMARY` click binding when that keybind is unused. Its inspected `Gamepad/Cursor.lua` reads the left stick with `DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)`, which consumes that input device through ESO's directional-input API. Its `Gamepad/Main.lua` activates the library as a directional-input owner while the pointer fragment is shown. HUI does not implement a second cursor or compete for left-stick movement. If the pointer has consumed the left stick, HUI lets ESO's scene-manager handler consume the right stick so it cannot leak into player movement; if the left stick remains available, HUI leaves ESO's original handler untouched. If a screen already owns `UI_SHORTCUT_PRIMARY`, it needs a screen-specific click adapter. HUI does not replace protected ESO actions or synthesize keyboard/mouse events.
 
 - `/hui` — show current mode and runtime state
 - `/hui hybrid` — keyboard UI + controller input
@@ -35,7 +35,7 @@ After changing modes, close and reopen the active menu so ESO can select the mat
 - **Advanced Disable Controller UI (ADCUI)** by **Lionas**: studied for its global keyboard-presentation override and lockpicking exception. HUI is a clean implementation and does not copy ADCUI source code. [Source repository](https://github.com/Lionas/Advanced-Disable-Controller-UI).
 - **LibMousePointer** by **Votan**: required external library providing the pointer fragment and cursor click API. [ESOUI page](https://www.esoui.com/downloads/info4518-libmousepointer.html).
 - [ESO scene manager](https://github.com/esoui/esoui/blob/live/esoui/ingame/scenes/ingamescenemanager.lua) — confirms ESO consumes both sticks in UI mode by default.
-- [ESO directional input](https://github.com/esoui/esoui/blob/live/esoui/libraries/zo_directionalinput/zo_directionalinput.lua) — confirms the input-owner ordering and `IsAvailable`/`Consume` behaviour used by HUI's fail-safe.
+- [ESO directional input](https://github.com/esoui/esoui/blob/live/esoui/libraries/zo_directionalinput/zo_directionalinput.lua) — confirms input owners are ordered by control visual order, `GetXY` consumes the requested device, and `IsAvailable`/`Consume` behaviour used by HUI's fail-safe.
 - [ESO keybinding utilities](https://github.com/esoui/esoui/blob/live/esoui/libraries/utility/keybindingutils.lua) — confirms the three keybinding functions HUI wraps for controller prompts.
 - [ESO HUD manager](https://github.com/esoui/esoui/blob/live/esoui/ingame/hud/hudmanager.lua) — confirms `HUD_MANAGER:PropagateSettings()` refreshes active HUD element anchors.
 - ESO UI source, published by ZeniMax for reference: [ESOUI source repository](https://github.com/esoui/esoui).
@@ -62,8 +62,8 @@ This branch is a foundation, not a feature-complete Hybrid release. The followin
 - Refresh of non-HUD platform styles. ESO's `PLATFORM_STYLE_MANAGER` is local and listens for the real `EVENT_GAMEPAD_PREFERRED_MODE_CHANGED`; HUI does not fake that engine event. `HUD_MANAGER:PropagateSettings()` only reverts HUD anchor modifications, not every `ZO_PlatformStyle` object. Components such as compass, boss bar, death UI and other style-driven controls need a targeted refresh audit.
 - Explicit quickslot-wheel and player-interaction-wheel bindings and behaviour. The old `Bindings.xml` and `UtilityWheel.lua` were intentionally not copied into this clean foundation.
 - A complete screen-by-screen route and interaction audit for inventory, map, crafting, bank, trade, dialogs, loot, resurrection and housing.
-- A verified LibMousePointer source review and live controller test. Its published page does not document enough detail to prove its exact left-stick consumption order.
+- Live controller testing of the now-inspected LibMousePointer integration, including cursor movement, scene transitions, overlays, and ensuring player movement never leaks through. Static source inspection confirms the library's left-stick consumption path, but does not establish runtime behaviour in the live client.
 
 ## Development status
 
-Initial audited foundation only. Not release-ready and not yet confirmed in-game. Automated Lua syntax, manifest and package checks are necessary but do not establish runtime correctness. The non-optional LibMousePointer dependency also needs its exact `## AddOnVersion` value so the manifest can use ESOUI's required versioned dependency syntax.
+Initial audited foundation only. Not release-ready and not yet confirmed in-game. Automated Lua syntax, manifest and package checks are necessary but do not establish runtime correctness. The required dependency is now version-pinned to `LibMousePointer>=10000`, matching the `## AddOnVersion: 10000` found in the library manifest on the reference branch. Verify the installed dependency is at least that version.

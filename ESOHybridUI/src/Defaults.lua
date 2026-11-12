@@ -23,7 +23,7 @@ ADDON.POLICY_LEGACY = "legacy"
 -- always read and written through helpers in Core.lua (GetFont/SetFont) so the
 -- code never depends on how ZO_SavedVars proxies nested defaults.
 ADDON.defaults = {
-    mode = ADDON.MODE_GAMEPAD,
+    mode = ADDON.MODE_HYBRID,
     menuPolicy = ADDON.POLICY_GAMEPAD,
 
     -- Hybrid feature switches (each one can be turned off if a game patch breaks it).

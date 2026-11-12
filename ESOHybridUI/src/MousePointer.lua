@@ -1,17 +1,13 @@
 -- Optional controller-operated pointer support for keyboard-style UI scenes.
--- The pointer surrogate and hit-testing are supplied by LibMousePointer.
--- We only attach its native scene fragment and expose explicit click actions;
--- we do not synthesize OS mouse movement or poll the sticks ourselves.
+-- LibMousePointer supplies the cursor control, scene fragment, hit-testing and click dispatch.
+-- This file only adapts ESO's directional-input ownership for this addon mode.
 
 local ADDON = ESOHybridUI
 local rt = ADDON.runtime
 
-
 -- ESO's keyboard lockpick template normally enables its virtual cursor only
 -- when IsInGamepadPreferredMode() is true. This mode deliberately reports
--- keyboard presentation, so reuse ESO's own native lockpick cursor calculation
--- with the real controller stick input. This is the narrow approach used by
--- EnhancedGamepadUI, updated to the current ESO method and fields.
+-- keyboard presentation, so reuse ESO's native lockpick cursor calculation.
 local STARTING_NORMALIZED_LOCKPICK_X = 0.53
 local GAMEPAD_LOCKPICK_SPEED_FACTOR = 3.5
 
@@ -71,17 +67,19 @@ local function InstallLockpickInputHook()
     return true
 end
 
--- LibMousePointer registers a directional-input handler, but its stock cursor
--- refuses to move when ESO's UI-mode handler has already consumed the stick.
--- Keep the library's scene/cursor/hit-test implementation and replace only that
--- per-frame movement method: read ESO's eased physical left-stick values, then
--- consume LEFT only while the pointer fragment is active. This prevents movement
--- input from leaking through in menus without touching the HUD or right stick.
 local IsPointerEnabled
 
--- ESO's UI-mode handler normally consumes both sticks before camera and
--- movement processing. In this mode the pointer owns LEFT; RIGHT is left
--- untouched so the normal camera handler can still receive it.
+-- The UI-mode handler consumes both sticks to stop them leaking into movement
+-- and camera input. Suppress that consumption only while LibMousePointer's
+-- fragment is actually showing. Merely enabling the setting must never change
+-- stick handling on the HUD or during a scene transition.
+local function IsPointerFragmentActive()
+    return IsPointerEnabled()
+        and MOUSE_POINTER_FRAGMENT ~= nil
+        and type(MOUSE_POINTER_FRAGMENT.IsShowing) == "function"
+        and MOUSE_POINTER_FRAGMENT:IsShowing()
+end
+
 local function InstallSceneManagerInputHook()
     local sceneManagerClass = ZO_IngameSceneManager
     if not sceneManagerClass or type(sceneManagerClass.UpdateDirectionalInput) ~= "function" then
@@ -92,9 +90,12 @@ local function InstallSceneManagerInputHook()
     end
 
     ZO_PreHook(sceneManagerClass, "UpdateDirectionalInput", function()
-        if IsPointerEnabled() then
+        if IsPointerFragmentActive() then
+            -- The pointer handler consumes LEFT. Let RIGHT pass through to the
+            -- normal camera path, matching the Keyboard UI + Controller design.
             return true
         end
+        -- Keep ESO's original both-stick consumption everywhere else.
         return false
     end)
 
@@ -102,11 +103,10 @@ local function InstallSceneManagerInputHook()
     return true
 end
 
--- Hook LibMousePointer's actual directional-input callback. The library
--- activates itself with DIRECTIONAL_INPUT, so this is the method the input
--- manager invokes (not Cursor_Gamepad:UpdateDirectionalInput directly).
--- Keep its cursor, hit-testing and click implementation; replace only stick
--- movement while the pointer is enabled.
+-- LibMousePointer activates this callback through DIRECTIONAL_INPUT:Activate.
+-- Use the same arbitration API as ESO's native handlers: IsAvailable/GetXY,
+-- then Consume the left stick after using it. Do not poll raw/eased stick
+-- getters here; doing so bypasses directional-input priority and deadzone rules.
 local function InstallPointerInputHook()
     local pointer = LibMousePointer
     if not pointer or type(pointer.UpdateDirectionalInput) ~= "function" then
@@ -116,9 +116,9 @@ local function InstallPointerInputHook()
         return true
     end
 
-    local moveStartTimestamp = 0
+    local moveStartTimestamp = GetGameTimeMilliseconds()
     ZO_PreHook(pointer, "UpdateDirectionalInput", function(lib)
-        if not IsPointerEnabled() then
+        if not IsPointerFragmentActive() then
             return false
         end
 
@@ -127,8 +127,12 @@ local function InstallPointerInputHook()
             return true
         end
 
-        local dx = ZO_Gamepad_GetLeftStickEasedX()
-        local dy = ZO_Gamepad_GetLeftStickEasedY()
+        if not DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK) then
+            moveStartTimestamp = GetGameTimeMilliseconds()
+            return true
+        end
+
+        local dx, dy = DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)
         dx, dy = zo_clampLength2D(dx, dy, 1.5)
 
         if dx == 0 and dy == 0 then
@@ -139,8 +143,9 @@ local function InstallPointerInputHook()
         DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK)
 
         local frameDelta = GetFrameDeltaNormalizedForTargetFramerate()
-        local magnitude = frameDelta * 3
-            * zo_clamp((GetGameTimeMilliseconds() - moveStartTimestamp) / 250, 1, 8)
+        local heldMilliseconds = GetGameTimeMilliseconds() - moveStartTimestamp
+        local acceleration = zo_clamp(heldMilliseconds / 250, 1, 8)
+        local magnitude = frameDelta * 3 * acceleration
         dx = dx * magnitude
         dy = -dy * magnitude
 
@@ -158,9 +163,6 @@ local function InstallPointerInputHook()
     rt.mousePointerInputHookInstalled = true
     return true
 end
-
--- Pointer input is enabled only while a keyboard-style UI scene is active.
--- The HUD keeps its native left-stick movement and right-stick camera controls.
 
 local function IsPointerScene(scene)
     if not scene or not scene.GetName then
@@ -199,8 +201,6 @@ function ADDON:InvokeMousePointerClick(button)
         return false
     end
 
-    -- Do not consume the configured button when the pointer is not over a
-    -- mouse-hit-testable control; normal ESO keybind handling can then proceed.
     if not LibMousePointer:GetControlAtCursor() then
         return false
     end
@@ -216,6 +216,34 @@ function ADDON:ResetMousePointer()
 
     LibMousePointer:ResetPosition()
     return true
+end
+
+function ADDON:DumpMousePointerDiagnostics()
+    local scene = SCENE_MANAGER and SCENE_MANAGER:GetCurrentScene()
+    local sceneName = scene and scene.GetName and scene:GetName() or "none"
+    local fragmentShowing = MOUSE_POINTER_FRAGMENT ~= nil
+        and type(MOUSE_POINTER_FRAGMENT.IsShowing) == "function"
+        and MOUSE_POINTER_FRAGMENT:IsShowing() or false
+    local cursor = LibMousePointer and LibMousePointer.gamepadCursor
+    local control = cursor and cursor.control
+    local available = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
+    local stickX, stickY = 0, 0
+    if available then
+        stickX, stickY = DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)
+    end
+
+    self:Say("Pointer mode=" .. tostring(rt.keyboardController)
+        .. " enabled=" .. tostring(IsPointerEnabled())
+        .. " fragment=" .. tostring(fragmentShowing)
+        .. " scene=" .. tostring(sceneName))
+    self:Say("LibMousePointer=" .. tostring(LibMousePointer ~= nil)
+        .. " cursor=" .. tostring(cursor ~= nil)
+        .. " control=" .. tostring(control ~= nil)
+        .. " controlHidden=" .. tostring(control and control:IsHidden() or "n/a"))
+    self:Say("leftAvailable=" .. tostring(available)
+        .. " leftXY=" .. string.format("%.3f, %.3f", stickX, stickY)
+        .. " sceneHook=" .. tostring(rt.mousePointerSceneInputHookInstalled)
+        .. " pointerHook=" .. tostring(rt.mousePointerInputHookInstalled))
 end
 
 function ADDON:ApplyMousePointer()

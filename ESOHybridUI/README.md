@@ -62,7 +62,7 @@ The keyboard Add-Ons panel is provided by LibAddonMenu. If LibGamepadOptions is 
 - **Menus opened from the HUD:** selects the default Gamepad routing policy or Legacy behaviour.
 - **Account-wide settings:** shares the addon settings across characters on the current megaserver.
 - **Keyboard-style quickslot wheel:** chooses the keyboard or native Gamepad quickslot radial in Hybrid. Keyboard UI + Controller always uses the keyboard radial.
-- **Controller glyphs on the action bar:** enables or disables controller glyphs in keyboard-presentation modes.
+- **Controller glyphs on the action bar:** enables or disables controller glyphs in Hybrid. Keyboard UI + Controller always uses controller glyphs.
 - **HUD prompt fonts:** adjusts interaction and stealth prompt font sizes.
 - **Advanced:** optional diagnostic logging, opt-in load announcement and command reference.
 - **Donation mail:** opens a mail draft addressed to the author. It does not attach or transfer gold. The mail composer is keyboard-oriented and may not open correctly from every native Gamepad screen.

@@ -1,11 +1,11 @@
 ## Title: ESO Hybrid UI
-## Description: AI-assisted development. Controller-first ESO interface addon. Keep Gamepad Mode On while Hybrid provides a keyboard-layout HUD, controller glyphs and a keyboard-style quickslot wheel. Supported menus, dialogs, map, loot and lockpicking use ESO's native Gamepad UI. The player-interaction wheel retains its keyboard-style presentation in Hybrid. Requires LibAddonMenu-2.0 r43+. Optional: LibGamepadOptions (controller settings page), LibDebugLogger (persistent log output). Inspired by Advanced Disable Controller UI (Lionas; contributions: jc28735250, DoriKyll).
+## Description: Controller-first ESO interface. Keep Gamepad Mode On while Hybrid uses keyboard-layout menus with a controller-operated pointer and a compact keyboard HUD. Protected/native workflows such as loot and lockpicking retain ESO's native handling. Requires LibAddonMenu-2.0 r43+. Optional: LibMousePointer (controller cursor), LibGamepadOptions (controller settings page), LibDebugLogger (persistent log output). Inspired by Advanced Disable Controller UI (Lionas; contributions: jc28735250 and DoriKyll).
 ## Author: ZOSPlsFix
 ## Version: 4.2.1-beta
 ## AddOnVersion: 40201
 ## APIVersion: 101050 101051
 ## DependsOn: LibAddonMenu-2.0>=43
-## OptionalDependsOn: LibGamepadOptions>=7 LibDebugLogger
+## OptionalDependsOn: LibMousePointer LibGamepadOptions>=7 LibDebugLogger
 ## SavedVariables: ESOHybridUI_SavedVariables
 
 lang/en.lua
@@ -13,6 +13,8 @@ src/Defaults.lua
 src/Diagnostics.lua
 src/Policy.lua
 src/ScenePolicy.lua
+src/MousePointer.lua
+src/KeyboardController.lua
 src/Core.lua
 src/Prompts.lua
 src/Dialogs.lua

@@ -1,33 +1,13 @@
--- Policy: the one decision "should ESO treat the UI as gamepad right now?".
---
--- ESO asks IsInGamepadPreferredMode() whenever it builds an element, selects a
--- scene or resolves a keybind. Hybrid replaces that global with a wrapper that can
--- answer differently per context while the real input device stays the controller.
---
--- Important ESO fact (from its source): the platform of a menu, shop, bank,
--- crafting station, housing editor or screenshot mode is chosen at the moment it is
--- opened (ZO_UISystemManager:OpenPlatformUISystem, SYSTEMS:GetObject ...), and
--- that moment is usually spent on the base HUD. So "answer false on the HUD" also
--- makes ESO pick the KEYBOARD version of everything opened from the HUD.
---
---   Gamepad mode        : answer is the game's own (untouched).
---   Hybrid, policy
---   "gamepad" (default) : base HUD -> keyboard; menus are explicitly opened under
---                         WithNativeGamepadMode and remain native once their scene
---                         is shown. This keeps the HUD stable during bar/scene rebuilds.
---   "legacy" (3.x)      : base HUD -> false; only contexts recognized by
---                         HybridWantsGamepad use native gamepad presentation.
---   Depth scopes        : WithNativeGamepadMode / WithKeyboardWheelMode force an
---                         answer for the duration of one call.
+-- Policy: keep the real controller input active while selecting keyboard UI templates.
+-- The preferred-mode query is a presentation decision; it is not the physical input device.
+-- Native-only workflows opt in through scoped WithNativeGamepadMode calls or explicit context checks.
 
 local ADDON = ESOHybridUI
 local rt = ADDON.runtime
 
 local function RealAnswer()
     local original = rt.originalIsInGamepadPreferredMode
-    if original then
-        return original()
-    end
+    if original then return original() end
     return false
 end
 
@@ -39,144 +19,102 @@ function ADDON:IsHybrid()
     return rt.hybrid == true
 end
 
--- Re-run a callback with a forced answer and preserve all return values.
 local function PackResults(...)
     return { n = select("#", ...), ... }
 end
 
 local function RunWithDepth(depthKey, callback, ...)
-    rt[depthKey] = rt[depthKey] + 1
-
-    -- Do not use pcall/xpcall here. Some native ESO input paths call secure
-    -- functions (for example StartSoulGemResurrection) while a mode scope is
-    -- active. A protected-call boundary makes that call stack insecure.
-    -- The depth is restored on normal return; an unexpected callback error
-    -- propagates and cannot be caught here without breaking that secure call path.
+    rt[depthKey] = (rt[depthKey] or 0) + 1
+    -- Do not add pcall/xpcall here: native ESO actions may call protected functions.
     local results = PackResults(callback(...))
-
     rt[depthKey] = math.max(0, rt[depthKey] - 1)
     return unpack(results, 1, results.n)
 end
 
--- Native gamepad answer: used for things that must look like ESO's gamepad UI.
 function ADDON:WithNativeGamepadMode(callback, ...)
     return RunWithDepth("forceNativeModeDepth", callback, ...)
 end
 
--- Keyboard answer: used to make ESO build its keyboard-style wheels.
 function ADDON:WithKeyboardWheelMode(callback, ...)
     return RunWithDepth("forceKeyboardWheelDepth", callback, ...)
 end
 
--- Only the native map is a gamepad context. The keyboard map must never be
--- treated as gamepad UI: doing so creates a mixed scene/input state.
-local function GamepadWorldMapShowing()
-    local gamepadMap = _G.GAMEPAD_WORLD_MAP_SCENE
-    return gamepadMap ~= nil and gamepadMap:IsShowing() == true
+-- Used for selecting a keyboard implementation before its scene exists.
+function ADDON:WithKeyboardPresentationMode(callback, ...)
+    return RunWithDepth("forceKeyboardPresentationDepth", callback, ...)
 end
 
--- "HUD scenes" replace the normal HUD (SetHUDScene) and therefore count as the
--- base scene, yet a controller cannot operate their keyboard versions: the
--- keyboard-only actions have no gamepad binding. Names seen in ESO's source;
--- /esohybrid_trace report lists every scene you visit so more can be added.
-local NATIVE_HUD_SCENES = {
-    housingEditorHud = true,
-    gamepadScreenshotMode = true,
-}
-
--- Legacy policy only: does the current context want ESO's native gamepad presentation?
 local function IsShowingGamepadDialog()
-    -- RECALL_CONFIRM is a native Gamepad-capable dialog whose updateFn calls
-    -- ZO_Dialogs_UpdateButtonState only when IsInGamepadPreferredMode() is false.
-    -- A Gamepad dialog has no keyboard Button1 child, so keep the native answer
-    -- stable for its full lifetime even if the map scene is transitioning away.
     return type(ZO_Dialogs_IsShowing) == "function"
         and ZO_Dialogs_IsShowing("RECALL_CONFIRM") == true
 end
 
-local function HybridWantsGamepad()
-    if IsShowingGamepadDialog() then
-        return true
-    end
-
-    -- ESO's built-in HUD editor uses IsInGamepadPreferredMode() to choose
-    -- which saved layout to edit. Hybrid displays the Keyboard HUD, so keep the
-    -- editor on that same layout instead of writing offsets to gamepadElements.
-    if HUD_EDITOR_SCENE_KEYBOARD and HUD_EDITOR_SCENE_KEYBOARD:IsShowing() then
-        return false
-    end
-
-    -- Loot has a dedicated native scene, but ESO can request the keyboard one.
-    if GetInteractionType() == INTERACTION_LOOT then
-        return true
-    end
-    -- Lockpicking keeps ESO's native gamepad scene.
-    if rt.isLockpicking then
-        return true
-    end
-    -- The map does not necessarily enter UI mode. If both scenes overlap
-    -- during a transition, the native gamepad scene takes priority.
-    if GamepadWorldMapShowing() then
-        return true
-    end
-    -- Never let the keyboard worldMap scene fall through to the generic
-    -- "in UI mode" test below and masquerade as a gamepad context.
-    if WORLD_MAP_SCENE and WORLD_MAP_SCENE:IsShowing() then
-        return false
-    end
-    -- UI mode alone is not enough: ESO also enters UI mode on focus loss while
-    -- showing its base HUD-UI scene. Require a real menu/overlay scene.
+local function IsNativeSceneAlreadyActive()
     local sceneManager = SCENE_MANAGER
-    if not sceneManager then
+    if not sceneManager or not sceneManager.GetCurrentSceneName
+        or not sceneManager.IsShowingBaseScene or sceneManager:IsShowingBaseScene() then
         return false
     end
-    if sceneManager.GetHUDSceneName and NATIVE_HUD_SCENES[sceneManager:GetHUDSceneName()] then
+    local sceneName = sceneManager:GetCurrentSceneName()
+    local presentation = ADDON:GetScenePresentation(sceneName)
+    return presentation == ADDON.SCENE_PRESENTATION_NATIVE
+        or presentation == ADDON.SCENE_PRESENTATION_SPECIAL
+end
+
+local function HybridWantsGamepad()
+    if IsShowingGamepadDialog() then return true end
+
+    -- These workflows contain native/protected input paths and remain ESO-owned.
+    if rt.isLockpicking then return true end
+    if GetInteractionType and INTERACTION_LOOT and GetInteractionType() == INTERACTION_LOOT then
         return true
     end
-    local inUIMode = sceneManager.IsInUIMode and sceneManager:IsInUIMode()
-    local showingBase = sceneManager.IsShowingBaseScene and sceneManager:IsShowingBaseScene()
-    return inUIMode and not showingBase
+    if type(IsUnitDead) == "function" and IsUnitDead("player") then
+        return true
+    end
+
+    local sceneManager = SCENE_MANAGER
+    if sceneManager and sceneManager.GetHUDSceneName then
+        local hudName = sceneManager:GetHUDSceneName()
+        if hudName == "housingEditorHud" or hudName == "gamepadScreenshotMode" then
+            return true
+        end
+    end
+
+    -- Preserve explicitly native scenes reached by direct ESO routes. During
+    -- platform selection the current scene is still the HUD, so this does not
+    -- prevent a keyboard menu from being selected.
+    return IsNativeSceneAlreadyActive()
 end
 
 local function IsGamepadUIAllowed()
     local answer
-    if rt.forceNativeModeDepth > 0 then
+    if (rt.forceNativeModeDepth or 0) > 0 then
         answer = RealAnswer()
-    elseif rt.forceKeyboardWheelDepth > 0 then
+    elseif (rt.forceKeyboardWheelDepth or 0) > 0
+        or (rt.forceKeyboardPresentationDepth or 0) > 0 then
         answer = false
     elseif not rt.hybrid then
         answer = RealAnswer()
     else
-        -- Hybrid is always a keyboard-style HUD. Native menus opt in through
-        -- WithNativeGamepadMode while they are opened, then their scene is
-        -- recognized by HybridWantsGamepad. Do not leave the whole HUD in
-        -- gamepad mode just because the menu policy is set to "gamepad".
+        -- Hybrid selects keyboard presentation by default. The physical gamepad
+        -- remains enabled in ESO settings and the pointer owns UI navigation.
         answer = RealAnswer() and HybridWantsGamepad() or false
     end
 
-    if rt.traceEnabled then
-        ADDON:TraceModeQuery(answer)
-    end
+    if rt.traceEnabled then ADDON:TraceModeQuery(answer) end
     return answer
 end
 
 function ADDON:InstallModeOverride()
-    -- Full Gamepad mode must use ESO's original global directly. Leaving even a
-    -- pass-through addon wrapper installed puts addon Lua in native UI call paths,
-    -- including keybind dispatch for protected inventory actions.
     if not rt.hybrid then
-        if not rt.modeOverrideInstalled then
-            return true
-        end
-
+        if not rt.modeOverrideInstalled then return true end
         if _G.IsInGamepadPreferredMode == rt.overrideFunction then
             _G.IsInGamepadPreferredMode = rt.originalIsInGamepadPreferredMode
             rt.modeOverrideInstalled = false
             rt.overrideReplacedWarned = false
             return true
         end
-
-        -- Another addon replaced our wrapper. Do not overwrite its newer owner.
         if not rt.overrideReplacedWarned then
             rt.overrideReplacedWarned = true
             self:LogWarn("IsInGamepadPreferredMode is no longer owned by Hybrid UI; leaving the newer implementation untouched.")
@@ -202,7 +140,6 @@ function ADDON:InstallModeOverride()
     return true
 end
 
--- Cheap cached flags for the hot path above.
 function ADDON:RefreshSettingsCache()
     local settings = self:GetSettings()
     rt.hybrid = settings.mode == ADDON.MODE_HYBRID

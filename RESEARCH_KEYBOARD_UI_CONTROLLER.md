@@ -1,3 +1,9 @@
+# Implementation update — 12 November 2026
+
+The conservative Phase A plan below was the initial research baseline. The active implementation has since adopted a broader default: ordinary keyboard scene names use keyboard-pointer presentation, while known Gamepad-only/protected workflows remain native. The keyboard world map is now included in that broad routing rather than being forced to the native map. See `docs/ADCUI_RESEARCH.md` for the ADCUI source review and the implemented directional-input ownership design. Unknown keyboard scenes now default to keyboard-pointer presentation; this increases coverage but also makes in-game validation essential.
+
+---
+
 # Keyboard UI + Controller architecture research
 
 ## Decision

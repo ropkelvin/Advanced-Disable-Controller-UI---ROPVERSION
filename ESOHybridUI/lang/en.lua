@@ -58,7 +58,7 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_REMINDER_NAME", "Show controller quicksl
 ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_REMINDER_TOOLTIP", "Show one chat reminder each time the addon loads when Hybrid or Keyboard UI + Controller is active and the keyboard-style quickslot wheel is enabled. The reminder explains how to assign a Gamepad secondary binding to Quickslot Wheel (ACTION_BUTTON_9).")
 ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_BINDING_REMINDER", "ESO Hybrid UI: To open the keyboard-style quickslot wheel with your controller, go to Settings > Controls > Keybindings > Combat, select Quickslot Wheel (ACTION_BUTTON_9), and assign a Gamepad button as a secondary binding. Your keybindings are not changed by the addon.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_GLYPHS_NAME", "Controller glyphs on the action bar")
-ZO_CreateStringId("SI_ESOHYBRIDUI_GLYPHS_TOOLTIP", "On: show controller button glyphs on the compact keyboard-layout action bar in Hybrid. Off: use the normal keyboard-layout action-bar labels. This setting refreshes the action-bar labels immediately.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_GLYPHS_TOOLTIP", "On: show controller button glyphs on the keyboard-layout action bar in Hybrid. Off: use keyboard labels in Hybrid. Keyboard UI + Controller always uses controller glyphs. This setting refreshes the action-bar labels immediately.")
 
 -- Settings: HUD prompt fonts
 ZO_CreateStringId("SI_ESOHYBRIDUI_HEADER_PROMPTS", "HUD prompts")

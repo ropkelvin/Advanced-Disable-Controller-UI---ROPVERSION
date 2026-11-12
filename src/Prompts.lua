@@ -40,13 +40,6 @@ function ADDON:ApplyPromptPresentation()
     end
 end
 
-function ADDON:RestorePrompts()
-    -- Keep the wrappers installed after the first in-world activation. They
-    -- become exact pass-throughs while inactive, avoiding wrapper stacking
-    -- with other addons across zone transitions.
-    self:ApplyPromptPresentation()
-end
-
 function ADDON:InitializePrompts()
     if not self:IsActive() then
         return

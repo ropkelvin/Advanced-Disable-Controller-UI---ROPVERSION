@@ -151,6 +151,17 @@ local function InstallShoulderConflictHook()
         return false
     end)
 
+    -- When a screen-specific shoulder action goes away while the category bar
+    -- remains visible, restore the category shortcut for the new screen.
+    ZO_PostHook(KEYBIND_STRIP, "RemoveKeybindButton", function(_, descriptor)
+        if descriptor and descriptor ~= descriptors.previous and descriptor ~= descriptors.next
+            and (descriptor.keybind == LEFT_KEYBIND or descriptor.keybind == RIGHT_KEYBIND) then
+            zo_callLater(function()
+                ADDON:RefreshMainMenuNavigation()
+            end, 0)
+        end
+    end)
+
     rt.mainMenuNavigationConflictHookInstalled = true
 end
 

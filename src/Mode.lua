@@ -5,21 +5,25 @@ local function IsLockpickActive()
     return rt.lockPicking == true
 end
 
-local IsHUIKeyboardPresentationPreferredMode = ADDON.HUIPreferredModeWrapper
-if not IsHUIKeyboardPresentationPreferredMode then
-    IsHUIKeyboardPresentationPreferredMode = function()
-        if ADDON:IsActive()
-            and ADDON:IsHybrid()
-            and ADDON:IsGamepadModeOn()
-            and not IsLockpickActive()
-            and not rt.modeOverrideConflict
-            and not ADDON:IsRestrictedSceneActive() then
-            return false
-        end
-        return ADDON.NativeIsInGamepadPreferredMode()
+local previousHUIWrapper = ADDON.HUIPreferredModeWrapper
+local function IsHUIKeyboardPresentationPreferredMode()
+    if ADDON:IsActive()
+        and ADDON:IsHybrid()
+        and ADDON:IsGamepadModeOn()
+        and not IsLockpickActive()
+        and not rt.modeOverrideConflict
+        and not ADDON:IsRestrictedSceneActive() then
+        return false
     end
-    ADDON.HUIPreferredModeWrapper = IsHUIKeyboardPresentationPreferredMode
+    return ADDON.NativeIsInGamepadPreferredMode()
 end
+
+-- On /reloadui, replace our previous wrapper with the current implementation
+-- without losing the original ESO function or stacking wrappers.
+if previousHUIWrapper and _G.IsInGamepadPreferredMode == previousHUIWrapper then
+    _G.IsInGamepadPreferredMode = IsHUIKeyboardPresentationPreferredMode
+end
+ADDON.HUIPreferredModeWrapper = IsHUIKeyboardPresentationPreferredMode
 
 function ADDON:ApplyMode()
     if not self.saved or not self:IsActive() then

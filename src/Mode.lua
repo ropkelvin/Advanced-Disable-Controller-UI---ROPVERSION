@@ -8,7 +8,7 @@ end
 local function IsHUIKeyboardPresentationPreferredMode()
     if ADDON:IsActive()
         and ADDON:IsHybrid()
-        and ADDON:IsNativeGamepadMode()
+        and ADDON:IsGamepadModeOn()
         and not IsLockpickActive()
         and not ADDON:IsRestrictedSceneActive() then
         return false

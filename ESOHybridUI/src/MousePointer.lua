@@ -92,12 +92,15 @@ local function UpdatePointerFromRightStick(pointer)
     local dx, dy = DIRECTIONAL_INPUT:GetXY(ZO_DI_RIGHT_STICK)
     dx, dy = zo_clampLength2D(dx, dy, 1.5)
 
+    local now = GetGameTimeMilliseconds()
     if dx == 0 and dy == 0 then
-        rt.mousePointerMoveStartTimestamp = GetGameTimeMilliseconds()
+        rt.mousePointerMoveStartTimestamp = now
+    elseif not rt.mousePointerMoveStartTimestamp then
+        rt.mousePointerMoveStartTimestamp = now
     end
 
     local frameDelta = GetFrameDeltaNormalizedForTargetFramerate()
-    local elapsed = GetGameTimeMilliseconds() - (rt.mousePointerMoveStartTimestamp or 0)
+    local elapsed = now - rt.mousePointerMoveStartTimestamp
     local magnitude = frameDelta * POINTER_CURSOR_SPEED
         * zo_clamp(elapsed / POINTER_CURSOR_ACCELERATION_MS, 1, 8)
     dx = dx * magnitude

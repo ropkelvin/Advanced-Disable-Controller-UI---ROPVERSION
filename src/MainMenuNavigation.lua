@@ -92,6 +92,15 @@ function ADDON:DeactivateMainMenuNavigation()
         return
     end
 
+    -- The scene manager owns UI teardown during loading. Do not mutate the
+    -- keybind strip after EVENT_PLAYER_DEACTIVATED.
+    if not ADDON:IsActive() then
+        rt.mainMenuNavigationPreviousAdded = false
+        rt.mainMenuNavigationNextAdded = false
+        rt.mainMenuNavigationActive = false
+        return
+    end
+
     if rt.mainMenuNavigationPreviousAdded then
         KEYBIND_STRIP:RemoveKeybindButton(descriptors.previous)
         rt.mainMenuNavigationPreviousAdded = false
@@ -166,7 +175,7 @@ local function InstallShoulderConflictHook()
 end
 
 function ADDON:RefreshMainMenuNavigation()
-    if not rt.mainMenuNavigationInitialized then
+    if not rt.mainMenuNavigationInitialized or not ADDON:IsActive() then
         return
     end
 

@@ -61,14 +61,14 @@ local function SetHybridUltimateGlyphs(button, visible)
     end
 end
 
-local function RegisterControllerActionGlyph(button, force)
+local function RegisterControllerActionGlyph(button)
     if not button or not button.buttonText then
         return
     end
 
     local useControllerGlyphs = UseControllerGlyphs()
     local nativeGamepadMode = ADDON:IsNativeGamepadMode()
-    if not force and button.esoHybridUIRegisteredGlyphMode == useControllerGlyphs
+    if button.esoHybridUIRegisteredGlyphMode == useControllerGlyphs
         and button.esoHybridUIRegisteredNativeMode == nativeGamepadMode then
         return
     end
@@ -119,8 +119,8 @@ local function RegisterControllerActionGlyph(button, force)
 end
 
 -- One bad button must never abort the rest.
-local function SafeRegister(button, force)
-    local ok, err = pcall(RegisterControllerActionGlyph, button, force)
+local function SafeRegister(button)
+    local ok, err = pcall(RegisterControllerActionGlyph, button)
     if not ok then
         ADDON:LogDebug("Action glyph registration failed:", tostring(err))
     end
@@ -148,14 +148,6 @@ local function InstallActionButtonHook()
         SafeRegister(button)
     end)
 
-    -- ESO can unregister/re-register the button label during a later refresh.
-    -- Re-apply after that native work so our controller binding is not silently
-    -- replaced while the cached mode flags still look current.
-    if type(ActionButton.Refresh) == "function" then
-        ZO_PostHook(ActionButton, "Refresh", function(button)
-            SafeRegister(button, true)
-        end)
-    end
     return true
 end
 

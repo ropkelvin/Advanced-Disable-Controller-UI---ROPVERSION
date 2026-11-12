@@ -302,6 +302,11 @@ function ADDON:ApplyPrompts()
     if not forceGamepadPrompts then
         RestoreStackAllMappings()
     end
+    -- Standard-style strips are used by keyboard templates across ESO. Set the
+    -- shared style so strips created after this refresh also resolve controller
+    -- glyphs; ownership-aware restoration preserves later changes by other addons.
+    SaveAndSet(KEYBIND_STRIP_STANDARD_STYLE, "alwaysPreferGamepadMode", forceGamepadPrompts)
+
     -- Keep the standard keyboard strip layout, but force controller glyph
     -- resolution in either keyboard-presentation mode.
     local baseStripStyle = IsInGamepadPreferredMode()

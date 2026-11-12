@@ -41,7 +41,7 @@ local function IsPointerScene(sceneName)
     end
     local normalized = string.lower(sceneName)
     if NON_POINTER_SCENES[normalized] or IsRestrictedSceneName(sceneName)
-        or string.find(normalized, "^gamepad") then
+        or string.find(normalized, "gamepad", 1, true) ~= nil then
         return false
     end
     return true

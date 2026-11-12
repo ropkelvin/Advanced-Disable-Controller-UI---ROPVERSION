@@ -2,7 +2,7 @@
 
 **AI-assisted development disclosure:** AI tools were used to generate and review portions of this addon. The implementation is still being audited and has not yet been fully verified in the live ESO client. Do not treat this development build as a stable release.
 
-**Required dependency:** [LibMousePointer by Votan](https://www.esoui.com/downloads/info4518-libmousepointer.html), minimum `AddOnVersion 10000` (library version 1.0.0 in the inspected source). **Optional dependency:** LibAddonMenu-2.0.
+**Required dependency:** [LibMousePointer by Votan](https://www.esoui.com/downloads/info4518-libmousepointer.html), minimum `AddOnVersion 10000` (library version 1.0.0 in the inspected source). The inspected library manifest advertises API versions `101048 101049`, older than HUI's current `101051`; its pointer source has been reviewed, but its API compatibility must be verified in the live client and users may see an outdated-library warning. HUI does not alter or redistribute the third-party library. **Optional dependency:** LibAddonMenu-2.0.
 
 HUI is a clean rebuild of ESOHybridUI around one initial goal: keep ESO's native Gamepad input enabled while presenting the keyboard UI.
 

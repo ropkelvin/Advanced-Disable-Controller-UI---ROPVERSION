@@ -28,6 +28,7 @@ ADDON.defaults = {
 
     -- Hybrid feature switches (each one can be turned off if a game patch breaks it).
     hybridQuickslotWheel = true,
+    hybridQuickslotBindingReminder = true,
     hybridActionBarGlyphs = true,
 
     fonts = {
@@ -66,6 +67,7 @@ ADDON.runtime = {
 
     -- Active only while the keyboard-style quickslot wheel is open.
     utilityWheelLayerActive = false,
+    quickslotBindingReminderShown = false,
 
     -- Prompt bookkeeping. Weak keys so we never keep a dead descriptor alive.
     promptOriginals = setmetatable({}, { __mode = "k" }),

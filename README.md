@@ -1,66 +1,49 @@
-# ESO Hybrid UI
+# HUI - ESO Hybrid UI
 
-AI-assisted development: AI tools contributed to portions of this addon's code and documentation. The maintainer is responsible for reviewing changes, validating behavior in ESO, and maintaining the addon.
+HUI is a clean rebuild of ESOHybridUI around one initial goal: **keep ESO's native Gamepad input enabled while presenting the keyboard UI**.
 
-This add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates.
+## Modes
 
-## Current release — 3.3.8
+- **Hybrid** (initial default): ESO's Gamepad Mode must be **On**. HUI changes the UI-preference query to select keyboard layouts, while preserving the original gamepad-mode query for controller state. Gamepad keybind resolution and prompts are selected separately. Keyboard-style scenes receive LibMousePointer's pointer fragment.
+- **Pure Gamepad**: HUI restores ESO's original `IsInGamepadPreferredMode` function and leaves native Gamepad UI routing alone.
 
-- Shows player and companion ultimate controller prompts in Hybrid using ESO's native `ZO_KeyTexture` glyph controls, sized to 24×24 for the compact keyboard HUD.
-- Hides the keyboard-style ultimate binding label in Hybrid because ESO's combined gamepad ultimate action is not a normal compact text binding.
-- Restores ESO's native ultimate-key controls when leaving Hybrid's custom glyph presentation.
-- Removes the speculative 600 ms weapon-swap refresh; the standalone key textures persist independently of action-slot swap updates.
-- Leaves native Gamepad-mode ultimate presentation to ESO.
+Only these two modes are exposed in this first stage. Additional modes can be added later.
 
-Controller-first interface addon for The Elder Scrolls Online. It provides native Gamepad mode and a compact Hybrid mode with controller prompts. Hybrid keeps the keyboard HUD and keyboard-style quickslot/player-interaction wheels while menus and navigation remain native gamepad UI.
+## Requirements
 
-## Dependency
+- PC version of The Elder Scrolls Online.
+- ESO Controls setting **Gamepad Mode: On**.
+- [LibMousePointer](https://www.esoui.com/downloads/info4518-libmousepointer.html) for left-stick pointer navigation and click support.
+- LibAddonMenu-2.0 is optional; without it, use `/hui hybrid` and `/hui gamepad`.
 
-- **Required:** LibAddonMenu-2.0 version 43 or newer.
-- The dependency is declared in `ESOHybridUI.txt` with `## DependsOn: LibAddonMenu-2.0>=43`.
-- **Optional:** LibGamepadOptions AddOnVersion 7 or newer. When installed, ESO Hybrid UI gets its own category in ESO's native gamepad Options menu. The keyboard LibAddonMenu panel remains available and both interfaces edit the same SavedVariables.
-- Without LibGamepadOptions, the addon continues to work normally; only the native gamepad settings category is unavailable. Install LibGamepadOptions separately from [ESOUI](https://www.esoui.com/downloads/info4614-libgamepadoptions.html).
+## Controls
 
-## Recommended ESO settings
+LibMousePointer adds its pointer fragment to keyboard-style scenes. Its documented API adds a click binding for `UI_SHORTCUT_PRIMARY` when that keybind is not already occupied. A screen that already owns that shortcut may need a dedicated click adapter; this first pass does not blindly invoke a second callback on an occupied shortcut. HUI does not replace protected ESO actions or synthesize keyboard/mouse events.
 
-Open the addon's settings and click **Apply settings** once. This saves the following ESO preferences:
+Research references:
+- [ADCUI source](https://github.com/Lionas/Advanced-Disable-Controller-UI/blob/master/AdvancedDisableControllerUI/AdvancedDisableControllerUI.lua) — established the keyboard-presentation override and the lockpicking exception.
+- [LibMousePointer API](https://www.esoui.com/downloads/info4518-libmousepointer.html) — provides the pointer fragment, cursor position, hit testing and click invocation.
+- [ESO scene manager source](https://esodata.uesp.net/101050/src/ingame/scenes/ingamescenemanager.lua.html) — confirms that the default UI-mode update consumes both sticks, so HUI must coordinate input ownership rather than let both systems process the same stick.
+- [ESO scene source](https://esodata.uesp.net/101050/src/libraries/zo_scene/zo_scene.lua.html) — scene fragments can be added and removed through the scene lifecycle.
 
-- Gamepad Mode: On
-- Keybind Display Mode: Gamepad
-- Use Keyboard Chat: On
-- Return Cursor on Chat Focus: On
+- `/hui` — show current mode
+- `/hui hybrid` — keyboard UI + controller input
+- `/hui gamepad` — native Gamepad UI
 
-The addon does not silently reapply these preferences on login. The button can be clicked again if the player later changes them.
+After changing modes, close and reopen the active menu so ESO can select the matching keyboard or Gamepad scene.
 
-## Installation archive structure
+## Architecture
 
-The installable ZIP must contain the addon folder matching the manifest name:
+- `Bootstrap.lua`: addon lifecycle, account-wide saved variables, capture of ESO's original mode query.
+- `Mode.lua`: two-mode state and scoped presentation override; lockpicking temporarily retains native Gamepad mode.
+- `SceneController.lua`: pointer fragment attachment to keyboard scenes and directional-input ownership.
+- `Prompts.lua`: separates keyboard layout selection from gamepad keybind resolution and glyph presentation.
+- `Settings.lua`: optional LibAddonMenu settings.
 
-```
-ESOHybridUI.zip
-└── ESOHybridUI/
-    ├── ESOHybridUI.txt
-    ├── Bindings.xml
-    └── src/
-        └── *.lua
+## Safety boundaries
 
-README.txt is included at the ZIP root (beside the addon folder), not inside the installable AddOns folder.
-```
+HUI does not call private ESO functions, simulate protected actions, or globally replace scene implementations. It uses the documented LibMousePointer fragment/click API and ESO's directional-input ownership API. The broad keyboard-scene routing and controller behaviour must still be verified in the live client, especially inventory, map, crafting, bank/trade, dialogs, resurrection, and lockpicking.
 
-Do not zip the repository root directly. The GitHub Actions workflow packages the installable files and uploads an `ESOHybridUI.zip` artifact on pushes to `master` and the maintenance feature branch. The root-level `README.txt` carries the required third-party disclaimer and addon notices.
+## Development status
 
-## SavedVariables
-
-Character-specific settings use ESO character IDs, which are unique across megaservers. Account-wide settings are namespaced by `GetWorldName()` so EU, NA, and PTS profiles do not overwrite each other. On first load after this change, the addon copies the previous un-namespaced account-wide profile into the current megaserver profile and leaves the legacy data intact.
-
-## Credits and attribution
-
-- **The Elder Scrolls Online / ZeniMax Online Studios:** game, UI framework, and addon API.
-- **LibAddonMenu-2.0:** required third-party settings-library dependency; it is distributed and maintained separately by its ESOUI authors.
-- **Advanced Disable Controller UI:** acknowledged as inspiration; originally by Lionas, with contributions from jc28735250 and subsequent maintenance by DoriKyll. ESO Hybrid UI does not include that project's source code or assets. See [NOTICE.md](NOTICE.md) for the attribution clarification.
-
-This repository does not bundle LibAddonMenu-2.0 or LibGamepadOptions. Install the required and optional libraries separately through ESOUI. Any directly reused third-party code or assets must retain the original license and attribution.
-
-## In-game actions and donations
-
-The optional donation shortcut only opens a mail draft addressed to @ZOSPlsFix. The player must manually choose whether to attach gold and the amount. The addon never attaches or modifies mail gold, sends mail, trades, automates combat, or performs other player actions.
+Initial architecture and first implementation pass. This is not yet confirmed in-game. Automated Lua syntax, manifest, and package checks should run before a test release.

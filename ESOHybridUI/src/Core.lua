@@ -270,7 +270,7 @@ local function TryPlatformRefresh()
 
     rt.isRefreshing = true
     local changed, changeError, restored, restoreError
-    local holdKeyboard = rt.hybrid and rt.menusGamepad
+    local holdKeyboard = rt.keyboardUI
     if holdKeyboard then
         -- ESO delivers EVENT_GAMEPAD_PREFERRED_MODE_CHANGED a few frames AFTER
         -- SetSetting returns, and HUD elements restyle themselves inside that
@@ -433,7 +433,10 @@ end
 
 function ADDON:SetMode(mode)
     local settings = GetSettings()
-    settings.mode = mode == ADDON.MODE_HYBRID and ADDON.MODE_HYBRID or ADDON.MODE_GAMEPAD
+    if mode ~= ADDON.MODE_HYBRID and mode ~= ADDON.MODE_KEYBOARD_CONTROLLER then
+        mode = ADDON.MODE_GAMEPAD
+    end
+    settings.mode = mode
     self:LogInfo("UI mode:", settings.mode)
     self:Refresh()
     self:MaybeRemindQuickslotBinding()
@@ -447,7 +450,11 @@ function ADDON:SetMenuPolicy(policy)
 end
 
 function ADDON:ToggleUI()
-    self:SetMode(self:IsHybrid() and ADDON.MODE_GAMEPAD or ADDON.MODE_HYBRID)
+    local current = GetSettings().mode
+    local nextMode = current == ADDON.MODE_GAMEPAD and ADDON.MODE_HYBRID
+        or current == ADDON.MODE_HYBRID and ADDON.MODE_KEYBOARD_CONTROLLER
+        or ADDON.MODE_GAMEPAD
+    self:SetMode(nextMode)
 end
 
 -- ---------------------------------------------------------------------------
@@ -492,7 +499,7 @@ end
 -- weapon swaps do not need a delayed corrective restyle. Keep one refresh after
 -- player activation so controls created during loading receive the active policy.
 local function OnPlayerActivated()
-    if rt.initialized and rt.hybrid then
+    if rt.initialized and rt.keyboardUI then
         rt.platformDirty = true
         SchedulePlatformRefresh(250)
     end
@@ -509,7 +516,7 @@ local function OnSceneStateChanged(scene, _, newState)
 
     -- A native menu may temporarily use gamepad presentation. Refresh shared HUD
     -- styling only once the base HUD is visible again.
-    if rt.hybrid then
+    if rt.keyboardUI then
         rt.platformDirty = true
     end
     if rt.platformDirty then
@@ -572,7 +579,11 @@ end
 -- ---------------------------------------------------------------------------
 
 local function PrintStatus()
-    ADDON:Say(GetString(ADDON:IsHybrid() and SI_ESOHYBRIDUI_STATUS_HYBRID or SI_ESOHYBRIDUI_STATUS_GAMEPAD))
+    local mode = GetSettings().mode
+    local statusId = mode == ADDON.MODE_KEYBOARD_CONTROLLER and SI_ESOHYBRIDUI_STATUS_KEYBOARD_CONTROLLER
+        or mode == ADDON.MODE_HYBRID and SI_ESOHYBRIDUI_STATUS_HYBRID
+        or SI_ESOHYBRIDUI_STATUS_GAMEPAD
+    ADDON:Say(GetString(statusId))
 end
 
 local function RegisterSlashCommands()

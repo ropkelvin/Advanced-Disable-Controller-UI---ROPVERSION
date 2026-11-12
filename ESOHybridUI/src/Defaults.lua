@@ -31,6 +31,7 @@ ADDON.defaults = {
     hybridQuickslotWheel = true,
     hybridQuickslotBindingReminder = true,
     hybridActionBarGlyphs = true,
+    keyboardControllerMousePointer = true,
 
     fonts = {
         reticle = "ZoFontKeybindStripDescription",

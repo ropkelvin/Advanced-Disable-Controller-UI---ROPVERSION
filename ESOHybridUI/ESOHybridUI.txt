@@ -1,8 +1,8 @@
 ## Title: ESO Hybrid UI
-## Description: AI-assisted development. Controller-first ESO interface addon. Keep Gamepad Mode On. Modes: native Gamepad; Hybrid (keyboard-layout HUD with native Gamepad menus); Keyboard UI + Controller (normal keyboard presentation with controller shortcuts and glyphs where ESO supports them). Requires LibAddonMenu-2.0 r43+. Optional: LibGamepadOptions (controller settings page), LibDebugLogger (persistent log output). Inspired by Advanced Disable Controller UI (Lionas; contributions: jc28735250, DoriKyll).
+## Description: AI-assisted development. Controller-first ESO interface addon. Keep Gamepad Mode On. Modes: native Gamepad; Hybrid (keyboard-layout HUD with native Gamepad menus); Keyboard UI + Controller (normal keyboard presentation with controller shortcuts and glyphs where ESO supports them). Requires LibAddonMenu-2.0 r43+. Optional: LibGamepadOptions (controller settings page), LibDebugLogger (persistent log output), LibMousePointer (controller-operated pointer for keyboard UI scenes). Inspired by Advanced Disable Controller UI (Lionas; contributions: jc28735250, DoriKyll).
 ## Author: ZOSPlsFix
-## Version: 4.2.1-beta
-## AddOnVersion: 40201
+## Version: 4.2.2-beta
+## AddOnVersion: 40202
 ## APIVersion: 101050 101051
 ## DependsOn: LibAddonMenu-2.0>=43
 ## OptionalDependsOn: LibGamepadOptions>=7 LibDebugLogger LibMousePointer

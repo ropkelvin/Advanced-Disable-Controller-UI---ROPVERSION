@@ -48,7 +48,6 @@ ADDON.runtime = {
     -- Context depth counters (see Policy.lua). >0 means "answer this way".
     forceNativeModeDepth = 0,
     forceKeyboardWheelDepth = 0,
-    gamepadDialogName = nil,
 
     -- Cached copy of "is Hybrid selected" so the hot path never touches saved vars.
     hybrid = false,

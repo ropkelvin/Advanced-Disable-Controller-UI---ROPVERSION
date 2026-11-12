@@ -6,7 +6,7 @@ HUI is a clean rebuild of ESOHybridUI around one initial goal: keep ESO's native
 
 ## Modes
 
-- **Hybrid** (initial default): ESO's Gamepad Mode must be **On**. HUI changes the UI-preference query only while the player is active in the world, while preserving ESO's original query for checking the actual game setting. Gamepad keybind resolution and prompts are selected separately. Keyboard-style scenes receive LibMousePointer's pointer fragment.
+- **Hybrid** (initial default): ESO's Gamepad Mode must be **On**. HUI changes the UI-preference query only while the player is active in the world, while preserving ESO's original query for checking the actual game setting. Gamepad keybind resolution and prompts are selected separately. Keyboard-style scenes receive LibMousePointer's pointer fragment. HUI disables its pointer and gamepad-prompt overrides on detected Crown Store/market, Scrying, and Tribute scenes. These exclusions still require live-client verification and ESOUI staff clarification before public release because the broad preferred-mode override must not affect restricted screens.
 - **Pure Gamepad**: HUI restores ESO's original `IsInGamepadPreferredMode` function and leaves native Gamepad UI routing alone.
 
 Only these two modes are exposed in this first stage. Additional modes can be added later.
@@ -44,7 +44,7 @@ After changing modes, close and reopen the active menu so ESO can select the mat
 
 ## Safety boundaries
 
-HUI does not call private ESO functions, simulate protected actions, automate gameplay, or read/write external files. It uses ESO's UI scene and directional-input systems and LibMousePointer's documented fragment/click API. The broad keyboard-scene routing and controller behaviour still require live-client validation, especially inventory, map, crafting, bank/trade, dialogs, resurrection, and lockpicking.
+HUI does not call private ESO functions, simulate protected actions, automate gameplay, or read/write external files. It uses ESO's UI scene and directional-input systems and LibMousePointer's documented fragment/click API. The broad keyboard-scene routing and controller behaviour still require live-client validation, especially inventory, map, crafting, bank/trade, dialogs, resurrection, and lockpicking. LibMousePointer's public documentation describes the fragment and click API but does not specify the exact left-stick input ownership implementation; HUI therefore only bypasses ESO's default stick consumption after the left stick is already consumed by an earlier UI input owner. If that has not happened, ESO retains its normal safety behaviour and consumes both sticks.
 
 ## Development status
 

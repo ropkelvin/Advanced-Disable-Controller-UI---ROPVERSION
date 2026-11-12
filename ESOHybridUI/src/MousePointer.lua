@@ -187,6 +187,7 @@ end
 
 function ADDON:ApplyMousePointer()
     InstallLockpickInputHook()
+    InstallPointerInputHook()
 
     if not SCENE_MANAGER then
         return false

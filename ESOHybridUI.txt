@@ -10,6 +10,7 @@
 src/Bootstrap.lua
 src/Mode.lua
 src/SceneController.lua
+src/MainMenuNavigation.lua
 src/Prompts.lua
 src/Settings.lua
 src/Diagnostics.lua

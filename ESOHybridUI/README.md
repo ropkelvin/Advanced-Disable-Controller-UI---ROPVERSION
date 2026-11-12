@@ -2,7 +2,7 @@
 
 **AI-assisted development disclosure:** AI tools were used during development and review. The addon is maintained and tested by its author. Please report compatibility issues with the ESO game version and a diagnostic dump.
 
-ESO Hybrid UI provides a controller-first interface that keeps ESO's Gamepad Mode enabled while offering a compact keyboard-layout HUD in Hybrid mode.
+ESO Hybrid UI provides three controller-first interface modes while keeping ESO's Gamepad Mode enabled: native Gamepad, Hybrid, and full Keyboard UI + Controller.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ ESO Hybrid UI provides a controller-first interface that keeps ESO's Gamepad Mod
 2. Extract the `ESOHybridUI` folder into `Documents/Elder Scrolls Online/live/AddOns/`.
 3. Start ESO and enable ESO Hybrid UI in the Add-Ons menu.
 4. Open the addon settings and press **Apply settings** once. This applies the recommended controller, keybind-display and chat settings; it does not change them automatically on every login.
-5. Choose **Hybrid** as the interface mode.
+5. Choose **Hybrid** or **Keyboard UI + Controller** as the interface mode.
 
 The addon folder must be named exactly `ESOHybridUI` and contain `ESOHybridUI.txt`.
 
@@ -42,23 +42,34 @@ The **Keyboard-style quickslot wheel** setting can be turned off to use ESO's na
 
 The **Menus opened from the HUD** policy defaults to **Gamepad**. The **Legacy** option retains the older routing behaviour and is intended only as a compatibility fallback.
 
+### Keyboard UI + Controller
+
+- Keeps ESO's normal keyboard UI templates and layout for the HUD and menus.
+- Does not route platform-selected menus, the map, loot or lockpicking to their native Gamepad UI.
+- Keeps controller input active through ESO's Gamepad Mode setting.
+- Forces controller glyph preference on keyboard-layout keybind buttons and HUD prompts.
+- Uses the keyboard-style quickslot radial; assign a Gamepad secondary binding to Quickslot Wheel (ACTION_BUTTON_9) under Settings > Controls > Keybindings > Combat to open it from the controller.
+- Uses the keyboard-style action bar; controller glyphs are registered using ESO's paired Gamepad action bindings.
+
+This mode cannot manufacture a Gamepad action for a keyboard-only control. Some screens or third-party addons may expose keyboard-only actions and will need a specific controller mapping or may remain partly keyboard/mouse operated. It intentionally does not fall back to native Gamepad screens to hide those gaps.
+
 ## Settings
 
 The keyboard Add-Ons panel is provided by LibAddonMenu. If LibGamepadOptions is installed, the same settings are also available from its native controller settings page.
 
 - **Apply settings:** explicitly applies the recommended ESO input and chat settings.
-- **Interface mode:** switches between Gamepad and Hybrid.
+- **Interface mode:** switches between Gamepad, Hybrid and Keyboard UI + Controller.
 - **Menus opened from the HUD:** selects the default Gamepad routing policy or Legacy behaviour.
 - **Account-wide settings:** shares the addon settings across characters on the current megaserver.
-- **Keyboard-style quickslot wheel:** chooses the keyboard or native Gamepad quickslot radial in Hybrid.
-- **Controller glyphs on the action bar:** enables or disables controller glyphs in Hybrid.
+- **Keyboard-style quickslot wheel:** chooses the keyboard or native Gamepad quickslot radial in Hybrid. Keyboard UI + Controller always uses the keyboard radial.
+- **Controller glyphs on the action bar:** enables or disables controller glyphs in keyboard-presentation modes.
 - **HUD prompt fonts:** adjusts interaction and stealth prompt font sizes.
 - **Advanced:** optional diagnostic logging, opt-in load announcement and command reference.
 - **Donation mail:** opens a mail draft addressed to the author. It does not attach or transfer gold. The mail composer is keyboard-oriented and may not open correctly from every native Gamepad screen.
 
 ## Commands
 
-- `/esohybrid` — toggle Gamepad / Hybrid.
+- `/esohybrid` — cycle Gamepad → Hybrid → Keyboard UI + Controller.
 - `/esohybrid_status` — show the current interface mode.
 - `/esohybrid_policy gamepad|legacy` — change the menu-routing policy.
 - `/esohybrid_settings` — open addon settings.
@@ -76,7 +87,7 @@ ESO's UI platform selection is handled through several internal systems. Hybrid 
 - The quickslot controller bridge inherits ESO's own controller bindings. Custom controller rebinding should be checked after changing those bindings.
 - The menu policy and special-case screens should be retested after major ESO updates.
 
-If reporting a problem, include the ESO API version, the action that triggered it, whether the issue occurs in Gamepad or Hybrid mode, and the output of `/esohybrid_dump`. For routing problems, enable `/esohybrid_trace on`, reproduce the issue, then include `/esohybrid_trace report`.
+If reporting a problem, include the ESO API version, the action that triggered it, whether the issue occurs in Gamepad, Hybrid or Keyboard UI + Controller mode, and the output of `/esohybrid_dump`. For routing problems, enable `/esohybrid_trace on`, reproduce the issue, then include `/esohybrid_trace report`.
 
 ## Credits
 

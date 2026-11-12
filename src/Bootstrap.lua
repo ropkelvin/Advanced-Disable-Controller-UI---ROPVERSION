@@ -65,14 +65,18 @@ local function OnPlayerActivated()
     ADDON:InitializePrompts()
     ADDON:InitializeSettings()
 
-    if ADDON:IsHybrid() and not ADDON:IsNativeGamepadMode() then
+    if ADDON:IsHybrid() and not ADDON:IsNativeGamepadMode()
+        and not ADDON.runtime.gamepadSettingWarningShown then
         ADDON:Print("Hybrid requires ESO Gamepad Mode to be On in Controls settings.")
+        ADDON.runtime.gamepadSettingWarningShown = true
     end
 end
 
 local function OnPlayerDeactivated()
     ADDON.runtime.inWorld = false
     ADDON.runtime.lockPicking = false
+    ADDON.runtime.restrictedSceneActive = false
+    ADDON.runtime.restrictedScenes = {}
     ADDON:ApplyMode()
     if ADDON.RestorePrompts then
         ADDON:RestorePrompts()

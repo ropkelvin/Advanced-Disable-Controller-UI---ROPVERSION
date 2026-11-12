@@ -20,9 +20,11 @@ function ADDON:ApplyMode()
         and not IsLockpickActive()
 
     -- Do not touch ESO's mode query outside the active world.
+    local modeQueryChanged = false
     if shouldUseKeyboardPresentation then
         if _G.IsInGamepadPreferredMode ~= IsHUIKeyboardPresentationPreferredMode then
             _G.IsInGamepadPreferredMode = IsHUIKeyboardPresentationPreferredMode
+            modeQueryChanged = true
         end
         rt.modeOverrideApplied = true
     elseif rt.modeOverrideApplied then
@@ -30,8 +32,15 @@ function ADDON:ApplyMode()
         -- later override installed by another addon.
         if _G.IsInGamepadPreferredMode == IsHUIKeyboardPresentationPreferredMode then
             _G.IsInGamepadPreferredMode = self.NativeIsInGamepadPreferredMode
+            modeQueryChanged = true
         end
         rt.modeOverrideApplied = false
+    end
+
+    -- ESO's public HUD manager exposes this refresh specifically to reapply
+    -- the active keyboard/gamepad HUD element anchors after a mode change.
+    if modeQueryChanged and HUD_MANAGER and HUD_MANAGER.PropagateSettings then
+        HUD_MANAGER:PropagateSettings()
     end
 
     if self.ApplyPromptPresentation then
@@ -67,10 +76,6 @@ local function InstallLockpickHook()
     end)
 
     rt.lockpickHookInstalled = true
-end
-
-function ADDON:InitializeLockpickHook()
-    InstallLockpickHook()
 end
 
 function ADDON:InitializeLockpickHook()

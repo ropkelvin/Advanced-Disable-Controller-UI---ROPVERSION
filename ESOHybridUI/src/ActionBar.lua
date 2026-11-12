@@ -3,7 +3,8 @@
 local ADDON = ESOHybridUI
 
 local function UseControllerGlyphs()
-    return ADDON:ShouldShowControllerPrompts() and ADDON:GetSettings().hybridActionBarGlyphs ~= false
+    return ADDON:ShouldShowControllerPrompts()
+        and (ADDON:IsKeyboardControllerMode() or ADDON:GetSettings().hybridActionBarGlyphs ~= false)
 end
 
 local function SetNativeUltimateKeysHidden(button, hidden)

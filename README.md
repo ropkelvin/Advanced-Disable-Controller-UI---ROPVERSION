@@ -31,6 +31,10 @@ LibMousePointer provides the scene pointer fragment and an optional `UI_SHORTCUT
 
 After changing modes, close and reopen the active menu so ESO can select the matching keyboard or Gamepad scene.
 
+## Current audit
+
+See [HYBRID-ACTION-AUDIT.md](docs/HYBRID-ACTION-AUDIT.md) for the source-based action-family matrix, uploaded-log findings, known routing gaps, ESOUI safety boundaries, and the live verification checklist. It deliberately distinguishes source-confirmed behaviour from controller actions that still require in-game testing.
+
 ## Research and attribution
 
 - **Advanced Disable Controller UI (ADCUI)** by **Lionas**: studied for its global keyboard-presentation override and lockpicking exception. HUI is a clean implementation and does not copy ADCUI source code. [Source repository](https://github.com/Lionas/Advanced-Disable-Controller-UI).

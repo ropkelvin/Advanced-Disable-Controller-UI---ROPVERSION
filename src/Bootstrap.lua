@@ -104,6 +104,7 @@ local function OnAddonLoaded(_, addonName)
     EVENT_MANAGER:UnregisterForEvent(ADDON.name, EVENT_ADD_ON_LOADED)
     ADDON:InitializeSavedVariables()
     ADDON:InitializeMode()
+    ADDON:InitializeDiagnostics()
 
     EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
     EVENT_MANAGER:RegisterForEvent(ADDON.name, EVENT_PLAYER_DEACTIVATED, OnPlayerDeactivated)

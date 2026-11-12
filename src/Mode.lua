@@ -10,6 +10,7 @@ local function IsHUIKeyboardPresentationPreferredMode()
         and ADDON:IsHybrid()
         and ADDON:IsGamepadModeOn()
         and not IsLockpickActive()
+        and not rt.modeOverrideConflict
         and not ADDON:IsRestrictedSceneActive() then
         return false
     end
@@ -27,22 +28,32 @@ function ADDON:ApplyMode()
         and not IsLockpickActive()
         and not self:IsRestrictedSceneActive()
 
-    -- Do not touch ESO's mode query outside the active world.
+    -- Do not overwrite another addon's mode wrapper. HUI only takes ownership
+    -- when the current global is the original function captured at load or
+    -- HUI's own wrapper from an earlier application.
     local modeQueryChanged = false
     if shouldUseKeyboardPresentation then
-        if _G.IsInGamepadPreferredMode ~= IsHUIKeyboardPresentationPreferredMode then
-            _G.IsInGamepadPreferredMode = IsHUIKeyboardPresentationPreferredMode
-            modeQueryChanged = true
+        if _G.IsInGamepadPreferredMode == self.NativeIsInGamepadPreferredMode
+            or _G.IsInGamepadPreferredMode == IsHUIKeyboardPresentationPreferredMode then
+            if _G.IsInGamepadPreferredMode ~= IsHUIKeyboardPresentationPreferredMode then
+                _G.IsInGamepadPreferredMode = IsHUIKeyboardPresentationPreferredMode
+                modeQueryChanged = true
+            end
+            rt.modeOverrideApplied = true
+            rt.modeOverrideConflict = false
+        else
+            rt.modeOverrideApplied = false
+            rt.modeOverrideConflict = true
+            self:Debug("Another addon replaced IsInGamepadPreferredMode; Hybrid presentation is paused to avoid overwriting its hook.")
         end
-        rt.modeOverrideApplied = true
-    elseif rt.modeOverrideApplied then
-        -- Restore only if our wrapper is still installed; do not overwrite a
-        -- later override installed by another addon.
-        if _G.IsInGamepadPreferredMode == IsHUIKeyboardPresentationPreferredMode then
+    else
+        if rt.modeOverrideApplied
+            and _G.IsInGamepadPreferredMode == IsHUIKeyboardPresentationPreferredMode then
             _G.IsInGamepadPreferredMode = self.NativeIsInGamepadPreferredMode
             modeQueryChanged = true
         end
         rt.modeOverrideApplied = false
+        rt.modeOverrideConflict = false
     end
 
     -- ESO's public HUD manager exposes this refresh specifically to reapply
@@ -120,6 +131,7 @@ function ADDON:InitializeMode()
                 .. " | InWorld=" .. tostring(self:IsActive())
                 .. " | Gamepad Mode On=" .. tostring(self:IsGamepadModeOn())
                 .. " | Original preferred query=" .. tostring(self:IsNativeGamepadMode())
+                .. " | Mode hook conflict=" .. tostring(rt.modeOverrideConflict)
                 .. " | UI preference=" .. tostring(IsInGamepadPreferredMode())
                 .. " | Scene=" .. tostring(sceneName)
                 .. " | Pointer=" .. tostring(rt.pointerScene))

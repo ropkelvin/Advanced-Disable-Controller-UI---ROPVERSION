@@ -1,0 +1,194 @@
+local ADDON = ESOHybridUI
+local rt = ADDON.runtime
+
+local UPDATE_NAME = "ESOHybridUI_Diagnostics"
+local SAMPLE_INTERVAL_MS = 500
+local CAPTURE_DURATION_MS = 90000
+local MAX_LOG_ENTRIES = 240
+
+local function SafeString(value)
+    if value == nil then
+        return "nil"
+    end
+    return tostring(value)
+end
+
+local function GetCurrentSceneName()
+    if SCENE_MANAGER and SCENE_MANAGER.GetCurrentSceneName then
+        return SCENE_MANAGER:GetCurrentSceneName() or "nil"
+    end
+    return "unavailable"
+end
+
+local function GetPointerState()
+    local lib = LibMousePointer
+    if not lib then
+        return "library=missing"
+    end
+
+    local cursor = lib.gamepadCursor
+    if not cursor then
+        return "library=ready,cursor=uninitialized"
+    end
+
+    local controlVisible = "unknown"
+    if cursor.control and cursor.control.IsHidden then
+        controlVisible = tostring(not cursor.control:IsHidden())
+    end
+
+    return "library=ready"
+        .. ",cursorId=" .. SafeString(cursor.cursorId)
+        .. ",cursorVisible=" .. controlVisible
+        .. ",x=" .. SafeString(cursor.x)
+        .. ",y=" .. SafeString(cursor.y)
+end
+
+local function GetPrimaryKeybindState()
+    if not KEYBIND_STRIP or not KEYBIND_STRIP.keybinds then
+        return "keybindStrip=unavailable"
+    end
+
+    local descriptor = KEYBIND_STRIP.keybinds.UI_SHORTCUT_PRIMARY
+    if type(descriptor) == "userdata" then
+        descriptor = descriptor.keybindButtonDescriptor
+    end
+    if not descriptor then
+        return "primary=unassigned"
+    end
+
+    -- Never evaluate descriptor.name here. Some ESO callbacks assume a
+    -- selected row and can themselves throw while the UI is transitioning.
+    return "primary=assigned"
+        .. ",descriptorType=" .. type(descriptor)
+        .. ",nameType=" .. type(descriptor.name)
+        .. ",scene=" .. SafeString(descriptor.addedForSceneName)
+        .. ",isPointerClick=" .. tostring(
+            LibMousePointer and descriptor == LibMousePointer.keybindButton
+        )
+end
+
+local function GetDirectionalState()
+    if not DIRECTIONAL_INPUT or not DIRECTIONAL_INPUT.IsAvailable then
+        return "directionalInput=unavailable"
+    end
+
+    return "leftAvailable=" .. tostring(DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK))
+        .. ",rightAvailable=" .. tostring(DIRECTIONAL_INPUT:IsAvailable(ZO_DI_RIGHT_STICK))
+end
+
+local function AppendEntry(kind, detail)
+    if not ADDON.saved then
+        return
+    end
+
+    ADDON.saved.diagnostics = ADDON.saved.diagnostics or {}
+    local diagnostics = ADDON.saved.diagnostics
+    diagnostics.log = diagnostics.log or {}
+
+    table.insert(
+        diagnostics.log,
+        tostring(GetGameTimeMilliseconds())
+            .. "|" .. tostring(kind)
+            .. "|" .. tostring(detail or "")
+    )
+
+    while #diagnostics.log > MAX_LOG_ENTRIES do
+        table.remove(diagnostics.log, 1)
+    end
+end
+
+function ADDON:RecordDiagnostic(kind, detail)
+    if rt.diagnosticCaptureActive then
+        AppendEntry(kind, detail)
+    end
+end
+
+local function BuildSample()
+    local sceneName = GetCurrentSceneName()
+    local scene = SCENE_MANAGER and SCENE_MANAGER.GetScene and SCENE_MANAGER:GetScene(sceneName)
+    local hasPointerFragment = "unknown"
+    if scene and MOUSE_POINTER_FRAGMENT and scene.HasFragment then
+        hasPointerFragment = tostring(scene:HasFragment(MOUSE_POINTER_FRAGMENT))
+    end
+
+    return "mode=" .. SafeString(ADDON.saved.mode)
+        .. ",active=" .. tostring(ADDON:IsActive())
+        .. ",gamepadOn=" .. tostring(ADDON:IsGamepadModeOn())
+        .. ",nativePreferred=" .. tostring(ADDON:IsNativeGamepadMode())
+        .. ",effectivePreferred=" .. tostring(IsInGamepadPreferredMode())
+        .. ",modeConflict=" .. tostring(rt.modeOverrideConflict)
+        .. ",restricted=" .. tostring(ADDON:IsRestrictedSceneActive())
+        .. ",scene=" .. SafeString(sceneName)
+        .. ",pointerScene=" .. tostring(rt.pointerScene)
+        .. ",pointerSceneName=" .. SafeString(rt.pointerSceneName)
+        .. ",pointerEnabled=" .. tostring(ADDON.saved.pointerEnabled)
+        .. ",sceneHasPointerFragment=" .. hasPointerFragment
+        .. "," .. GetPointerState()
+        .. "," .. GetDirectionalState()
+        .. "," .. GetPrimaryKeybindState()
+end
+
+function ADDON:StopDiagnostics(reason)
+    if not rt.diagnosticCaptureActive then
+        return false
+    end
+
+    EVENT_MANAGER:UnregisterForUpdate(UPDATE_NAME)
+    AppendEntry("END", reason or "manual")
+    rt.diagnosticCaptureActive = false
+
+    if self.saved and self.saved.diagnostics then
+        self.saved.diagnostics.complete = true
+        self.saved.diagnostics.finishedAtMs = GetGameTimeMilliseconds()
+    end
+
+    self:Print("Diagnostic capture complete. Use /reloadui to save the log, then upload ESOHybridUI.lua from your SavedVariables folder.")
+    return true
+end
+
+function ADDON:StartDiagnostics()
+    if not self.saved then
+        self:Print("SavedVariables are not ready; try again after entering the world.")
+        return
+    end
+
+    if rt.diagnosticCaptureActive then
+        self:Print("Diagnostic capture is already running.")
+        return
+    end
+
+    self.saved.diagnostics = {
+        version = 1,
+        startedAtMs = GetGameTimeMilliseconds(),
+        durationMs = CAPTURE_DURATION_MS,
+        complete = false,
+        log = {},
+    }
+
+    rt.diagnosticCaptureActive = true
+    AppendEntry("START", "90-second capture; reproduce the pointer/input issue now")
+    AppendEntry("INITIAL", BuildSample())
+
+    local startedAt = GetGameTimeMilliseconds()
+    EVENT_MANAGER:RegisterForUpdate(UPDATE_NAME, SAMPLE_INTERVAL_MS, function()
+        if not rt.diagnosticCaptureActive then
+            EVENT_MANAGER:UnregisterForUpdate(UPDATE_NAME)
+            return
+        end
+
+        AppendEntry("SAMPLE", BuildSample())
+
+        if GetGameTimeMilliseconds() - startedAt >= CAPTURE_DURATION_MS then
+            ADDON:StopDiagnostics("automatic timeout")
+        end
+    end)
+
+    self:Print("Capturing diagnostics for 90 seconds. Reproduce the pointer stopping, open/close menus, and trigger the actions that normally cause trouble.")
+    self:Print("When capture finishes, use /reloadui, then upload Documents\\Elder Scrolls Online\\live\\SavedVariables\\ESOHybridUI.lua.")
+end
+
+function ADDON:InitializeDiagnostics()
+    SLASH_COMMANDS["/huidebug"] = function()
+        self:StartDiagnostics()
+    end
+end

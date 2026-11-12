@@ -134,6 +134,8 @@ local function BuildControls(isGamepad)
     add({ type = "header", name = GetString(SI_ESOHYBRIDUI_HEADER_HYBRID_HUD) })
     local refresh = function() ADDON:Refresh() end
     add(Checkbox(SI_ESOHYBRIDUI_WHEEL_NAME, SI_ESOHYBRIDUI_WHEEL_TOOLTIP, "hybridQuickslotWheel", true, refresh))
+    add(Checkbox(SI_ESOHYBRIDUI_WHEEL_REMINDER_NAME, SI_ESOHYBRIDUI_WHEEL_REMINDER_TOOLTIP,
+        "hybridQuickslotBindingReminder", true))
     add(Checkbox(SI_ESOHYBRIDUI_GLYPHS_NAME, SI_ESOHYBRIDUI_GLYPHS_TOOLTIP, "hybridActionBarGlyphs", true, refresh))
 
     add({ type = "header", name = GetString(SI_ESOHYBRIDUI_HEADER_PROMPTS) })

@@ -389,7 +389,7 @@ end
 -- Refresh / apply
 -- ---------------------------------------------------------------------------
 
-local APPLY_STEPS = { "ApplySystemRouting", "ApplyPrompts", "ApplyDialogs", "ApplyUtilityWheel", "ApplyActionBar", "ApplyWorldMap" }
+local APPLY_STEPS = { "ApplySystemRouting", "ApplyPrompts", "ApplyDialogs", "ApplyUtilityWheel", "ApplyActionBar", "ApplyWorldMap", "ApplyMousePointer" }
 local reportedStepErrors = {}
 
 function ADDON:ApplyAll()

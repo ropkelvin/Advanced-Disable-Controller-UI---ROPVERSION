@@ -51,7 +51,7 @@ local function ShouldUsePointer(sceneName)
     return ADDON:IsActive()
         and ADDON:IsHybrid()
         and ADDON.saved.pointerEnabled
-        and ADDON:IsNativeGamepadMode()
+        and ADDON:IsGamepadModeOn()
         and not ADDON:IsRestrictedSceneActive()
         and MOUSE_POINTER_FRAGMENT ~= nil
         and IsPointerScene(sceneName)

@@ -166,32 +166,9 @@ end
 -- ESO's keybinding helpers decide which device's binding to resolve and whether
 -- gamepad glyphs show. They return values, so a pre-hook cannot replace them:
 -- wrap each original and forward every argument when Hybrid is not active.
-local function InstallGlobalPromptHooks()
-    local originalShouldUseGamepadAction = _G.ZO_Keybindings_ShouldUseGamepadAction
-    local originalGetPreferredKeyType = _G.ZO_Keybindings_GetPreferredKeyType
-    local originalShouldShowGamepadKeybind = _G.ZO_Keybindings_ShouldShowGamepadKeybind
-    if not (originalShouldUseGamepadAction and originalGetPreferredKeyType and originalShouldShowGamepadKeybind) then
-        return false
-    end
-
-    _G.ZO_Keybindings_ShouldUseGamepadAction = function(alwaysPreferGamepadMode, ...)
-        if ADDON:ShouldShowControllerPrompts() and alwaysPreferGamepadMode ~= false then return true end
-        return originalShouldUseGamepadAction(alwaysPreferGamepadMode, ...)
-    end
-
-    _G.ZO_Keybindings_GetPreferredKeyType = function(alwaysPreferGamepadMode, ...)
-        if ADDON:ShouldShowControllerPrompts() and alwaysPreferGamepadMode ~= false then
-            return PREFERRED_INPUT_DEVICE_TYPE_GAMEPAD
-        end
-        return originalGetPreferredKeyType(alwaysPreferGamepadMode, ...)
-    end
-
-    _G.ZO_Keybindings_ShouldShowGamepadKeybind = function(alwaysPreferGamepadMode, ...)
-        if ADDON:ShouldShowControllerPrompts() and alwaysPreferGamepadMode ~= false then return true end
-        return originalShouldShowGamepadKeybind(alwaysPreferGamepadMode, ...)
-    end
-    return true
-end
+-- Do not wrap ESO's global keybinding resolvers. They are used inside native
+-- keybind dispatch, including protected inventory actions. Prompt selection is
+-- handled through native keybind-strip styles and per-label registration instead.
 
 local function InstallDeathPromptHook()
     if not DEATH or not DEATH.ApplyStyle then
@@ -262,7 +239,6 @@ function ADDON:ApplyPrompts()
 
     local forceGamepadPrompts = self:ShouldShowControllerPrompts()
 
-    self:InstallWhenReady("globalPromptHooks", InstallGlobalPromptHooks)
     self:InstallWhenReady("stackAllHook", InstallStackAllHook)
     self:InstallWhenReady("deathPromptHook", InstallDeathPromptHook)
 

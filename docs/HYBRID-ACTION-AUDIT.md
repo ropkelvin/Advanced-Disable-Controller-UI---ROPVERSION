@@ -66,7 +66,7 @@ LibMousePointer's InvokeClick obtains a control and directly calls its OnClicked
 
 ### 4. Directional-input ownership is ordered and exclusive
 
-ESO's gamepad API requires controls to register through DIRECTIONAL_INPUT so multiple UI systems do not consume the same stick. LibMousePointer consumes the left stick through GetXY(ZO_DI_LEFT_STICK). ESO's in-game scene manager consumes both sticks in its default UI-mode handler. HUI now hooks the SCENE_MANAGER instance and only skips that default consume-both-sticks handler after the left stick has already been consumed; it then consumes the right stick. It must never allow a stick to leak into player movement.
+ESO's gamepad API requires controls to register through DIRECTIONAL_INPUT so multiple UI systems do not consume the same stick. LibMousePointer consumes the left stick through GetXY(ZO_DI_LEFT_STICK). ESO's in-game scene manager consumes both sticks in its default UI-mode handler. HUI hooks the SCENE_MANAGER instance. The original availability check was order-dependent: if the scene manager's directional-input callback ran before LibMousePointer, the left stick was still available and ESO consumed both sticks before the pointer got its turn. HUI now checks that LibMousePointer is registered, skips only the stock consume-both-sticks callback, and consumes the right stick itself. LibMousePointer's own GetXY call claims the left stick, including zero-magnitude frames; if the pointer is not registered, ESO's original handler remains in control. It must never allow a stick to leak into player movement.
 
 ### 5. Pointer fragment attachment does not prove fragment activation
 

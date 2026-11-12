@@ -45,20 +45,24 @@ local function InstallKeybindStripStyleHook()
         return
     end
 
-    local originalSetStyle = KEYBIND_STRIP.SetStyle
-    ZO_PreHook(KEYBIND_STRIP, "SetStyle", function(strip, styleInfo, ...)
+    -- Post-hook rather than replacing SetStyle: preserve other addons' hooks,
+    -- then reapply a copied standard style only when Hybrid is active.
+    ZO_PostHook(KEYBIND_STRIP, "SetStyle", function(strip, styleInfo)
+        if rt.reapplyingStandardStyle then
+            return
+        end
+
         if styleInfo == KEYBIND_STRIP_STANDARD_STYLE and ShouldUseControllerPrompts() then
             local styleCopy = ZO_ShallowTableCopy(styleInfo)
             styleCopy.alwaysPreferGamepadMode = true
             rt.appliedStandardStyle = styleCopy
-            originalSetStyle(strip, styleCopy, ...)
-            return true
-        end
 
-        if styleInfo == KEYBIND_STRIP_STANDARD_STYLE then
+            rt.reapplyingStandardStyle = true
+            strip:SetStyle(styleCopy)
+            rt.reapplyingStandardStyle = false
+        elseif styleInfo == KEYBIND_STRIP_STANDARD_STYLE then
             rt.appliedStandardStyle = nil
         end
-        return false
     end)
 
     rt.keybindStripStyleHookInstalled = true

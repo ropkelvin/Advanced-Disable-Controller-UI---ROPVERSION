@@ -30,6 +30,10 @@ local function IsPointerFragmentActive()
         or not MOUSE_POINTER_FRAGMENT:IsShowing() then
         return false
     end
+    -- A keyboard scene can remain underneath a native overlay during transitions.
+    -- Only let the pointer own input when the top scene itself is keyboard-pointer.
+    local currentScene = SCENE_MANAGER and SCENE_MANAGER:GetCurrentScene()
+    if not IsPointerScene(currentScene) then return false end
     local cursor = LibMousePointer.gamepadCursor
     local control = cursor and cursor.control
     return control ~= nil and control.IsHidden and not control:IsHidden()

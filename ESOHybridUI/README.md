@@ -10,6 +10,7 @@ ESO Hybrid UI provides three controller-first interface modes while keeping ESO'
 - **LibAddonMenu-2.0 r43 or newer** (required).
 - ESO's **Gamepad Mode must be set to On**, not Auto. Auto can switch input presentation unexpectedly.
 - Optional: LibGamepadOptions for the native controller settings page.
+- Optional: LibMousePointer for controller-operated pointer navigation and mouse clicks in keyboard-style UI scenes.
 - Optional: LibDebugLogger (and DebugLogViewer) for persistent diagnostic logs.
 
 ## Installation
@@ -51,8 +52,10 @@ The **Menus opened from the HUD** policy defaults to **Gamepad**. The **Legacy**
 - Uses the keyboard-style quickslot radial; assign a Gamepad secondary binding to Quickslot Wheel (ACTION_BUTTON_9) under Settings > Controls > Keybindings > Combat to open it from the controller.
 - Uses the keyboard-style action bar; ESO's paired Gamepad action bindings remain responsible for combat actions.
 - Uses ESO's left and right shoulder controller bindings to move backward and forward through the visible, enabled keyboard main-menu categories. The addon delegates each selection to ESO's keyboard main-menu handler, preserving its normal scene and confirmation flow.
+- When LibMousePointer is installed and the setting is enabled, attaches its pointer fragment temporarily to active keyboard-style UI scenes (not the base HUD). This provides mouse-style targeting for controls that expose mouse hit-testing.
+- Adds three unassigned actions under Settings > Controls > Keybindings > General: pointer left click, pointer right click and pointer reset. Assign buttons yourself; the addon does not steal A/B/X/Y or alter existing bindings.
 
-This mode cannot manufacture a Gamepad action for a keyboard-only control. Keyboard UI controls are not universally focus-navigable: screens and third-party addons that do not expose controller keybinds or focus navigation may still require mouse/keyboard input. The mode deliberately avoids replacing protected native callbacks or globally remapping unrelated controls.
+This mode cannot manufacture a Gamepad action for a keyboard-only control. Keyboard UI controls are not universally focus-navigable: screens and third-party addons that do not expose controller keybinds or focus navigation may still require mouse/keyboard input. The optional LibMousePointer integration provides a cursor surrogate and hit-testing where supported; it does not turn text-entry fields, protected actions or every custom control into controller-native controls. The mode deliberately avoids replacing protected native callbacks or globally remapping unrelated controls.
 
 ## Settings
 

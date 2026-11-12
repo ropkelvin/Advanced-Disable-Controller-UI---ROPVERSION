@@ -66,8 +66,19 @@ function ADDON:RefreshSceneController()
         return
     end
 
-    local shouldRunPointer = self:IsActive()
-        and self:IsHybrid()
+    if not self:IsActive() then
+        if rt.pointerScenes then
+            for sceneName, scene in pairs(rt.pointerScenes) do
+                scene:RemoveFragment(MOUSE_POINTER_FRAGMENT)
+                rt.pointerScenes[sceneName] = nil
+            end
+        end
+        rt.pointerScene = false
+        rt.pointerSceneName = nil
+        return
+    end
+
+    local shouldRunPointer = self:IsHybrid()
         and self.saved.pointerEnabled
         and self:IsNativeGamepadMode()
         and MOUSE_POINTER_FRAGMENT ~= nil

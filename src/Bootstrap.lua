@@ -76,6 +76,7 @@ local function OnPlayerActivated()
     ADDON:TryRefreshHUDSettings()
     ADDON:InitializeSceneController()
     ADDON:InitializePrompts()
+    ADDON:InitializeMainMenuNavigation()
     ADDON:InitializeSettings()
 
     if ADDON:IsHybrid() and not ADDON:IsGamepadModeOn()

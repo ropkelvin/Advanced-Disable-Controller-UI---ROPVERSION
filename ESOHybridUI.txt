@@ -12,3 +12,4 @@ src/Mode.lua
 src/SceneController.lua
 src/Prompts.lua
 src/Settings.lua
+src/Diagnostics.lua

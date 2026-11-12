@@ -18,29 +18,20 @@ function ADDON:ApplyPromptPresentation()
         end
 
         KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = hybridPrompts or rt.originalPromptStyle
+
+        -- SetStyle ignores the same table identity. A shallow copy forces the
+        -- strip to rebuild its current buttons using the updated preference.
+        if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle and ZO_ShallowTableCopy then
+            KEYBIND_STRIP:SetStyle(ZO_ShallowTableCopy(KEYBIND_STRIP_STANDARD_STYLE))
+        end
     end
 end
 
 function ADDON:RestorePrompts()
+    -- Keep the wrappers installed after the first in-world activation. They
+    -- become exact pass-throughs while inactive, avoiding wrapper stacking
+    -- with other addons across zone transitions.
     self:ApplyPromptPresentation()
-
-    if wrapperShouldUseGamepadAction and _G.ZO_Keybindings_ShouldUseGamepadAction == wrapperShouldUseGamepadAction then
-        _G.ZO_Keybindings_ShouldUseGamepadAction = originalShouldUseGamepadAction
-    end
-    if wrapperGetPreferredKeyType and _G.ZO_Keybindings_GetPreferredKeyType == wrapperGetPreferredKeyType then
-        _G.ZO_Keybindings_GetPreferredKeyType = originalGetPreferredKeyType
-    end
-    if wrapperShouldShowGamepadKeybind and _G.ZO_Keybindings_ShouldShowGamepadKeybind == wrapperShouldShowGamepadKeybind then
-        _G.ZO_Keybindings_ShouldShowGamepadKeybind = originalShouldShowGamepadKeybind
-    end
-
-    originalShouldUseGamepadAction = nil
-    originalGetPreferredKeyType = nil
-    originalShouldShowGamepadKeybind = nil
-    wrapperShouldUseGamepadAction = nil
-    wrapperGetPreferredKeyType = nil
-    wrapperShouldShowGamepadKeybind = nil
-    rt.promptHooksInstalled = false
 end
 
 function ADDON:InitializePrompts()

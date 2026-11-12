@@ -39,6 +39,10 @@ function ADDON:ApplyMode()
         and not IsLockpickActive()
         and not self:IsRestrictedSceneActive()
 
+    self:RecordDiagnostic("MODE_APPLY", "keyboardPresentation=" .. tostring(shouldUseKeyboardPresentation)
+        .. ",nativePreferred=" .. tostring(self:IsNativeGamepadMode())
+        .. ",scene=" .. tostring(SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()))
+
     -- Do not overwrite another addon's mode wrapper. HUI only takes ownership
     -- when the current global is the original function captured at load or
     -- HUI's own wrapper from an earlier application.
@@ -55,6 +59,7 @@ function ADDON:ApplyMode()
         else
             rt.modeOverrideApplied = false
             rt.modeOverrideConflict = true
+            self:RecordDiagnostic("MODE_HOOK_CONFLICT", "another addon owns IsInGamepadPreferredMode")
             self:Debug("Another addon replaced IsInGamepadPreferredMode; Hybrid presentation is paused to avoid overwriting its hook.")
         end
     else

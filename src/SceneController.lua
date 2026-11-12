@@ -16,8 +16,11 @@ local function IsRestrictedSceneName(sceneName)
         return false
     end
     local normalized = string.lower(sceneName)
-    return normalized == "scrying"
-        or normalized == "tribute"
+    -- Restricted activities can have keyboard/gamepad scene suffixes.
+    -- Match the activity token rather than only one exact root scene name.
+    -- "scrying" is deliberately distinct from "scribing".
+    return string.find(normalized, "scrying", 1, true) ~= nil
+        or string.find(normalized, "tribute", 1, true) ~= nil
         or string.find(normalized, "market", 1, true) ~= nil
         or string.find(normalized, "crown", 1, true) ~= nil
         or string.find(normalized, "gildbarstore", 1, true) ~= nil

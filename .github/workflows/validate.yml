@@ -1,0 +1,49 @@
+name: Validate addon
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lua-and-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua 5.1
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1
+      - name: Check Lua syntax
+        shell: bash
+        run: |
+          find ESOHybridUI -type f -name '*.lua' -print0 | while IFS= read -r -d '' file; do
+            luac5.1 -p "$file"
+          done
+      - name: Validate manifest paths
+        run: python3 scripts/validate_addon.py
+
+  windows-package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build release ZIP
+        shell: pwsh
+        run: ./package.ps1
+      - name: Verify release ZIP root
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem dist -Filter 'ESOHybridUI-*.zip' | Select-Object -First 1
+          if (-not $zip) { throw "No release ZIP was produced." }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($zip.FullName)
+          try {
+            $bad = @($archive.Entries | Where-Object { -not $_.FullName.StartsWith('ESOHybridUI/') })
+            if ($bad.Count -gt 0) { throw "Unexpected ZIP root entries: $($bad.FullName -join ', ')" }
+            if (-not ($archive.Entries | Where-Object { $_.FullName -eq 'ESOHybridUI/ESOHybridUI.txt' })) {
+              throw "ZIP is missing the addon manifest."
+            }
+          } finally {
+            $archive.Dispose()
+          }

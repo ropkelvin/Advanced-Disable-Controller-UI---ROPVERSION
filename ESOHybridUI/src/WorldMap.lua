@@ -45,7 +45,50 @@ local function InstallMapSceneHook()
     return true
 end
 
+-- ESO chooses keyboard vs. Gamepad floor/level controls inside this method
+-- using IsInGamepadPreferredMode(). The shared world-map fragment can update
+-- while the Gamepad scene is still transitioning in, before Policy.lua can
+-- identify that scene as active. Run this one native map decision in the
+-- Gamepad context so the keyboard floor controls never flash into view.
+local function InstallMapLevelNavigationHook()
+    local managerClass = ZO_WorldMapManager
+    if not managerClass or type(managerClass.UpdateFloorAndLevelNavigation) ~= "function" then
+        return false
+    end
+
+    local originalUpdate = managerClass.UpdateFloorAndLevelNavigation
+    ZO_PreHook(managerClass, "UpdateFloorAndLevelNavigation", function(manager, ...)
+        if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+            ADDON:WithNativeGamepadMode(originalUpdate, manager, ...)
+            return true
+        end
+        return false
+    end)
+    return true
+end
+
+-- ZO_WorldMap_UpdateMap refreshes platform-dependent map controls, including
+-- floor/level navigation. Keep that refresh on the native Gamepad path when
+-- Hybrid opens the map from the keyboard HUD.
+local function InstallMapPresentationRefreshHook()
+    local originalUpdate = _G.ZO_WorldMap_UpdateMap
+    if type(originalUpdate) ~= "function" then
+        return false
+    end
+
+    ZO_PreHook("ZO_WorldMap_UpdateMap", function(...)
+        if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+            ADDON:WithNativeGamepadMode(originalUpdate, ...)
+            return true
+        end
+        return false
+    end)
+    return true
+end
+
 function ADDON:ApplyWorldMap()
     self:InstallWhenReady("mapCategoryHook", InstallMapCategoryHook)
     self:InstallWhenReady("mapSceneHook", InstallMapSceneHook)
+    self:InstallWhenReady("mapLevelNavigationHook", InstallMapLevelNavigationHook)
+    self:InstallWhenReady("mapPresentationRefreshHook", InstallMapPresentationRefreshHook)
 end

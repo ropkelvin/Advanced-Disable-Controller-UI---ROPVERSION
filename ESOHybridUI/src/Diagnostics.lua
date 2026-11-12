@@ -301,6 +301,14 @@ function ADDON:RegisterDiagnosticCommands()
         ADDON:DumpDiagnostics()
     end
 
+    SLASH_COMMANDS["/esohybrid_pointer"] = function()
+        if ADDON.DumpMousePointerDiagnostics then
+            ADDON:DumpMousePointerDiagnostics()
+        else
+            ADDON:Say("Pointer diagnostics are unavailable.")
+        end
+    end
+
     SLASH_COMMANDS["/esohybrid_trace"] = function(argument)
         local value = string.lower(tostring(argument or "")):match("^%s*(.-)%s*$")
         if value == "on" then

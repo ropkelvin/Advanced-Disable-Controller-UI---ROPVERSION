@@ -1,6 +1,9 @@
 local ADDON = ESOHybridUI
 
 function ADDON:InitializeSettings()
+    if self.runtime.settingsInitialized then
+        return
+    end
     if not LibAddonMenu2 then
         self:Debug("LibAddonMenu-2.0 not found; /hui hybrid and /hui gamepad remain available.")
         return
@@ -55,4 +58,5 @@ function ADDON:InitializeSettings()
             default = false,
         },
     })
+    self.runtime.settingsInitialized = true
 end

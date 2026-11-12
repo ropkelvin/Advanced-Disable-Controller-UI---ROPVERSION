@@ -14,8 +14,13 @@ function ADDON:ApplyPromptPresentation()
     if not self:IsActive() then
         if rt.originalPromptStyleCaptured and KEYBIND_STRIP_STANDARD_STYLE then
             KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = rt.originalPromptStyle
-            if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle and ZO_ShallowTableCopy then
-                KEYBIND_STRIP:SetStyle(ZO_ShallowTableCopy(KEYBIND_STRIP_STANDARD_STYLE))
+            if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle and KEYBIND_STRIP.GetStyle and ZO_ShallowTableCopy then
+                local currentStyle = KEYBIND_STRIP:GetStyle()
+                if currentStyle == KEYBIND_STRIP_STANDARD_STYLE or currentStyle == rt.appliedStandardStyle then
+                    local refreshedStyle = ZO_ShallowTableCopy(KEYBIND_STRIP_STANDARD_STYLE)
+                    KEYBIND_STRIP:SetStyle(refreshedStyle)
+                    rt.appliedStandardStyle = refreshedStyle
+                end
             end
         end
         return
@@ -35,8 +40,13 @@ function ADDON:ApplyPromptPresentation()
 
         -- SetStyle ignores the same table identity. A shallow copy forces the
         -- strip to rebuild its current buttons using the updated preference.
-        if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle and ZO_ShallowTableCopy then
-            KEYBIND_STRIP:SetStyle(ZO_ShallowTableCopy(KEYBIND_STRIP_STANDARD_STYLE))
+        if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle and KEYBIND_STRIP.GetStyle and ZO_ShallowTableCopy then
+            local currentStyle = KEYBIND_STRIP:GetStyle()
+            if currentStyle == KEYBIND_STRIP_STANDARD_STYLE or currentStyle == rt.appliedStandardStyle then
+                local refreshedStyle = ZO_ShallowTableCopy(KEYBIND_STRIP_STANDARD_STYLE)
+                KEYBIND_STRIP:SetStyle(refreshedStyle)
+                rt.appliedStandardStyle = refreshedStyle
+            end
         end
     end
 end

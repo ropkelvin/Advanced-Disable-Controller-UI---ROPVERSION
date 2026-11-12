@@ -235,10 +235,12 @@ local function InstallDirectionalInputHook()
 
     ZO_PreHook(ZO_IngameSceneManager, "UpdateDirectionalInput", function()
         if ADDON:IsActive() and ADDON:IsHybrid() and rt.pointerScene and DIRECTIONAL_INPUT then
-            -- Only bypass ESO's "consume both sticks" method after an earlier
-            -- UI input owner has already consumed the left stick. This is the
-            -- fail-safe: if the pointer has not claimed it, ESO consumes both
-            -- sticks normally and the player cannot move behind the menu.
+            -- LibMousePointer's cursor calls GetXY(ZO_DI_LEFT_STICK), which
+            -- consumes the left stick through DIRECTIONAL_INPUT. Its high-tier
+            -- pointer control is ordered ahead of CLIENT_INPUT. Only then do
+            -- we bypass ESO's default consume-both-sticks handler and consume
+            -- the right stick here. If the left stick is still available, let
+            -- ESO's original handler consume both sticks as normal.
             if DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK) then
                 return false
             end

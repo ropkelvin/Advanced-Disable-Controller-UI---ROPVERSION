@@ -1,10 +1,12 @@
 # HUI - ESO Hybrid UI
 
-HUI is a clean rebuild of ESOHybridUI around one initial goal: **keep ESO's native Gamepad input enabled while presenting the keyboard UI**.
+**AI-assisted development disclosure:** AI tools were used to generate and review portions of this addon. The implementation is still being audited and has not yet been fully verified in the live ESO client. Do not treat this development build as a stable release.
+
+HUI is a clean rebuild of ESOHybridUI around one initial goal: keep ESO's native Gamepad input enabled while presenting the keyboard UI.
 
 ## Modes
 
-- **Hybrid** (initial default): ESO's Gamepad Mode must be **On**. HUI changes the UI-preference query to select keyboard layouts, while preserving the original gamepad-mode query for controller state. Gamepad keybind resolution and prompts are selected separately. Keyboard-style scenes receive LibMousePointer's pointer fragment.
+- **Hybrid** (initial default): ESO's Gamepad Mode must be **On**. HUI changes the UI-preference query only while the player is active in the world, while preserving ESO's original query for checking the actual game setting. Gamepad keybind resolution and prompts are selected separately. Keyboard-style scenes receive LibMousePointer's pointer fragment.
 - **Pure Gamepad**: HUI restores ESO's original `IsInGamepadPreferredMode` function and leaves native Gamepad UI routing alone.
 
 Only these two modes are exposed in this first stage. Additional modes can be added later.
@@ -13,37 +15,37 @@ Only these two modes are exposed in this first stage. Additional modes can be ad
 
 - PC version of The Elder Scrolls Online.
 - ESO Controls setting **Gamepad Mode: On**.
-- [LibMousePointer](https://www.esoui.com/downloads/info4518-libmousepointer.html) for left-stick pointer navigation and click support.
+- [LibMousePointer](https://www.esoui.com/downloads/info4518-libmousepointer.html) by **Votan** is required for pointer support.
 - LibAddonMenu-2.0 is optional; without it, use `/hui hybrid` and `/hui gamepad`.
 
 ## Controls
 
-LibMousePointer adds its pointer fragment to keyboard-style scenes. Its documented API adds a click binding for `UI_SHORTCUT_PRIMARY` when that keybind is not already occupied. A screen that already owns that shortcut may need a dedicated click adapter; this first pass does not blindly invoke a second callback on an occupied shortcut. HUI does not replace protected ESO actions or synthesize keyboard/mouse events.
+LibMousePointer provides the scene pointer fragment and an optional `UI_SHORTCUT_PRIMARY` click binding when that keybind is unused. If a screen already owns the shortcut, it needs a screen-specific click adapter. HUI does not replace protected ESO actions or synthesize keyboard/mouse events.
 
-Research references:
-- [ADCUI source](https://github.com/Lionas/Advanced-Disable-Controller-UI/blob/master/AdvancedDisableControllerUI/AdvancedDisableControllerUI.lua) — established the keyboard-presentation override and the lockpicking exception.
-- [LibMousePointer API](https://www.esoui.com/downloads/info4518-libmousepointer.html) — provides the pointer fragment, cursor position, hit testing and click invocation.
-- [ESO scene manager source](https://esodata.uesp.net/101050/src/ingame/scenes/ingamescenemanager.lua.html) — confirms that the default UI-mode update consumes both sticks, so HUI must coordinate input ownership rather than let both systems process the same stick.
-- [ESO scene source](https://esodata.uesp.net/101050/src/libraries/zo_scene/zo_scene.lua.html) — scene fragments can be added and removed through the scene lifecycle.
-
-- `/hui` — show current mode
+- `/hui` — show current mode and runtime state
 - `/hui hybrid` — keyboard UI + controller input
 - `/hui gamepad` — native Gamepad UI
 
 After changing modes, close and reopen the active menu so ESO can select the matching keyboard or Gamepad scene.
 
+## Research and attribution
+
+- **Advanced Disable Controller UI (ADCUI)** by **Lionas**: studied for its global keyboard-presentation override and lockpicking exception. HUI is a clean implementation and does not copy ADCUI source code. [Source repository](https://github.com/Lionas/Advanced-Disable-Controller-UI).
+- **LibMousePointer** by **Votan**: required external library providing the pointer fragment and cursor click API. [ESOUI page](https://www.esoui.com/downloads/info4518-libmousepointer.html).
+- ESO UI source, published by ZeniMax for reference: [ESOUI source repository](https://github.com/esoui/esoui).
+
 ## Architecture
 
-- `Bootstrap.lua`: addon lifecycle, account-wide saved variables, capture of ESO's original mode query.
-- `Mode.lua`: two-mode state and scoped presentation override; lockpicking temporarily retains native Gamepad mode.
-- `SceneController.lua`: pointer fragment attachment to keyboard scenes and directional-input ownership.
-- `Prompts.lua`: separates keyboard layout selection from gamepad keybind resolution and glyph presentation.
+- `Bootstrap.lua`: addon lifecycle, account-wide SavedVariables, and in-world activation/deactivation.
+- `Mode.lua`: two-mode state, active-world-only presentation override, and lockpick scene exception.
+- `SceneController.lua`: pointer fragment attachment and directional-input ownership for the current top scene.
+- `Prompts.lua`: gamepad keybind and glyph preference wrappers, installed only while the player is active in the world.
 - `Settings.lua`: optional LibAddonMenu settings.
 
 ## Safety boundaries
 
-HUI does not call private ESO functions, simulate protected actions, or globally replace scene implementations. It uses the documented LibMousePointer fragment/click API and ESO's directional-input ownership API. The broad keyboard-scene routing and controller behaviour must still be verified in the live client, especially inventory, map, crafting, bank/trade, dialogs, resurrection, and lockpicking.
+HUI does not call private ESO functions, simulate protected actions, automate gameplay, or read/write external files. It uses ESO's UI scene and directional-input systems and LibMousePointer's documented fragment/click API. The broad keyboard-scene routing and controller behaviour still require live-client validation, especially inventory, map, crafting, bank/trade, dialogs, resurrection, and lockpicking.
 
 ## Development status
 
-Initial architecture and first implementation pass. This is not yet confirmed in-game. Automated Lua syntax, manifest, and package checks should run before a test release.
+Initial architecture and first implementation pass. This is not yet confirmed in-game. Automated Lua syntax, manifest and package checks are necessary but do not establish runtime correctness.

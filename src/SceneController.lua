@@ -19,8 +19,11 @@ local function IsRestrictedSceneName(sceneName)
     return normalized == "scrying"
         or normalized == "tribute"
         or string.find(normalized, "market", 1, true) ~= nil
-        or string.find(normalized, "store", 1, true) ~= nil
         or string.find(normalized, "crown", 1, true) ~= nil
+        or string.find(normalized, "gildbarstore", 1, true) ~= nil
+        or string.find(normalized, "endeavorsealstore", 1, true) ~= nil
+        or string.find(normalized, "esoplusoffers", 1, true) ~= nil
+        or string.find(normalized, "giftinventory", 1, true) ~= nil
 end
 
 function ADDON:IsRestrictedSceneActive()

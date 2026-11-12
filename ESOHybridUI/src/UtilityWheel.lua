@@ -11,7 +11,7 @@ local rt = ADDON.runtime
 local BRIDGE_LAYER = "ESOHybridUI_UTILITY_WHEEL_BRIDGE"
 
 function ADDON:ShouldBridgeUtilityWheelInput()
-    return rt.utilityWheelLayerActive == true and self:IsHybrid() and self:IsNativeGamepadMode()
+    return rt.utilityWheelLayerActive == true and rt.keyboardUI == true and self:IsNativeGamepadMode()
 end
 
 function ADDON:CycleUtilityWheel(direction)
@@ -57,7 +57,7 @@ local function RemoveBridgeLayer()
 end
 
 local function WantsKeyboardQuickslot()
-    return ADDON:GetSettings().hybridQuickslotWheel ~= false
+    return rt.keyboardController == true or ADDON:GetSettings().hybridQuickslotWheel ~= false
 end
 
 -- Keep the keyboard wheel's actions and artwork, but ask ESO's keybinding
@@ -123,7 +123,7 @@ local function InstallManagerHooks()
     local originalStart = managerClass.StartInteraction
     managerClass.StartInteraction = function(self, wheelType, ...)
         if wheelType == ZO_INTERACTIVE_WHEEL_TYPE_UTILITY
-            and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+            and rt.keyboardUI and ADDON:IsNativeGamepadMode() then
             if WantsKeyboardQuickslot() then
                 return AfterUtilityStart(ADDON:WithKeyboardWheelMode(originalStart, self, wheelType, ...))
             end

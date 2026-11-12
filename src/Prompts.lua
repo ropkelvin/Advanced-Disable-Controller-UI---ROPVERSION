@@ -1,12 +1,15 @@
 local ADDON = ESOHybridUI
 local rt = ADDON.runtime
 
-local originalShouldUseGamepadAction = ZO_Keybindings_ShouldUseGamepadAction
-local originalGetPreferredKeyType = ZO_Keybindings_GetPreferredKeyType
-local originalShouldShowGamepadKeybind = ZO_Keybindings_ShouldShowGamepadKeybind
+local originalShouldUseGamepadAction
+local originalGetPreferredKeyType
+local originalShouldShowGamepadKeybind
+local wrapperShouldUseGamepadAction
+local wrapperGetPreferredKeyType
+local wrapperShouldShowGamepadKeybind
 
 function ADDON:ApplyPromptPresentation()
-    local hybridPrompts = self:IsHybrid() and self:IsNativeGamepadMode()
+    local hybridPrompts = self:IsActive() and self:IsHybrid() and self:IsNativeGamepadMode()
 
     if KEYBIND_STRIP_STANDARD_STYLE then
         if not rt.originalPromptStyleCaptured then
@@ -14,44 +17,70 @@ function ADDON:ApplyPromptPresentation()
             rt.originalPromptStyleCaptured = true
         end
 
-        if hybridPrompts then
-            KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = true
-            if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle then
-                KEYBIND_STRIP:SetStyle(KEYBIND_STRIP_STANDARD_STYLE)
-            end
-        else
-            KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = rt.originalPromptStyle
-        end
+        KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = hybridPrompts or rt.originalPromptStyle
     end
 end
 
+function ADDON:RestorePrompts()
+    self:ApplyPromptPresentation()
+
+    if wrapperShouldUseGamepadAction and _G.ZO_Keybindings_ShouldUseGamepadAction == wrapperShouldUseGamepadAction then
+        _G.ZO_Keybindings_ShouldUseGamepadAction = originalShouldUseGamepadAction
+    end
+    if wrapperGetPreferredKeyType and _G.ZO_Keybindings_GetPreferredKeyType == wrapperGetPreferredKeyType then
+        _G.ZO_Keybindings_GetPreferredKeyType = originalGetPreferredKeyType
+    end
+    if wrapperShouldShowGamepadKeybind and _G.ZO_Keybindings_ShouldShowGamepadKeybind == wrapperShouldShowGamepadKeybind then
+        _G.ZO_Keybindings_ShouldShowGamepadKeybind = originalShouldShowGamepadKeybind
+    end
+
+    originalShouldUseGamepadAction = nil
+    originalGetPreferredKeyType = nil
+    originalShouldShowGamepadKeybind = nil
+    wrapperShouldUseGamepadAction = nil
+    wrapperGetPreferredKeyType = nil
+    wrapperShouldShowGamepadKeybind = nil
+    rt.promptHooksInstalled = false
+end
+
 function ADDON:InitializePrompts()
+    if not self:IsActive() then
+        return
+    end
+
     if not rt.promptHooksInstalled then
+        originalShouldUseGamepadAction = _G.ZO_Keybindings_ShouldUseGamepadAction
+        originalGetPreferredKeyType = _G.ZO_Keybindings_GetPreferredKeyType
+        originalShouldShowGamepadKeybind = _G.ZO_Keybindings_ShouldShowGamepadKeybind
+
         if originalShouldUseGamepadAction then
-            _G.ZO_Keybindings_ShouldUseGamepadAction = function(alwaysPreferGamepadMode, ...)
-                if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+            wrapperShouldUseGamepadAction = function(alwaysPreferGamepadMode, ...)
+                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
                     return true
                 end
                 return originalShouldUseGamepadAction(alwaysPreferGamepadMode, ...)
             end
+            _G.ZO_Keybindings_ShouldUseGamepadAction = wrapperShouldUseGamepadAction
         end
 
         if originalGetPreferredKeyType then
-            _G.ZO_Keybindings_GetPreferredKeyType = function(alwaysPreferGamepadMode, ...)
-                if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+            wrapperGetPreferredKeyType = function(alwaysPreferGamepadMode, ...)
+                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
                     return PREFERRED_INPUT_DEVICE_TYPE_GAMEPAD
                 end
                 return originalGetPreferredKeyType(alwaysPreferGamepadMode, ...)
             end
+            _G.ZO_Keybindings_GetPreferredKeyType = wrapperGetPreferredKeyType
         end
 
         if originalShouldShowGamepadKeybind then
-            _G.ZO_Keybindings_ShouldShowGamepadKeybind = function(alwaysPreferGamepadMode, ...)
-                if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+            wrapperShouldShowGamepadKeybind = function(alwaysPreferGamepadMode, ...)
+                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
                     return true
                 end
                 return originalShouldShowGamepadKeybind(alwaysPreferGamepadMode, ...)
             end
+            _G.ZO_Keybindings_ShouldShowGamepadKeybind = wrapperShouldShowGamepadKeybind
         end
 
         rt.promptHooksInstalled = true

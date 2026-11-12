@@ -4,7 +4,7 @@
 ## APIVersion: 101051
 ## Description: AI-assisted development; code remains under review and is not yet fully verified in-game. Keyboard-style ESO UI with native gamepad input. Inspired by ADCUI by Lionas; requires LibMousePointer by Votan.
 ## SavedVariablesAccountWide: ESOHybridUISavedVariables
-## DependsOn: LibMousePointer
+## DependsOn: LibMousePointer>=10000
 ## OptionalDependsOn: LibAddonMenu-2.0
 
 src/Bootstrap.lua

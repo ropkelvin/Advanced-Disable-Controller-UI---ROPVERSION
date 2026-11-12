@@ -60,6 +60,50 @@ local function WantsKeyboardQuickslot()
     return ADDON:GetSettings().hybridQuickslotWheel ~= false
 end
 
+-- Keep the keyboard wheel's actions and artwork, but ask ESO's keybinding
+-- label system to display the paired Gamepad actions. This is presentation-only:
+-- the keyboard wheel still registers and uses its original cycle actions.
+local function ApplyControllerCycleLabels(wheel)
+    if not wheel or type(ZO_Keybindings_UnregisterLabelForBindingUpdate) ~= "function"
+        or type(ZO_Keybindings_RegisterLabelForBindingUpdate) ~= "function" then
+        return false
+    end
+
+    if wheel.cycleLeftKeybindLabel then
+        ZO_Keybindings_UnregisterLabelForBindingUpdate(wheel.cycleLeftKeybindLabel)
+        ZO_Keybindings_RegisterLabelForBindingUpdate(
+            wheel.cycleLeftKeybindLabel, "UTILITY_WHEEL_KEYBOARD_CYCLE_LEFT",
+            false, "UTILITY_WHEEL_GAMEPAD_CYCLE_LEFT", nil, true)
+    end
+    if wheel.cycleRightKeybindLabel then
+        ZO_Keybindings_UnregisterLabelForBindingUpdate(wheel.cycleRightKeybindLabel)
+        ZO_Keybindings_RegisterLabelForBindingUpdate(
+            wheel.cycleRightKeybindLabel, "UTILITY_WHEEL_KEYBOARD_CYCLE_RIGHT",
+            false, "UTILITY_WHEEL_GAMEPAD_CYCLE_RIGHT", nil, true)
+    end
+    return true
+end
+
+local function InstallKeyboardWheelPromptHook()
+    local wheelClass = ZO_UtilityWheel_Keyboard
+    if not wheelClass or type(wheelClass.Initialize) ~= "function" then
+        return false
+    end
+
+    if not rt.keyboardWheelPromptInitializeOriginal then
+        local originalInitialize = wheelClass.Initialize
+        rt.keyboardWheelPromptInitializeOriginal = originalInitialize
+        wheelClass.Initialize = function(self, ...)
+            originalInitialize(self, ...)
+            ApplyControllerCycleLabels(self)
+        end
+    end
+
+    -- The keyboard wheel is normally initialized before addons load.
+    ApplyControllerCycleLabels(UTILITY_WHEEL_KEYBOARD)
+    return true
+end
+
 -- StartInteraction returns a started flag (ESO's input binding consumes it) plus
 -- anything else; hand every value back unchanged.
 local function AfterUtilityStart(started, ...)
@@ -107,6 +151,7 @@ end
 
 function ADDON:ApplyUtilityWheel()
     self:InstallWhenReady("utilityWheelHooks", InstallManagerHooks)
+    self:InstallWhenReady("keyboardWheelPromptHook", InstallKeyboardWheelPromptHook)
     self:InstallWhenReady("wheelCleanup", function()
         -- Never leave the bridge layer behind across a zone change or logout.
         EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_WheelCleanup", EVENT_PLAYER_DEACTIVATED, RemoveBridgeLayer)

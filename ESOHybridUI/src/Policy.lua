@@ -39,6 +39,10 @@ function ADDON:IsHybrid()
     return rt.hybrid == true
 end
 
+function ADDON:IsKeyboardControllerMode()
+    return rt.keyboardController == true
+end
+
 -- Re-run a callback with a forced answer and preserve all return values.
 local function PackResults(...)
     return { n = select("#", ...), ... }
@@ -140,7 +144,10 @@ end
 
 local function IsGamepadUIAllowed()
     local answer
-    if rt.forceNativeModeDepth > 0 then
+    if rt.keyboardController then
+        -- Keep every interface on its keyboard presentation in this mode.
+        answer = false
+    elseif rt.forceNativeModeDepth > 0 then
         answer = RealAnswer()
     elseif rt.forceKeyboardWheelDepth > 0 then
         answer = false
@@ -164,7 +171,7 @@ function ADDON:InstallModeOverride()
     -- Full Gamepad mode must use ESO's original global directly. Leaving even a
     -- pass-through addon wrapper installed puts addon Lua in native UI call paths,
     -- including keybind dispatch for protected inventory actions.
-    if not rt.hybrid then
+    if not rt.keyboardUI then
         if not rt.modeOverrideInstalled then
             return true
         end
@@ -206,5 +213,7 @@ end
 function ADDON:RefreshSettingsCache()
     local settings = self:GetSettings()
     rt.hybrid = settings.mode == ADDON.MODE_HYBRID
-    rt.menusGamepad = settings.menuPolicy ~= ADDON.POLICY_LEGACY
+    rt.keyboardController = settings.mode == ADDON.MODE_KEYBOARD_CONTROLLER
+    rt.keyboardUI = rt.hybrid or rt.keyboardController
+    rt.menusGamepad = rt.hybrid and settings.menuPolicy ~= ADDON.POLICY_LEGACY
 end

@@ -38,6 +38,7 @@ The capture was complete (90 seconds, 151 samples).
 | Player-to-player interaction (trade/duel/emote wheel entry) | PLAYER_TO_PLAYER_INTERACT, PLAYER_TO_PLAYER | Preserve native Down/Up lifecycle | Native path retained; wheel presentation needs testing |
 | Quickslot / utility wheel | ACTION_BUTTON_9, UI_SHORTCUT_QUICK_SLOTS, Interactive Wheel Manager | Preserve native binding and hold/release semantics | No HUI-specific wheel adapter yet |
 | Main menu toggles: inventory, character, skills, champion, journal, collections, map, group, contacts, guilds, Alliance War, mail, notifications, Activity Finder, help | GamepadUIMode allowlist and menu bindings | Keep keyboard scenes navigable without replacing menu actions | Native toggles exist; each destination screen still needs testing |
+| Main-menu category switching | `MAIN_MENU_KEYBOARD.categoryBar`, `ZO_MenuBar_SelectDescriptor`, native category callbacks | Shoulder-button previous/next category controls, only when the screen does not already own the shortcut | Implemented on HUI; live validation still required for hidden/disabled categories and screen-specific shoulder conflicts |
 | UI shortcuts: primary/secondary/tertiary/quaternary/quinary/negative/help/exit and directional shortcuts | UI shortcut binding layer + keybind strip | Ensure selected descriptor and actual callback agree with gamepad input | Known primary-key collision; full dispatch audit open |
 | Inventory actions: use, equip, destroy, split, move, bank, trade | Screen keybind descriptors and protected ESO functions | Never directly call protected functions from pointer callbacks | High-risk; pointer click must not be treated as a secure native click |
 | Dialogs, notifications, confirmations | ZO_Dialogs and screen keybind descriptors | Preserve native callbacks and safe focus/selection | Notifications primary conflict observed; no generic click adapter |
@@ -75,6 +76,10 @@ The diagnostic capture now records the current scene state, whether the scene is
 ### 6. Platform-style refresh is incomplete
 
 HUI does not yet have a verified, supported way to refresh every already-created ZO_PlatformStyle control after its preferred-mode query changes. HUD_MANAGER:PropagateSettings() is not a universal platform-style refresh. Action-bar, ultimate, reticle, death, boss-bar, compass and prompt visuals require individual source review and live checks.
+
+### 7. Main-menu category navigation
+
+HUI now adds left/right shoulder keybind-strip descriptors while the keyboard main-menu category bar is showing and only when the active keybind strip does not already own those shortcuts. The callbacks select adjacent enabled category-bar descriptors through ESO's own `ZO_MenuBar_SelectDescriptor` path, so the keyboard menu's existing category callback performs the scene change. A later native shoulder descriptor removes the HUI descriptor instead of being replaced. This is a non-gameplay navigation adapter; it still requires live testing for category visibility, overlays, and keybind-strip state transitions.
 
 ## ESOUI / ZOS safety boundary
 

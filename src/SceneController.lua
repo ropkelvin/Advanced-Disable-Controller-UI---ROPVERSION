@@ -24,6 +24,7 @@ local function IsRestrictedSceneName(sceneName)
         or string.find(normalized, "endeavorsealstore", 1, true) ~= nil
         or string.find(normalized, "esoplusoffers", 1, true) ~= nil
         or string.find(normalized, "giftinventory", 1, true) ~= nil
+        or string.find(normalized, "dailyloginrewards", 1, true) ~= nil
 end
 
 function ADDON:IsRestrictedSceneActive()

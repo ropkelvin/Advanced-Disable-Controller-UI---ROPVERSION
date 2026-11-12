@@ -119,6 +119,35 @@ local function RestoreStackAllMappings()
     end
 end
 
+-- Make native keybind buttons resolve controller bindings automatically.
+-- This is the shared button-level path used by HUD prompts and standalone
+-- keybind buttons; keybind-strip descriptors continue to use the strip style.
+local function InstallAutonomousKeybindButtonHook()
+    local mixin = ZO_KeybindButtonMixin
+    if not mixin or type(mixin.SetKeybind) ~= "function" then
+        return false
+    end
+
+    if rt.keybindButtonSetKeybindOriginal then
+        return true
+    end
+
+    local originalSetKeybind = mixin.SetKeybind
+    rt.keybindButtonSetKeybindOriginal = originalSetKeybind
+
+    mixin.SetKeybind = function(button, keybind, showUnbound, gamepadPreferredKeybind, alwaysPreferGamepadMode, showAsHold)
+        -- The two Hybrid wheels intentionally retain keyboard-style bindings.
+        if ADDON:ShouldShowControllerPrompts() and rt.forceKeyboardWheelDepth == 0 then
+            alwaysPreferGamepadMode = true
+        end
+
+        return originalSetKeybind(button, keybind, showUnbound,
+            gamepadPreferredKeybind, alwaysPreferGamepadMode, showAsHold)
+    end
+
+    return true
+end
+
 local function InstallStackAllHook()
     if not ZO_KeybindStrip then
         return false
@@ -213,27 +242,10 @@ local function RefreshHousingPrompt(forceGamepadPrompts)
     local fragment = HOUSING_HUD_FRAGMENT
     local button = fragment and fragment.keybindButton
     if button and button.SetKeybind then
-        -- ESO initializes this HUD prompt as keyboard-only. Keep its original
-        -- action, but ask the keybind button to resolve the controller binding.
+        -- This fragment is created before addon initialization. Reapply its
+        -- existing binding once; the shared SetKeybind hook handles later updates.
         button:SetKeybind("SHOW_HOUSING_PANEL", false, nil, forceGamepadPrompts)
     end
-end
-
-local function InstallHousingPromptHook()
-    local housingFragmentClass = HousingHUDFragment
-    if not housingFragmentClass or type(housingFragmentClass.InitializeKeybinds) ~= "function" then
-        return false
-    end
-
-    -- The class method runs when the housing HUD fragment initializes. Refresh
-    -- the keybind after ESO has set up its native callback and text.
-    ZO_PostHook(housingFragmentClass, "InitializeKeybinds", function(fragment)
-        local button = fragment.keybindButton
-        if button and button.SetKeybind then
-            button:SetKeybind("SHOW_HOUSING_PANEL", false, nil, ADDON:ShouldShowControllerPrompts())
-        end
-    end)
-    return true
 end
 
 
@@ -283,7 +295,7 @@ function ADDON:ApplyPrompts()
 
     self:InstallWhenReady("stackAllHook", InstallStackAllHook)
     self:InstallWhenReady("deathPromptHook", InstallDeathPromptHook)
-    self:InstallWhenReady("housingPromptHook", InstallHousingPromptHook)
+    self:InstallWhenReady("autonomousKeybindButtonHook", InstallAutonomousKeybindButtonHook)
 
     if not forceGamepadPrompts then
         RestoreStackAllMappings()

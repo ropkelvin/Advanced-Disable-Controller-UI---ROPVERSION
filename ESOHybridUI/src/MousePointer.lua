@@ -77,6 +77,8 @@ end
 -- per-frame movement method: read ESO's eased physical left-stick values, then
 -- consume LEFT only while the pointer fragment is active. This prevents movement
 -- input from leaking through in menus without touching the HUD or right stick.
+local IsPointerEnabled
+
 local function InstallPointerInputHook()
     local cursorClass = LibMousePointer and LibMousePointer.Cursor_Gamepad
     if not cursorClass or type(cursorClass.UpdateDirectionalInput) ~= "function" then
@@ -124,11 +126,8 @@ local function InstallPointerInputHook()
     return true
 end
 
--- LibMousePointer already implements cursor movement through ESO's
--- DIRECTIONAL_INPUT arbitration using ZO_DI_LEFT_STICK. Keep that native
--- implementation: while a keyboard-style UI scene is open, the left stick
--- navigates the pointer; in the HUD it remains available for character
--- movement. Do not redirect the right stick, which remains the camera input.
+-- Pointer input is enabled only while a keyboard-style UI scene is active.
+-- The HUD keeps its native left-stick movement and right-stick camera controls.
 
 local function IsPointerScene(scene)
     if not scene or not scene.GetName then
@@ -139,7 +138,7 @@ local function IsPointerScene(scene)
     return name ~= "hud" and name ~= "hudui"
 end
 
-local function IsPointerEnabled()
+IsPointerEnabled = function()
     return rt.keyboardController == true
         and ADDON:IsNativeGamepadMode()
         and ADDON:GetSettings().keyboardControllerMousePointer ~= false

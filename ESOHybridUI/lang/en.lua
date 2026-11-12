@@ -14,6 +14,9 @@
 ZO_CreateStringId("SI_KEYBINDINGS_CATEGORY_ESO_HYBRID_UI", "ESO Hybrid UI")
 ZO_CreateStringId("SI_KEYBINDINGS_CATEGORY_ESO_HYBRID_UI_WHEEL", "ESO Hybrid UI: utility wheel bridge")
 ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_TOGGLE_UI", "Cycle interface modes")
+ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_POINTER_CLICK", "Controller mouse pointer: left click")
+ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_POINTER_RIGHT_CLICK", "Controller mouse pointer: right click")
+ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_POINTER_RESET", "Controller mouse pointer: reset position")
 ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_LEFT", "Cycle utility wheel left (controller)")
 ZO_CreateStringId("SI_BINDING_NAME_ESOHYBRIDUI_UTILITY_WHEEL_CYCLE_RIGHT", "Cycle utility wheel right (controller)")
 
@@ -59,6 +62,8 @@ ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_REMINDER_TOOLTIP", "Show one chat remind
 ZO_CreateStringId("SI_ESOHYBRIDUI_WHEEL_BINDING_REMINDER", "ESO Hybrid UI: To open the keyboard-style quickslot wheel with your controller, go to Settings > Controls > Keybindings > Combat, select Quickslot Wheel (ACTION_BUTTON_9), and assign a Gamepad button as a secondary binding. Your keybindings are not changed by the addon.")
 ZO_CreateStringId("SI_ESOHYBRIDUI_GLYPHS_NAME", "Controller glyphs on the action bar")
 ZO_CreateStringId("SI_ESOHYBRIDUI_GLYPHS_TOOLTIP", "On: show controller button glyphs on the keyboard-layout action bar in Hybrid. Off: use keyboard labels in Hybrid. Keyboard UI + Controller always uses controller glyphs. This setting refreshes the action-bar labels immediately.")
+ZO_CreateStringId("SI_ESOHYBRIDUI_MOUSE_POINTER_NAME", "Controller mouse pointer")
+ZO_CreateStringId("SI_ESOHYBRIDUI_MOUSE_POINTER_TOOLTIP", "In Keyboard UI + Controller mode, show a controller-operated pointer on keyboard-style UI scenes where mouse hit-testing is supported. Requires the separate LibMousePointer library. Bind ESO Hybrid UI: left click, right click and reset position under Settings > Controls > Keybindings > General. The addon does not take over your normal mouse.")
 
 -- Settings: HUD prompt fonts
 ZO_CreateStringId("SI_ESOHYBRIDUI_HEADER_PROMPTS", "HUD prompts")

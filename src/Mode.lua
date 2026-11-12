@@ -5,6 +5,10 @@ local function IsLockpickActive()
     return rt.lockPicking == true
 end
 
+local function IsHUIKeyboardPresentationPreferredMode()
+    return false
+end
+
 function ADDON:ApplyMode()
     if not self.saved then
         return
@@ -17,11 +21,17 @@ function ADDON:ApplyMode()
 
     -- Do not touch ESO's mode query outside the active world.
     if shouldUseKeyboardPresentation then
-        _G.IsInGamepadPreferredMode = function()
-            return false
+        if _G.IsInGamepadPreferredMode ~= IsHUIKeyboardPresentationPreferredMode then
+            _G.IsInGamepadPreferredMode = IsHUIKeyboardPresentationPreferredMode
         end
-    else
-        _G.IsInGamepadPreferredMode = self.NativeIsInGamepadPreferredMode
+        rt.modeOverrideApplied = true
+    elseif rt.modeOverrideApplied then
+        -- Restore only if our wrapper is still installed; do not overwrite a
+        -- later override installed by another addon.
+        if _G.IsInGamepadPreferredMode == IsHUIKeyboardPresentationPreferredMode then
+            _G.IsInGamepadPreferredMode = self.NativeIsInGamepadPreferredMode
+        end
+        rt.modeOverrideApplied = false
     end
 
     if self.ApplyPromptPresentation then

@@ -9,7 +9,19 @@ local wrapperGetPreferredKeyType
 local wrapperShouldShowGamepadKeybind
 
 function ADDON:ApplyPromptPresentation()
-    local hybridPrompts = self:IsActive() and self:IsHybrid()
+    -- Never touch presentation controls before the player is in-world. On
+    -- deactivation, restore the original shared style if HUI had changed it.
+    if not self:IsActive() then
+        if rt.originalPromptStyleCaptured and KEYBIND_STRIP_STANDARD_STYLE then
+            KEYBIND_STRIP_STANDARD_STYLE.alwaysPreferGamepadMode = rt.originalPromptStyle
+            if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle and ZO_ShallowTableCopy then
+                KEYBIND_STRIP:SetStyle(ZO_ShallowTableCopy(KEYBIND_STRIP_STANDARD_STYLE))
+            end
+        end
+        return
+    end
+
+    local hybridPrompts = self:IsHybrid()
         and self:IsNativeGamepadMode() and not self:IsRestrictedSceneActive()
 
     if KEYBIND_STRIP_STANDARD_STYLE then

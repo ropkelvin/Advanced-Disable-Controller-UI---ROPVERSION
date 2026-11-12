@@ -172,8 +172,10 @@ local function IsPointerScene(scene)
 end
 
 IsPointerEnabled = function()
+    -- Keyboard UI + Controller intentionally forces ESO's UI presentation
+    -- query to keyboard mode. Do not gate pointer availability on the native
+    -- gamepad-presentation answer: the controller remains the active input.
     return rt.keyboardController == true
-        and ADDON:IsNativeGamepadMode()
         and ADDON:GetSettings().keyboardControllerMousePointer ~= false
         and LibMousePointer ~= nil
         and MOUSE_POINTER_FRAGMENT ~= nil

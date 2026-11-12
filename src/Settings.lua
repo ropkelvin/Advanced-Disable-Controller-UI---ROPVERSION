@@ -36,7 +36,7 @@ function ADDON:InitializeSettings()
         {
             type = "checkbox",
             name = "Controller pointer in keyboard menus",
-            tooltip = "Uses LibMousePointer to move and click through keyboard-style screens.",
+            tooltip = "Moves a controller cursor through keyboard-style scenes. Click support is screen-dependent; use native keybinds for protected actions.",
             getFunc = function()
                 return self.saved.pointerEnabled
             end,

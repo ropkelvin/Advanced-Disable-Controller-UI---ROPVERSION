@@ -209,6 +209,34 @@ local function RefreshPlayerInteractionPrompt(forceGamepadPrompts)
         "PLAYER_TO_PLAYER_INTERACT", false, nil, forceGamepadPrompts)
 end
 
+local function RefreshHousingPrompt(forceGamepadPrompts)
+    local fragment = HOUSING_HUD_FRAGMENT
+    local button = fragment and fragment.keybindButton
+    if button and button.SetKeybind then
+        -- ESO initializes this HUD prompt as keyboard-only. Keep its original
+        -- action, but ask the keybind button to resolve the controller binding.
+        button:SetKeybind("SHOW_HOUSING_PANEL", false, nil, forceGamepadPrompts)
+    end
+end
+
+local function InstallHousingPromptHook()
+    local housingFragmentClass = HousingHUDFragment
+    if not housingFragmentClass or type(housingFragmentClass.InitializeKeybinds) ~= "function" then
+        return false
+    end
+
+    -- The class method runs when the housing HUD fragment initializes. Refresh
+    -- the keybind after ESO has set up its native callback and text.
+    ZO_PostHook(housingFragmentClass, "InitializeKeybinds", function(fragment)
+        local button = fragment.keybindButton
+        if button and button.SetKeybind then
+            button:SetKeybind("SHOW_HOUSING_PANEL", false, nil, ADDON:ShouldShowControllerPrompts())
+        end
+    end)
+    return true
+end
+
+
 local function ApplyReticleFonts(forceGamepadPrompts)
     -- Re-apply the correct native style when leaving Hybrid as well. Returning
     -- early here left the addon's custom fonts on the reticle/stealth icon after
@@ -255,6 +283,7 @@ function ADDON:ApplyPrompts()
 
     self:InstallWhenReady("stackAllHook", InstallStackAllHook)
     self:InstallWhenReady("deathPromptHook", InstallDeathPromptHook)
+    self:InstallWhenReady("housingPromptHook", InstallHousingPromptHook)
 
     if not forceGamepadPrompts then
         RestoreStackAllMappings()
@@ -267,6 +296,7 @@ function ADDON:ApplyPrompts()
     ApplyReticleFonts(forceGamepadPrompts)
     RefreshReticlePrompt(forceGamepadPrompts)
     RefreshPlayerInteractionPrompt(forceGamepadPrompts)
+    RefreshHousingPrompt(forceGamepadPrompts)
 
     if KEYBIND_STRIP and KEYBIND_STRIP.SetStyle and ZO_ShallowTableCopy then
         local stripStyle = ZO_ShallowTableCopy(baseStripStyle)

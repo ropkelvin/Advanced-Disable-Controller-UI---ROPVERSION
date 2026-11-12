@@ -74,10 +74,21 @@ local IsPointerEnabled
 -- fragment is actually showing. Merely enabling the setting must never change
 -- stick handling on the HUD or during a scene transition.
 local function IsPointerFragmentActive()
-    return IsPointerEnabled()
-        and MOUSE_POINTER_FRAGMENT ~= nil
-        and type(MOUSE_POINTER_FRAGMENT.IsShowing) == "function"
-        and MOUSE_POINTER_FRAGMENT:IsShowing()
+    if not IsPointerEnabled()
+        or not MOUSE_POINTER_FRAGMENT
+        or type(MOUSE_POINTER_FRAGMENT.IsShowing) ~= "function"
+        or not MOUSE_POINTER_FRAGMENT:IsShowing() then
+        return false
+    end
+
+    -- A showing fragment is not enough if LibMousePointer failed to create or
+    -- reveal its gamepad cursor. In that case keep ESO's normal UI-mode stick
+    -- consumption enabled rather than letting LEFT leak into character movement.
+    local cursor = LibMousePointer.gamepadCursor
+    local control = cursor and cursor.control
+    return control ~= nil
+        and type(control.IsHidden) == "function"
+        and not control:IsHidden()
 end
 
 local function InstallSceneManagerInputHook()
@@ -144,7 +155,20 @@ local function IsPointerScene(scene)
     end
 
     local name = scene:GetName()
-    return name ~= "hud" and name ~= "hudui"
+    if name == "hud" then
+        return false
+    end
+
+    -- ESO enters UI mode by showing hudui as its base scene. It is a valid
+    -- pointer surface only while the scene manager confirms actual UI mode;
+    -- otherwise the left stick must remain normal character movement.
+    if name == "hudui" then
+        return SCENE_MANAGER ~= nil
+            and SCENE_MANAGER.IsInUIMode ~= nil
+            and SCENE_MANAGER:IsInUIMode()
+    end
+
+    return true
 end
 
 IsPointerEnabled = function()
@@ -156,9 +180,22 @@ IsPointerEnabled = function()
 end
 
 local function AttachToScene(scene)
+    if not scene then
+        return false
+    end
+
     if IsPointerEnabled() and IsPointerScene(scene) and scene.AddTemporaryFragment then
+        -- AddTemporaryFragment also updates an already-visible scene. Do not
+        -- call fragment:Refresh() manually; LibMousePointer owns its state
+        -- transition and DIRECTIONAL_INPUT activation in its fragment callback.
         scene:AddTemporaryFragment(MOUSE_POINTER_FRAGMENT)
         return true
+    end
+
+    -- Keep the fragment out of HUD/non-UI scenes if a mode refresh occurs while
+    -- that scene is still current.
+    if MOUSE_POINTER_FRAGMENT and scene.RemoveTemporaryFragment then
+        scene:RemoveTemporaryFragment(MOUSE_POINTER_FRAGMENT)
     end
     return false
 end
@@ -166,6 +203,15 @@ end
 local function OnSceneStateChanged(scene, oldState, newState)
     if newState == SCENE_SHOWING or newState == SCENE_SHOWN then
         AttachToScene(scene)
+    end
+end
+
+local function OnGameCameraUIModeChanged()
+    -- Secondary signal for UI-mode transitions that do not produce a new
+    -- top-level menu scene. SceneStateChanged remains the primary lifecycle
+    -- path, because this engine event is not emitted consistently on all paths.
+    if SCENE_MANAGER then
+        AttachToScene(SCENE_MANAGER:GetCurrentScene())
     end
 end
 
@@ -231,6 +277,16 @@ function ADDON:ApplyMousePointer()
 
     if not rt.mousePointerSceneHookInstalled then
         SCENE_MANAGER:RegisterCallback("SceneStateChanged", OnSceneStateChanged)
+
+        -- Optional fallback. SceneStateChanged is still authoritative for
+        -- entering/leaving hudui and for ordinary menu scene transitions.
+        if EVENT_GAME_CAMERA_UI_MODE_CHANGED and EVENT_MANAGER then
+            EVENT_MANAGER:RegisterForEvent(
+                ADDON.ADDON_NAME .. "_MousePointerUIMode",
+                EVENT_GAME_CAMERA_UI_MODE_CHANGED,
+                OnGameCameraUIModeChanged)
+        end
+
         rt.mousePointerSceneHookInstalled = true
     end
 

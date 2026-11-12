@@ -5,7 +5,7 @@
 ## AddOnVersion: 40201
 ## APIVersion: 101050 101051
 ## DependsOn: LibAddonMenu-2.0>=43
-## OptionalDependsOn: LibGamepadOptions>=7 LibDebugLogger
+## OptionalDependsOn: LibGamepadOptions>=7 LibDebugLogger LibMousePointer
 ## SavedVariables: ESOHybridUI_SavedVariables
 
 lang/en.lua
@@ -14,6 +14,7 @@ src/Diagnostics.lua
 src/Policy.lua
 src/Core.lua
 src/KeyboardController.lua
+src/MousePointer.lua
 src/Prompts.lua
 src/Dialogs.lua
 src/UtilityWheel.lua

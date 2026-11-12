@@ -118,7 +118,18 @@ function ADDON:DumpMousePointerDiagnostics()
     self:Say("Scene-manager input hook=" .. tostring(rt.mousePointerSceneInputHookInstalled))
 end
 
+local function InstallRefreshHook()
+    if rt.mousePointerRefreshHookInstalled or type(ADDON.Refresh) ~= "function" then
+        return
+    end
+    ZO_PostHook(ADDON, "Refresh", function()
+        zo_callLater(function() ADDON:ApplyMousePointer() end, 0)
+    end)
+    rt.mousePointerRefreshHookInstalled = true
+end
+
 function ADDON:ApplyMousePointer()
+    InstallRefreshHook()
     InstallSceneManagerInputHook()
     if not SCENE_MANAGER then return false end
     if not rt.mousePointerSceneHookInstalled then

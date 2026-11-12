@@ -63,6 +63,7 @@ function ADDON:ApplyMode()
     -- the active keyboard/gamepad HUD element anchors after a mode change.
     if modeQueryChanged and HUD_MANAGER and HUD_MANAGER.PropagateSettings then
         HUD_MANAGER:PropagateSettings()
+        rt.hudRefreshPending = false
     end
 
     if self.ApplyPromptPresentation then

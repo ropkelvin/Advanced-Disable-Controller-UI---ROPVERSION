@@ -11,12 +11,33 @@ local NON_POINTER_SCENES = {
     lockpickgamepad = true,
 }
 
+local function IsRestrictedSceneName(sceneName)
+    if type(sceneName) ~= "string" then
+        return false
+    end
+    local normalized = string.lower(sceneName)
+    return normalized == "scrying"
+        or normalized == "tribute"
+        or string.find(normalized, "market", 1, true) ~= nil
+        or string.find(normalized, "store", 1, true) ~= nil
+        or string.find(normalized, "crown", 1, true) ~= nil
+end
+
+function ADDON:IsRestrictedSceneActive()
+    if rt.restrictedSceneActive then
+        return true
+    end
+    local currentSceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
+    return IsRestrictedSceneName(currentSceneName)
+end
+
 local function IsPointerScene(sceneName)
     if type(sceneName) ~= "string" then
         return false
     end
     local normalized = string.lower(sceneName)
-    if NON_POINTER_SCENES[normalized] or string.find(normalized, "^gamepad") then
+    if NON_POINTER_SCENES[normalized] or IsRestrictedSceneName(sceneName)
+        or string.find(normalized, "^gamepad") then
         return false
     end
     return true
@@ -106,9 +127,23 @@ local function InstallSceneHooks()
 
     if SCENE_MANAGER.Show then
         ZO_PreHook(SCENE_MANAGER, "Show", function(_, sceneName)
-            if ADDON:IsActive() and type(sceneName) == "string" then
-                ADDON:ApplyPointerToScene(sceneName, false)
+            if not ADDON:IsActive() or type(sceneName) ~= "string" then
+                return
             end
+
+            if IsRestrictedSceneName(sceneName) then
+                rt.restrictedScenes = rt.restrictedScenes or {}
+                local restrictedScene = SCENE_MANAGER:GetScene(sceneName)
+                if restrictedScene then
+                    rt.restrictedScenes[sceneName] = restrictedScene
+                end
+                if not rt.restrictedSceneActive then
+                    rt.restrictedSceneActive = true
+                    ADDON:ApplyMode()
+                end
+            end
+
+            ADDON:ApplyPointerToScene(sceneName, false)
         end)
     end
 
@@ -118,8 +153,35 @@ local function InstallSceneHooks()
                 return
             end
 
+            local sceneName = scene:GetName()
+            if IsRestrictedSceneName(sceneName) then
+                rt.restrictedScenes = rt.restrictedScenes or {}
+                if newState == SCENE_HIDDEN then
+                    rt.restrictedScenes[sceneName] = nil
+                else
+                    rt.restrictedScenes[sceneName] = scene
+                end
+            end
+
+            local restrictedActive = IsRestrictedSceneName(SCENE_MANAGER:GetCurrentSceneName())
+            if not restrictedActive and rt.restrictedScenes then
+                for name, restrictedScene in pairs(rt.restrictedScenes) do
+                    if restrictedScene:IsShowing() then
+                        restrictedActive = true
+                        break
+                    else
+                        rt.restrictedScenes[name] = nil
+                    end
+                end
+            end
+
+            if restrictedActive ~= rt.restrictedSceneActive then
+                rt.restrictedSceneActive = restrictedActive
+                ADDON:ApplyMode()
+            end
+
             if newState == SCENE_SHOWING or newState == SCENE_SHOWN then
-                ADDON:ApplyPointerToScene(scene:GetName(), false)
+                ADDON:ApplyPointerToScene(sceneName, false)
             end
 
             -- Only the actual top scene owns the pointer and stick routing.

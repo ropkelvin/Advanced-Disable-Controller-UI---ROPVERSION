@@ -8,7 +8,7 @@ HUI is a clean rebuild of ESOHybridUI around one initial goal: keep ESO's native
 
 ## Modes
 
-- **Hybrid** (initial default): ESO's Gamepad Mode must be **On**. HUI verifies the actual Gamepad Mode setting is explicitly **Always Gamepad** (not Auto), then changes the UI-preference query only while the player is active in the world. ESO's original query is retained for safe fallback. Gamepad keybind resolution and prompts are selected separately. Keyboard-style scenes receive LibMousePointer's pointer fragment. HUI disables its pointer and gamepad-prompt overrides on detected Crown Store/market, Scrying, and Tribute scenes. These exclusions still require live-client verification and ESOUI staff clarification before public release because the broad preferred-mode override must not affect restricted screens.
+- **Hybrid** (initial default): ESO's Gamepad Mode must be **On**. HUI verifies the actual Gamepad Mode setting is explicitly **On** (not Auto), then changes the UI-preference query only while the player is active in the world. ESO's original query is retained for safe fallback. Gamepad keybind resolution and prompts are selected separately. Keyboard-style scenes receive LibMousePointer's pointer fragment. HUI disables its pointer and gamepad-prompt overrides on detected Crown Store/market, Scrying, and Tribute scenes. These exclusions still require live-client verification and ESOUI staff clarification before public release because the broad preferred-mode override must not affect restricted screens.
 - **Pure Gamepad**: HUI restores ESO's original `IsInGamepadPreferredMode` function and leaves native Gamepad UI routing alone.
 
 Only these two modes are exposed in this first stage. Additional modes can be added later.

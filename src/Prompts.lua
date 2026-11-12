@@ -69,7 +69,8 @@ function ADDON:InitializePrompts()
 
         if originalShouldShowGamepadKeybind then
             wrapperShouldShowGamepadKeybind = function(alwaysPreferGamepadMode, ...)
-                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
+                if ADDON:IsActive() and ADDON:IsHybrid() and ADDON:IsNativeGamepadMode()
+                    and not ADDON:IsRestrictedSceneActive() then
                     return true
                 end
                 return originalShouldShowGamepadKeybind(alwaysPreferGamepadMode, ...)

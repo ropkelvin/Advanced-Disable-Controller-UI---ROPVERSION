@@ -227,6 +227,58 @@ local function InstallSceneHooks()
     rt.pointerHookInstalled = true
 end
 
+local function InstallPointerKeybindConflictHook()
+    if rt.pointerKeybindConflictHookInstalled
+        or not KEYBIND_STRIP
+        or not KEYBIND_STRIP.AddKeybindButton
+        or not LibMousePointer
+        or not LibMousePointer.keybindButton then
+        return
+    end
+
+    local pointerClickDescriptor = LibMousePointer.keybindButton
+    local pointerClickKeybind = pointerClickDescriptor.keybind
+
+    -- LibMousePointer uses UI_SHORTCUT_PRIMARY for cursor clicks. Some native
+    -- keyboard scenes also register UI_SHORTCUT_PRIMARY (for example the
+    -- Notifications scene's Accept Request action). ESO's keybind strip treats
+    -- that as a duplicate and evaluates descriptor.name while reporting it;
+    -- the Notifications name callback assumes a selected row and can nil-index.
+    -- When a real scene descriptor claims the same key, remove only the
+    -- library's click descriptor first. The pointer fragment and cursor remain
+    -- active; that scene's native primary action keeps ownership of the key.
+    ZO_PreHook(KEYBIND_STRIP, "AddKeybindButton", function(keybindStrip, descriptor, stateIndex)
+        if not descriptor
+            or descriptor == pointerClickDescriptor
+            or descriptor.keybind ~= pointerClickKeybind then
+            return false
+        end
+
+        local state = keybindStrip:GetKeybindState(stateIndex)
+        if state then
+            if state.individualButtons
+                and state.individualButtons[pointerClickKeybind] == pointerClickDescriptor then
+                keybindStrip:RemoveKeybindButton(pointerClickDescriptor, stateIndex)
+            end
+            return false
+        end
+
+        local existing = keybindStrip.keybinds
+            and keybindStrip.keybinds[pointerClickKeybind]
+        local existingDescriptor = existing
+        if type(existing) == "userdata" then
+            existingDescriptor = existing.keybindButtonDescriptor
+        end
+
+        if existingDescriptor == pointerClickDescriptor then
+            keybindStrip:RemoveKeybindButton(pointerClickDescriptor, stateIndex)
+        end
+        return false
+    end)
+
+    rt.pointerKeybindConflictHookInstalled = true
+end
+
 local function InstallDirectionalInputHook()
     if not ZO_IngameSceneManager or not ZO_IngameSceneManager.UpdateDirectionalInput
         or rt.directionalHookInstalled then
@@ -256,6 +308,7 @@ end
 function ADDON:InitializeSceneController()
     rt.pointerScenes = rt.pointerScenes or {}
     InstallSceneHooks()
+    InstallPointerKeybindConflictHook()
     InstallDirectionalInputHook()
     self:RefreshSceneController()
 end

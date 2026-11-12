@@ -92,15 +92,19 @@ local function IsPointerFragmentActive()
 end
 
 local function InstallSceneManagerInputHook()
-    local sceneManagerClass = ZO_IngameSceneManager
-    if not sceneManagerClass or type(sceneManagerClass.UpdateDirectionalInput) ~= "function" then
+    -- Hook the live manager instance, not the class table. ESO exposes this
+    -- method through ZO_IngameSceneManager, but the active SCENE_MANAGER is the
+    -- object registered with DIRECTIONAL_INPUT and is the one that receives
+    -- UpdateDirectionalInput during UI mode.
+    local sceneManager = SCENE_MANAGER
+    if not sceneManager or type(sceneManager.UpdateDirectionalInput) ~= "function" then
         return false
     end
     if rt.mousePointerSceneInputHookInstalled then
         return true
     end
 
-    ZO_PreHook(sceneManagerClass, "UpdateDirectionalInput", function()
+    ZO_PreHook(sceneManager, "UpdateDirectionalInput", function()
         if IsPointerFragmentActive() then
             -- The pointer handler consumes LEFT. Let RIGHT pass through to the
             -- normal camera path, matching the Keyboard UI + Controller design.
@@ -261,7 +265,8 @@ function ADDON:DumpMousePointerDiagnostics()
     self:Say("LibMousePointer=" .. tostring(LibMousePointer ~= nil)
         .. " cursor=" .. tostring(cursor ~= nil)
         .. " control=" .. tostring(control ~= nil)
-        .. " controlHidden=" .. tostring(control and control:IsHidden() or "n/a"))
+        .. " controlHidden=" .. tostring(control ~= nil and control:IsHidden() or false)
+        .. " sceneManagerMethod=" .. tostring(SCENE_MANAGER and type(SCENE_MANAGER.UpdateDirectionalInput) or "nil"))
     self:Say("leftAvailable=" .. tostring(available)
         .. " leftXY=" .. string.format("%.3f, %.3f", stickX, stickY)
         .. " sceneHook=" .. tostring(rt.mousePointerSceneInputHookInstalled)

@@ -14,6 +14,7 @@ ADDON.VERSION = "4.2.1-beta"
 
 ADDON.MODE_GAMEPAD = "gamepad"
 ADDON.MODE_HYBRID = "hybrid"
+ADDON.MODE_KEYBOARD_CONTROLLER = "keyboardController"
 
 -- How menus opened from the HUD are chosen (see Policy.lua).
 ADDON.POLICY_GAMEPAD = "gamepad"
@@ -52,6 +53,8 @@ ADDON.runtime = {
 
     -- Cached copy of "is Hybrid selected" so the hot path never touches saved vars.
     hybrid = false,
+    keyboardUI = false,
+    keyboardController = false,
     menusGamepad = true,
 
     isLockpicking = false,

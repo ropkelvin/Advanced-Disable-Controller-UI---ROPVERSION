@@ -52,6 +52,7 @@ local function ShouldUsePointer(sceneName)
         and ADDON:IsHybrid()
         and ADDON.saved.pointerEnabled
         and ADDON:IsGamepadModeOn()
+        and not rt.modeOverrideConflict
         and not ADDON:IsRestrictedSceneActive()
         and MOUSE_POINTER_FRAGMENT ~= nil
         and IsPointerScene(sceneName)

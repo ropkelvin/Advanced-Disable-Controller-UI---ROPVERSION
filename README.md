@@ -52,6 +52,16 @@ After changing modes, close and reopen the active menu so ESO can select the mat
 
 HUI does not call private ESO functions, simulate protected actions, automate gameplay, or read/write external files. It uses ESO's UI scene and directional-input systems and LibMousePointer's documented fragment/click API. The broad keyboard-scene routing and controller behaviour still require live-client validation, especially inventory, map, crafting, bank/trade, dialogs, resurrection, and lockpicking. LibMousePointer's public documentation describes the fragment and click API but does not specify the exact left-stick input ownership implementation; HUI therefore only bypasses ESO's default stick consumption after the left stick is already consumed by an earlier UI input owner. If that has not happened, ESO retains its normal safety behaviour and consumes both sticks.
 
+## Known implementation gaps
+
+This branch is a foundation, not a feature-complete Hybrid release. The following work is still required before claiming full controller support:
+
+- Screen-specific click handling when `UI_SHORTCUT_PRIMARY` is already occupied. The LibMousePointer automatic click binding is conditional.
+- Dedicated controller glyph adapters for the action bar/ultimate, reticle, death and player-interaction prompts. Some ESO controls check `IsInGamepadPreferredMode()` directly, so the generic keybinding wrappers alone cannot cover every case.
+- Explicit quickslot-wheel and player-interaction-wheel bindings and behaviour. The old `Bindings.xml` and `UtilityWheel.lua` were intentionally not copied into this clean foundation.
+- A complete screen-by-screen route and interaction audit for inventory, map, crafting, bank, trade, dialogs, loot, resurrection and housing.
+- A verified LibMousePointer source review and live controller test. Its published page does not document enough detail to prove its exact left-stick consumption order.
+
 ## Development status
 
-Initial architecture and first implementation pass. This is not yet confirmed in-game. Automated Lua syntax, manifest and package checks are necessary but do not establish runtime correctness.
+Initial audited foundation only. Not release-ready and not yet confirmed in-game. Automated Lua syntax, manifest and package checks are necessary but do not establish runtime correctness. The non-optional LibMousePointer dependency also needs its exact `## AddOnVersion` value so the manifest can use ESOUI's required versioned dependency syntax.

@@ -6,6 +6,27 @@
 
 local ADDON = ESOHybridUI
 
+local function InstallMapCategoryHook()
+    local mainMenu = MAIN_MENU_KEYBOARD
+    if not mainMenu or type(mainMenu.ToggleCategory) ~= "function" then
+        return false
+    end
+
+    -- The Map category is opened from the keyboard main-menu object in Hybrid.
+    -- Select ESO's native Gamepad map scene before the category's keyboard
+    -- implementation runs.
+    ZO_PreHook(mainMenu, "ToggleCategory", function(_, category)
+        if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() and category == MENU_CATEGORY_MAP then
+            ADDON:WithNativeGamepadMode(function()
+                SCENE_MANAGER:Show("gamepad_worldMap")
+            end)
+            return true
+        end
+        return false
+    end)
+    return true
+end
+
 local function InstallMapSceneHook()
     local originalShowWorldMap = _G.ZO_WorldMap_ShowWorldMap
     if type(originalShowWorldMap) ~= "function" then
@@ -25,5 +46,6 @@ local function InstallMapSceneHook()
 end
 
 function ADDON:ApplyWorldMap()
+    self:InstallWhenReady("mapCategoryHook", InstallMapCategoryHook)
     self:InstallWhenReady("mapSceneHook", InstallMapSceneHook)
 end

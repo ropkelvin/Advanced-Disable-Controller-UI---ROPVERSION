@@ -18,7 +18,10 @@ local function IsHUIKeyboardPresentationPreferredMode()
 end
 
 function ADDON:ApplyMode()
-    if not self.saved then
+    if not self.saved or not self:IsActive() then
+        -- The player-deactivated event is raised as the loading screen is
+        -- shown. While inactive, the global wrapper itself is pass-through;
+        -- do not refresh scenes, controls, or HUD until player activation.
         return
     end
 

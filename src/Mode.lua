@@ -59,6 +59,10 @@ local function InstallLockpickHook()
     rt.lockpickHookInstalled = true
 end
 
+function ADDON:InitializeLockpickHook()
+    InstallLockpickHook()
+end
+
 function ADDON:InitializeMode()
     if self.saved.mode ~= "gamepad" then
         self.saved.mode = "hybrid"
@@ -97,6 +101,5 @@ function ADDON:InitializeMode()
         end
     end
 
-    InstallLockpickHook()
     self:ApplyMode()
 end

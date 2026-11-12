@@ -71,11 +71,16 @@ local function RefreshGamepadMapKeybinds()
 
     local manager = WORLD_MAP_MANAGER
     if manager then
-        for _, controls in ipairs({ manager.gamepadLevelsControl, manager.gamepadFloorsControl }) do
-            if controls then
-                ForceGamepadKeybindButton(controls:GetNamedChild("RightKeybind"))
-                ForceGamepadKeybindButton(controls:GetNamedChild("LeftKeybind"))
-            end
+        local levels = manager.gamepadLevelsControl
+        if levels then
+            ForceGamepadKeybindButton(levels:GetNamedChild("RightKeybind"))
+            ForceGamepadKeybindButton(levels:GetNamedChild("LeftKeybind"))
+        end
+
+        local floors = manager.gamepadFloorsControl
+        if floors then
+            ForceGamepadKeybindButton(floors:GetNamedChild("RightKeybind"))
+            ForceGamepadKeybindButton(floors:GetNamedChild("LeftKeybind"))
         end
     end
 end

@@ -112,7 +112,7 @@ local function BuildControls(isGamepad)
         tooltip = GetString(SI_ESOHYBRIDUI_POLICY_TOOLTIP),
         choices = { GetString(SI_ESOHYBRIDUI_POLICY_GAMEPAD), GetString(SI_ESOHYBRIDUI_POLICY_LEGACY) },
         choicesValues = { ADDON.POLICY_GAMEPAD, ADDON.POLICY_LEGACY },
-        default = ADDON.POLICY_GAMEPAD,
+        default = ADDON.POLICY_LEGACY,
         getFunc = function()
             return ADDON:GetSettings().menuPolicy == ADDON.POLICY_LEGACY and ADDON.POLICY_LEGACY or ADDON.POLICY_GAMEPAD
         end,
@@ -137,6 +137,8 @@ local function BuildControls(isGamepad)
     add(Checkbox(SI_ESOHYBRIDUI_WHEEL_REMINDER_NAME, SI_ESOHYBRIDUI_WHEEL_REMINDER_TOOLTIP,
         "hybridQuickslotBindingReminder", true))
     add(Checkbox(SI_ESOHYBRIDUI_GLYPHS_NAME, SI_ESOHYBRIDUI_GLYPHS_TOOLTIP, "hybridActionBarGlyphs", true, refresh))
+    add(Checkbox(SI_ESOHYBRIDUI_POINTER_NAME, SI_ESOHYBRIDUI_POINTER_TOOLTIP, "keyboardControllerMousePointer", true,
+        function() ADDON:ApplyMousePointer() end))
 
     add({ type = "header", name = GetString(SI_ESOHYBRIDUI_HEADER_PROMPTS) })
     add(FontDropdown(SI_ESOHYBRIDUI_FONT_RETICLE_NAME, SI_ESOHYBRIDUI_FONT_RETICLE_TOOLTIP, "reticle"))

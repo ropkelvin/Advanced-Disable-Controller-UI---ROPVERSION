@@ -141,3 +141,7 @@ EVENT_MANAGER:RegisterForEvent(ADDON.ADDON_NAME .. "_PointerPlayerActivated",
     EVENT_PLAYER_ACTIVATED, function()
         ADDON:ApplyMousePointer()
     end)
+
+SLASH_COMMANDS["/esohybrid_pointer"] = function()
+    ADDON:DumpMousePointerDiagnostics()
+end

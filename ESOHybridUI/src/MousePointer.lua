@@ -71,6 +71,59 @@ local function InstallLockpickInputHook()
     return true
 end
 
+-- LibMousePointer registers a directional-input handler, but its stock cursor
+-- refuses to move when ESO's UI-mode handler has already consumed the stick.
+-- Keep the library's scene/cursor/hit-test implementation and replace only that
+-- per-frame movement method: read ESO's eased physical left-stick values, then
+-- consume LEFT only while the pointer fragment is active. This prevents movement
+-- input from leaking through in menus without touching the HUD or right stick.
+local function InstallPointerInputHook()
+    local cursorClass = LibMousePointer and LibMousePointer.Cursor_Gamepad
+    if not cursorClass or type(cursorClass.UpdateDirectionalInput) ~= "function" then
+        return false
+    end
+    if rt.mousePointerInputHookInstalled then
+        return true
+    end
+
+    local moveStartTimestamp = 0
+    ZO_PreHook(cursorClass, "UpdateDirectionalInput", function(cursor)
+        if not IsPointerEnabled() then
+            return false
+        end
+
+        DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK)
+
+        local dx = ZO_Gamepad_GetLeftStickEasedX()
+        local dy = ZO_Gamepad_GetLeftStickEasedY()
+        dx, dy = zo_clampLength2D(dx, dy, 1.5)
+
+        if dx == 0 and dy == 0 then
+            moveStartTimestamp = GetGameTimeMilliseconds()
+            return true
+        end
+
+        local frameDelta = GetFrameDeltaNormalizedForTargetFramerate()
+        local magnitude = frameDelta * 3
+            * zo_clamp((GetGameTimeMilliseconds() - moveStartTimestamp) / 250, 1, 8)
+        dx = dx * magnitude
+        dy = -dy * magnitude
+
+        cursor.control:SetAnchor(CENTER, GuiRoot, TOPLEFT, cursor.x + dx, cursor.y + dy)
+        local clampedX, clampedY = cursor.control:GetCenter()
+        if clampedX ~= cursor.x or clampedY ~= cursor.y then
+            cursor.x, cursor.y = clampedX, clampedY
+            cursor.directionalX = cursor.x + dx
+            cursor.directionalY = cursor.y + dy
+            cursor:UpdateCursorInfo()
+        end
+        return true
+    end)
+
+    rt.mousePointerInputHookInstalled = true
+    return true
+end
+
 -- LibMousePointer already implements cursor movement through ESO's
 -- DIRECTIONAL_INPUT arbitration using ZO_DI_LEFT_STICK. Keep that native
 -- implementation: while a keyboard-style UI scene is open, the left stick

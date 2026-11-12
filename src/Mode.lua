@@ -23,7 +23,7 @@ function ADDON:ApplyMode()
 
     local shouldUseKeyboardPresentation = self:IsActive()
         and self:IsHybrid()
-        and self:IsNativeGamepadMode()
+        and self:IsGamepadModeOn()
         and not IsLockpickActive()
         and not self:IsRestrictedSceneActive()
 
@@ -118,7 +118,8 @@ function ADDON:InitializeMode()
             local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName() or "unknown"
             self:Print("Mode=" .. self.saved.mode
                 .. " | InWorld=" .. tostring(self:IsActive())
-                .. " | ESO Gamepad Mode=" .. tostring(self:IsNativeGamepadMode())
+                .. " | Gamepad Mode On=" .. tostring(self:IsGamepadModeOn())
+                .. " | Original preferred query=" .. tostring(self:IsNativeGamepadMode())
                 .. " | UI preference=" .. tostring(IsInGamepadPreferredMode())
                 .. " | Scene=" .. tostring(sceneName)
                 .. " | Pointer=" .. tostring(rt.pointerScene))

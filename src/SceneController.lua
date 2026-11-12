@@ -102,6 +102,7 @@ function ADDON:RefreshSceneController()
     local shouldRunPointer = self:IsHybrid()
         and self.saved.pointerEnabled
         and self:IsNativeGamepadMode()
+        and not self:IsRestrictedSceneActive()
         and MOUSE_POINTER_FRAGMENT ~= nil
 
     if not shouldRunPointer and rt.pointerScenes then

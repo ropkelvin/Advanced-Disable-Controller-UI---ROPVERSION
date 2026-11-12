@@ -19,6 +19,7 @@ This inventory covers **305 native action definitions** found in the global bind
 - Main-menu LB/RB category cycling delegates to ESO's keyboard main-menu category handler.
 - Keyboard quickslot wheel cycling bridges to ESO's native Gamepad cycle bindings.
 - Optional LibMousePointer integration attaches its fragment to active keyboard-style scenes, excluding the base HUD. It exposes separately bindable left-click, right-click and reset actions; it never silently steals A/B/X/Y.
+- Keyboard-style lockpicking reuses ESO's current native virtual-cursor calculation with the controller's left-stick input, following the narrow compatibility approach used by EnhancedGamepadUI.
 - Existing native callbacks remain native. Protected inventory/resurrection functions are not reimplemented.
 
 ## Native global action inventory
@@ -288,6 +289,18 @@ This inventory covers **305 native action definitions** found in the global bind
 `CLOSE_INTERCEPT_TOGGLE_SYSTEM`, `CLOSE_INTERCEPT_TOGGLE_GAME_CAMERA_UI_MODE`, `CLOSE_INTERCEPT_GAMEPAD_UI_EXIT`
 
 ### PromotionalEventPersonalCampaignAnnouncementInterceptLayer
+
+## How the action families map to controller support
+
+| Native action family | Intended handling in Keyboard UI + Controller |
+|---|---|
+| Movement, combat, weapon swap, synergy, targeting and camera | Preserve ESO's native Gamepad gameplay actions. Do not synthesize combat calls or replace secure input callbacks. |
+| UI category toggles | Keep ESO's native toggle actions pointed at the keyboard main-menu object; LB/RB navigate the keyboard category bar. |
+| UI shortcut primary/secondary/tertiary/etc. | These dispatch through the active keybind strip. Glyph preference alone is insufficient; each keyboard descriptor needs a matching controller action or mouse click. |
+| Dialogs, conversations, loot and menus | Use the keyboard scene's existing mouse handlers through the optional pointer, or add a screen-specific safe descriptor mapping. |
+| Radial menus and quickslot wheel | Preserve ESO's radial-menu `DIRECTIONAL_INPUT` path; keyboard radial selection should be tested separately from its open/cycle bindings. |
+| Lockpicking | Use ESO's native lockpick virtual-cursor math with left-stick input, because the keyboard template normally gates this on the preferred-mode query. |
+| Housing editor, antiquities, special preview and third-party panels | Treat as screen-specific until their keybind descriptors, focus behavior and protected callbacks are audited. |
 
 ## Coverage rules for the remaining work
 

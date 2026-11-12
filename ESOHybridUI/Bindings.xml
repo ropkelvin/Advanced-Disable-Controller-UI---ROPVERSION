@@ -5,6 +5,16 @@
                 <Down>ESOHybridUI:ToggleUI()</Down>
             </Action>
         </Category>
+        <Category name="SI_KEYBINDINGS_CATEGORY_GENERAL">
+            <!-- ADCUI-style category navigation: reuse ESO's native shoulder
+                 bindings rather than assigning or changing user keybinds. -->
+            <Action name="ESOHYBRIDUI_MAIN_MENU_PREVIOUS_CATEGORY" inheritsBindFrom="UI_SHORTCUT_LEFT_SHOULDER">
+                <Down>if ESOHybridUI and ESOHybridUI:CycleKeyboardMainMenuCategory(-1) then return true end return false</Down>
+            </Action>
+            <Action name="ESOHYBRIDUI_MAIN_MENU_NEXT_CATEGORY" inheritsBindFrom="UI_SHORTCUT_RIGHT_SHOULDER">
+                <Down>if ESOHybridUI and ESOHybridUI:CycleKeyboardMainMenuCategory(1) then return true end return false</Down>
+            </Action>
+        </Category>
     </Layer>
 
     <!-- Temporary layer pushed only while Hybrid's keyboard-style quickslot wheel

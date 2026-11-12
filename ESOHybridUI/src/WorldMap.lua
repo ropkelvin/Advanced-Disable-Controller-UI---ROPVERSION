@@ -50,6 +50,36 @@ end
 -- while the Gamepad scene is still transitioning in, before Policy.lua can
 -- identify that scene as active. Run this one native map decision in the
 -- Gamepad context so the keyboard floor controls never flash into view.
+-- The Gamepad map controls are created by ESO before this addon loads, so
+-- the shared SetKeybind hook cannot affect their first registration. Re-register
+-- those existing labels with their original actions and an explicit Gamepad
+-- preference; this changes glyph selection only, not the action or callback.
+local function ForceGamepadKeybindButton(button)
+    if button and button.SetKeybind and button.keybind
+        and button.alwaysPreferGamepadMode ~= true then
+        button:SetKeybind(button.keybind, false, button.gamepadPreferredKeybind, true)
+    end
+end
+
+local function RefreshGamepadMapKeybinds()
+    local header = ZO_WorldMapHeader_Gamepad
+    local zoom = header and header:GetNamedChild("ZoomKeybind")
+    if zoom then
+        ForceGamepadKeybindButton(zoom:GetNamedChild("RightKeybind"))
+        ForceGamepadKeybindButton(zoom:GetNamedChild("LeftKeybind"))
+    end
+
+    local manager = WORLD_MAP_MANAGER
+    if manager then
+        for _, controls in ipairs({ manager.gamepadLevelsControl, manager.gamepadFloorsControl }) do
+            if controls then
+                ForceGamepadKeybindButton(controls:GetNamedChild("RightKeybind"))
+                ForceGamepadKeybindButton(controls:GetNamedChild("LeftKeybind"))
+            end
+        end
+    end
+end
+
 local function InstallMapLevelNavigationHook()
     local managerClass = ZO_WorldMapManager
     if not managerClass or type(managerClass.UpdateFloorAndLevelNavigation) ~= "function" then
@@ -59,7 +89,10 @@ local function InstallMapLevelNavigationHook()
     local originalUpdate = managerClass.UpdateFloorAndLevelNavigation
     ZO_PreHook(managerClass, "UpdateFloorAndLevelNavigation", function(manager, ...)
         if ADDON:IsHybrid() and ADDON:IsNativeGamepadMode() then
-            ADDON:WithNativeGamepadMode(originalUpdate, manager, ...)
+            ADDON:WithNativeGamepadMode(function(...)
+                originalUpdate(manager, ...)
+                RefreshGamepadMapKeybinds()
+            end, ...)
             return true
         end
         return false
@@ -91,4 +124,5 @@ function ADDON:ApplyWorldMap()
     self:InstallWhenReady("mapSceneHook", InstallMapSceneHook)
     self:InstallWhenReady("mapLevelNavigationHook", InstallMapLevelNavigationHook)
     self:InstallWhenReady("mapPresentationRefreshHook", InstallMapPresentationRefreshHook)
+    RefreshGamepadMapKeybinds()
 end

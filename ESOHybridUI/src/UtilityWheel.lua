@@ -1,4 +1,4 @@
--- Hybrid quickslot (utility) wheel.
+-- Keyboard-presentation quickslot (utility) wheel.
 --
 -- ESO has separate keyboard and gamepad wheel classes. The manager caches
 -- its selected platform when StartInteraction runs, so each wheel must be

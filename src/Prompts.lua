@@ -16,6 +16,41 @@ local function ShouldUseControllerPrompts()
         and not ADDON:IsRestrictedSceneActive()
 end
 
+function ADDON:RestorePrompts()
+    -- Restore only if HUI still owns every wrapped helper. If another addon
+    -- wrapped one of ours, keep the pass-through chain rather than clobber it.
+    local canRestore = true
+    if wrapperShouldUseGamepadAction and _G.ZO_Keybindings_ShouldUseGamepadAction ~= wrapperShouldUseGamepadAction then
+        canRestore = false
+    end
+    if wrapperGetPreferredKeyType and _G.ZO_Keybindings_GetPreferredKeyType ~= wrapperGetPreferredKeyType then
+        canRestore = false
+    end
+    if wrapperShouldShowGamepadKeybind and _G.ZO_Keybindings_ShouldShowGamepadKeybind ~= wrapperShouldShowGamepadKeybind then
+        canRestore = false
+    end
+
+    if canRestore then
+        if wrapperShouldUseGamepadAction then
+            _G.ZO_Keybindings_ShouldUseGamepadAction = originalShouldUseGamepadAction
+        end
+        if wrapperGetPreferredKeyType then
+            _G.ZO_Keybindings_GetPreferredKeyType = originalGetPreferredKeyType
+        end
+        if wrapperShouldShowGamepadKeybind then
+            _G.ZO_Keybindings_ShouldShowGamepadKeybind = originalShouldShowGamepadKeybind
+        end
+
+        originalShouldUseGamepadAction = nil
+        originalGetPreferredKeyType = nil
+        originalShouldShowGamepadKeybind = nil
+        wrapperShouldUseGamepadAction = nil
+        wrapperGetPreferredKeyType = nil
+        wrapperShouldShowGamepadKeybind = nil
+        rt.promptHooksInstalled = false
+    end
+end
+
 function ADDON:InitializePrompts()
     if not self:IsActive() or rt.promptHooksInstalled then
         return

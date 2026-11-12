@@ -156,6 +156,8 @@ local function InstallSceneHooks()
                 return
             end
 
+            ADDON:RecordDiagnostic("SCENE_SHOW_REQUEST", sceneName)
+
             if IsRestrictedSceneName(sceneName) then
                 rt.restrictedScenes = rt.restrictedScenes or {}
                 local restrictedScene = SCENE_MANAGER:GetScene(sceneName)
@@ -187,6 +189,9 @@ local function InstallSceneHooks()
             end
 
             local sceneName = scene:GetName()
+            ADDON:RecordDiagnostic("SCENE_STATE", sceneName
+                .. ",old=" .. tostring(oldState)
+                .. ",new=" .. tostring(newState))
             if IsRestrictedSceneName(sceneName) then
                 rt.restrictedScenes = rt.restrictedScenes or {}
                 if newState == SCENE_HIDDEN then
@@ -271,6 +276,8 @@ local function InstallPointerKeybindConflictHook()
         end
 
         if existingDescriptor == pointerClickDescriptor then
+            ADDON:RecordDiagnostic("POINTER_PRIMARY_CONFLICT", "scene=" .. tostring(
+                SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()))
             keybindStrip:RemoveKeybindButton(pointerClickDescriptor, stateIndex)
         end
         return false

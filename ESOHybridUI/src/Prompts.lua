@@ -4,10 +4,10 @@ local ADDON = ESOHybridUI
 local rt = ADDON.runtime
 local NIL_VALUE = {}
 
--- Glyph/prompt forcing applies only in Hybrid and only when the controller is the
--- real input device (ESO Gamepad Mode On).
+-- Keep keyboard presentation separate from the active input device. The
+-- controller must remain ESO's real input device (Gamepad Mode On).
 function ADDON:ShouldShowControllerPrompts()
-    return rt.hybrid == true and self:IsNativeGamepadMode()
+    return rt.keyboardUI == true and self:IsNativeGamepadMode()
 end
 
 local function SaveAndSet(object, key, value)
@@ -208,7 +208,7 @@ local function InstallDeathPromptHook()
 
     local originalApplyStyle = DEATH.ApplyStyle
     ZO_PreHook(DEATH, "ApplyStyle", function(death, ...)
-        if ADDON:ShouldShowControllerPrompts() then
+        if ADDON:IsHybrid() and ADDON:ShouldShowControllerPrompts() then
             -- No meaningful return value: run the native-gamepad template
             -- selection ourselves and suppress the duplicate original call.
             ADDON:WithNativeGamepadMode(originalApplyStyle, death, ...)
@@ -302,8 +302,8 @@ function ADDON:ApplyPrompts()
     if not forceGamepadPrompts then
         RestoreStackAllMappings()
     end
-    -- Keep the strip's native platform layout, but force controller glyph
-    -- resolution on the keyboard HUD while Hybrid is active.
+    -- Keep the standard keyboard strip layout, but force controller glyph
+    -- resolution in either keyboard-presentation mode.
     local baseStripStyle = IsInGamepadPreferredMode()
         and KEYBIND_STRIP_GAMEPAD_STYLE or KEYBIND_STRIP_STANDARD_STYLE
     RemapKnownDescriptors(forceGamepadPrompts and not rt.menusGamepad)

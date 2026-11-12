@@ -51,7 +51,7 @@ ADDON.runtime = {
     forceNativeModeDepth = 0,
     forceKeyboardWheelDepth = 0,
 
-    -- Cached copy of "is Hybrid selected" so the hot path never touches saved vars.
+    -- Cached mode flags so the hot path never touches saved variables.
     hybrid = false,
     keyboardUI = false,
     keyboardController = false,

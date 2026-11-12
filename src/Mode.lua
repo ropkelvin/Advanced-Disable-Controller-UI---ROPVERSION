@@ -85,6 +85,9 @@ function ADDON:ApplyMode()
     if self.RefreshSceneController then
         self:RefreshSceneController()
     end
+    if self.RefreshMainMenuNavigation then
+        self:RefreshMainMenuNavigation()
+    end
 end
 
 function ADDON:TryRefreshHUDSettings()

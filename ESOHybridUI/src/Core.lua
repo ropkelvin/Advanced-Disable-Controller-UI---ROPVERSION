@@ -522,7 +522,9 @@ local function ShowWelcomeDialog()
             mainText = { text = GetString(SI_ESOHYBRIDUI_WELCOME_TEXT) },
             buttons = { { text = GetString(SI_ESOHYBRIDUI_WELCOME_BUTTON) } },
         })
-        return ZO_Dialogs_ShowDialog(dialogName, nil, nil, ADDON:IsNativeGamepadMode())
+        -- This is an addon-created dialog. Keep it on the keyboard template:
+        -- forcing a Gamepad dialog through this API can taint later protected callbacks.
+        return ZO_Dialogs_ShowDialog(dialogName, nil, nil, false)
     end)
 
     if ok and dialogOrError then

@@ -13,6 +13,7 @@ ADDON.defaults = {
 ADDON.runtime = {
     initialized = false,
     inWorld = false,
+    modeOverrideConflict = false,
     lockPicking = false,
     pointerScene = false,
     pointerHookInstalled = false,

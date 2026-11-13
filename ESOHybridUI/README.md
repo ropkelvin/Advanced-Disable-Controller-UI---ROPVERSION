@@ -1,4 +1,4 @@
-# HUI - ESO Hybrid UI 2.1.1
+# HUI - ESO Hybrid UI 2.1.2
 
 Keyboard-style ESO menus with controller input. ESO's **Gamepad Mode must be On** (not Auto). HUI includes its own pointer; LibAddonMenu-2.0 is optional.
 
@@ -13,7 +13,7 @@ Keyboard-style ESO menus with controller input. ESO's **Gamepad Mode must be On*
 | LB / RB | Previous / next main-menu category while the native keyboard category bar is showing |
 | LT / RT | Previous / next detected visible `ZO_MenuBar` tab; other tab implementations are not covered |
 
-HUI owns its cursor and registers a high-priority directional-input owner. ESO's `DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)` consumes the queried device for that update, so HUI does not issue a redundant second consume. Ownership starts when the pointer fragment begins showing.
+HUI owns its cursor and registers a high-priority directional-input owner. ESO's `DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)` consumes the queried device for that update, so HUI does not issue a redundant second consume. HUI also immediately mirrors the consumed state to ESO's `SetGamepadLeftStickConsumedByUI` input API, rather than waiting for the later ClientInput callback. Ownership starts when the pointer fragment begins showing.
 
 ## Click safety
 

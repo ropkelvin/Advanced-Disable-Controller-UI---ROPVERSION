@@ -19,7 +19,7 @@ jobs:
       - name: Check addon metadata
         run: |
           grep -q '^## APIVersion: 101051$' ESOHybridUI/ESOHybridUI.txt
-          grep -q '^## Version: 2.0.2$' ESOHybridUI/ESOHybridUI.txt
+          grep -q '^## Version: 2.0.3$' ESOHybridUI/ESOHybridUI.txt
       - name: Check manifest paths
         run: |
           awk '!/^#/ && NF {print}' ESOHybridUI/ESOHybridUI.txt | while read file; do

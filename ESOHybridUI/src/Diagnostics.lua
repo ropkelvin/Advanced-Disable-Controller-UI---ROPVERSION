@@ -1,5 +1,4 @@
--- /huidebug: 90 s capture to SavedVariables (then /reloadui). Costs nothing
--- when idle: Record() returns immediately unless a capture is running.
+-- /huidebug: 90 s capture to SavedVariables. Idle overhead is negligible.
 local ADDON = ESOHybridUI
 local rt = ADDON.rt
 
@@ -31,21 +30,35 @@ end
 
 local function Sample()
     local lib = LibMousePointer
-    local cursor = lib and lib.gamepadCursor
+    local cursorX, cursorY
+    local hit
+    local listening = false
+    if lib then
+        if lib.GetCursorPosition then
+            cursorX, cursorY = lib:GetCursorPosition()
+        end
+        if lib.GetControlAtCursor then
+            hit = lib:GetControlAtCursor()
+        end
+        listening = DIRECTIONAL_INPUT ~= nil
+            and DIRECTIONAL_INPUT:IsListening(lib)
+    end
+
     local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
-    local primary = KEYBIND_STRIP and KEYBIND_STRIP.keybinds and KEYBIND_STRIP.keybinds.UI_SHORTCUT_PRIMARY
+    local primary = KEYBIND_STRIP and KEYBIND_STRIP.keybinds
+        and KEYBIND_STRIP.keybinds.UI_SHORTCUT_PRIMARY
+
     return string.format(
-        "mode=%s inWorld=%s gamepadOn=%s keyboardUI=%s restricted=%s lockpick=%s menuScene=%s scene=%s "
-        .. "fragmentShowing=%s cursorId=%s x=%s y=%s hit=%s primaryHeld=%s "
-        .. "updates=%s rawX=%s rawY=%s err=%s",
+        "mode=%s inWorld=%s gamepadOn=%s keyboardUI=%s modeConflict=%s restricted=%s lockpick=%s menuScene=%s scene=%s "
+        .. "fragmentShowing=%s pointerListening=%s cursor=%s,%s hit=%s primaryHeld=%s "
+        .. "directionalHook=%s tabBar=%s",
         tostring(ADDON.saved.mode), tostring(rt.inWorld), tostring(rt.gamepadOn),
-        tostring(rt.keyboardPresentation), tostring(rt.restricted), tostring(rt.lockPick),
-        tostring(rt.menuScene), tostring(sceneName),
-        tostring(MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing()),
-        tostring(cursor and cursor.cursorId), tostring(cursor and cursor.x), tostring(cursor and cursor.y),
-        NameOf(cursor and cursor.mouseOverControl), tostring(primary ~= nil),
-        tostring(rt.pointerUpdates), tostring(rt.rawStickX), tostring(rt.rawStickY),
-        tostring(rt.lastError))
+        tostring(rt.keyboardPresentation), tostring(rt.modeOverrideConflict),
+        tostring(rt.restricted), tostring(rt.lockPick), tostring(rt.menuScene),
+        tostring(sceneName), tostring(MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing()),
+        tostring(listening), tostring(cursorX), tostring(cursorY), NameOf(hit),
+        tostring(primary ~= nil), tostring(rt.pointerDirectionalHooked),
+        tostring(ADDON.GetTabBarName and ADDON:GetTabBarName() or "not-probed"))
 end
 
 function ADDON:StopDiagnostics(reason)
@@ -64,7 +77,7 @@ function ADDON:StartDiagnostics()
         self:Print("Capture already running.")
         return
     end
-    self.saved.diagnostics = { version = 2, complete = false, log = {} }
+    self.saved.diagnostics = { version = 3, complete = false, log = {} }
     rt.diagActive = true
     Append("START", Sample())
 

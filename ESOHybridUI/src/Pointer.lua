@@ -127,7 +127,7 @@ function ADDON:InitializePointer()
 
     -- Existing scene integration expects this global fragment name. HUI now
     -- owns it; LibMousePointer is no longer required.
-    MOUSE_POINTER_FRAGMENT = pointerFragment
+    ADDON.PointerFragment = pointerFragment
     rt.pointerOwner = pointerOwner
     rt.pointerInitialized = true
 end

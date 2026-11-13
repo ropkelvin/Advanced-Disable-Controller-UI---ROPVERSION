@@ -22,6 +22,7 @@ local function UpdateCursorInfo()
         return
     end
     WINDOW_MANAGER:UpdateCursorPosition(cursorId, cursorX, cursorY)
+    rt.pointerX, rt.pointerY = cursorX, cursorY
     pointerOwner.mouseOverControl = WINDOW_MANAGER:GetControlAtCursor(cursorId)
 end
 

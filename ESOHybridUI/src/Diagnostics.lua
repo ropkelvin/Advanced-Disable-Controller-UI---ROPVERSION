@@ -58,7 +58,7 @@ local function Sample()
         tostring(sceneName), tostring(MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing()),
         tostring(listening), tostring(cursorX), tostring(cursorY), NameOf(hit),
         tostring(primary ~= nil), tostring(rt.pointerDirectionalHooked),
-        tostring(ADDON.GetTabBarName and ADDON:GetTabBarName() or "not-probed"))
+        tostring(rt.lastTabBar or "not-probed"))
 end
 
 function ADDON:StopDiagnostics(reason)

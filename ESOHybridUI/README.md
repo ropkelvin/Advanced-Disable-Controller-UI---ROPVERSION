@@ -1,4 +1,4 @@
-# HUI - ESO Hybrid UI 2.0.2
+# HUI - ESO Hybrid UI 2.0.3
 
 Keyboard-style ESO menus with controller input. ESO's **Gamepad Mode must be On** (not Auto). Requires LibMousePointer by Votan; LibAddonMenu-2.0 is optional.
 

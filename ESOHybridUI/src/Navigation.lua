@@ -99,6 +99,11 @@ local function FindTabBar()
     return best and best.bar or nil
 end
 
+function ADDON:GetTabBarName()
+    local bar = FindTabBar()
+    return bar and bar:GetName() or "none"
+end
+
 function ADDON:PrintTabProbe()
     local bar = FindTabBar()
     if not bar then

@@ -7,6 +7,12 @@ local POLL_NAME = "ESOHybridUI_Scenes"
 local POLL_MS = 100
 local RESYNC_EVERY = 4
 
+local NON_MENU = {
+    hud = true, hudui = true, loot = true, loot_keyboard = true,
+    loot_gamepad = true, loading = true, characterselect = true,
+    lockpickkeyboard = true, lockpickgamepad = true,
+}
+
 local RESTRICTED_TOKENS = {
     "scrying", "tribute", "market", "crown", "gildbarstore",
     "endeavorsealstore", "esoplusoffers", "giftinventory",
@@ -33,6 +39,8 @@ local function GetInfo(name)
     info = {
         restricted = restricted,
         lockpick = string.find(lowered, "lockpick", 1, true) ~= nil,
+        menu = not restricted and not NON_MENU[lowered]
+            and string.find(lowered, "lockpick", 1, true) == nil,
     }
     nameInfo[name] = info
     return info
@@ -60,7 +68,7 @@ local function Poll()
     local info = GetInfo(name)
     if name ~= currentName then
         currentName = name
-        rt.menuScene = name ~= "hud" and name ~= "hudui"
+        rt.menuScene = info.menu
         rt.lockPick = info.lockpick
         rt.restricted = info.restricted
         ADDON:Record("SCENE", name)

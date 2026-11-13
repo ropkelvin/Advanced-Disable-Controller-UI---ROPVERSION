@@ -16,7 +16,7 @@ Keep ESO's **Gamepad Mode: On** setting enabled while presenting keyboard-style 
 
 ## Current controls
 
-- **Left stick:** move HUI's virtual cursor in supported keyboard-style menus. HUI registers its own high-priority `DIRECTIONAL_INPUT` owner; ESO's `GetXY` call consumes the queried stick for that update.
+- **Left stick:** move HUI's virtual cursor in supported keyboard-style menus. HUI registers its own high-priority `DIRECTIONAL_INPUT` owner; ESO's `GetXY` call consumes the queried stick for that update, and HUI immediately propagates that state to the game input layer with ESO's `SetGamepadLeftStickConsumedByUI` API.
 - **A / primary:** uses the active screen's native keybind action when that screen exposes one. HUI does not synthesize a mouse click or invoke arbitrary control handlers.
 - **B / back:** uses the active screen's native back/cancel action.
 - **LB/RB:** previous/next main-menu category while the native keyboard category bar is showing.

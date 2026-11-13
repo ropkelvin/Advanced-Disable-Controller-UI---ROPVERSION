@@ -1,78 +1,12 @@
--- Pointer input for keyboard-style scenes.
+-- Pointer integration.
 --
--- LibMousePointer owns the virtual cursor and its native click keybind. HUI
--- supplies left-stick movement only. Never synthesize OnClicked/OnMouseUp:
--- arbitrary handler calls are not trusted mouse input and can trip ESO's
--- protected-action boundary (inventory destruction, etc.).
+-- LibMousePointer already owns the cursor, left-stick sampling, cursor hit
+-- testing, hover and primary-click descriptor. HUI must not implement a
+-- second cursor or replace library methods. Its own documented InvokeClick
+-- API is used only for an optional right-click/context action.
 local ADDON = ESOHybridUI
 local rt = ADDON.rt
 
-rt.pointerUpdates = 0
-
-local function GetCursor()
-    local lib = LibMousePointer
-    local cursor = lib and lib.gamepadCursor
-    if cursor and cursor.cursorId and cursor.control then
-        return cursor
-    end
-    return nil
-end
-
-local moveStart = 0
-
-local function Step()
-    local cursor = GetCursor()
-    if not cursor or not DIRECTIONAL_INPUT then
-        return
-    end
-
-    rt.pointerUpdates = rt.pointerUpdates + 1
-    DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK, ZO_DI_RIGHT_STICK)
-    SetGamepadLeftStickConsumedByUI(true)
-    SetGamepadRightStickConsumedByUI(true)
-
-    local x = DIRECTIONAL_INPUT:GetXFromInputDevice(ZO_DI_LEFT_STICK)
-    local y = DIRECTIONAL_INPUT:GetYFromInputDevice(ZO_DI_LEFT_STICK)
-    rt.rawStickX, rt.rawStickY = x, y
-
-    local now = GetGameTimeMilliseconds()
-    if x == 0 and y == 0 then
-        moveStart = now
-    end
-
-    local speed = ADDON.saved.pointerSpeed or 3
-    local delta = GetFrameDeltaNormalizedForTargetFramerate()
-    local acceleration = zo_clamp((now - moveStart) / 250, 1, 8)
-    local dx, dy = x * delta * speed * acceleration, -y * delta * speed * acceleration
-
-    local control = cursor.control
-    control:SetAnchor(CENTER, GuiRoot, TOPLEFT, cursor.x + dx, cursor.y + dy)
-    local cx, cy = control:GetCenter()
-    if cx and cy then
-        local width, height = GuiRoot:GetDimensions()
-        cx, cy = zo_clamp(cx, 0, width), zo_clamp(cy, 0, height)
-        cursor.x, cursor.y = cx, cy
-        cursor.directionalX, cursor.directionalY = cx, cy
-        control:ClearAnchors()
-        control:SetAnchor(CENTER, GuiRoot, TOPLEFT, cx, cy)
-    end
-    cursor:UpdateCursorInfo()
-end
-
-local inputObject = {}
-rt.pointerInputObject = inputObject
-function inputObject:UpdateDirectionalInput()
-    Step()
-end
-
-local function ReleaseSticks()
-    SetGamepadLeftStickConsumedByUI(false)
-    SetGamepadRightStickConsumedByUI(false)
-    rt.rawStickX, rt.rawStickY = 0, 0
-end
-
--- Use LibMousePointer's documented hit-testing/click API. This is deliberately
--- not a hand-written OnMouseUp/OnClicked dispatch.
 local rightClick = {
     alignment = KEYBIND_STRIP_ALIGN_LEFT,
     name = "Context menu",
@@ -85,81 +19,78 @@ local rightClick = {
     end,
 }
 
-local function RestoreLibraryDriver()
-    if rt.libraryDriverSuppressed and LibMousePointer then
-        LibMousePointer.UpdateDirectionalInput = rt.originalLibraryDriver
-        rt.libraryDriverSuppressed = false
-        rt.originalLibraryDriver = nil
+local function OnFragmentState(_, newState)
+    if newState == SCENE_FRAGMENT_SHOWN then
+        ADDON:SetKeybind(rightClick, true)
+    elseif newState == SCENE_FRAGMENT_HIDING or newState == SCENE_FRAGMENT_HIDDEN then
+        ADDON:SetKeybind(rightClick, false)
     end
+end
+
+local function InstallDirectionalInputIntegration()
+    if rt.pointerDirectionalHooked or not SCENE_MANAGER
+        or not SCENE_MANAGER.UpdateDirectionalInput then
+        return
+    end
+
+    -- ESO's stock scene-manager owner consumes BOTH sticks while in UI mode.
+    -- LibMousePointer is also a DIRECTIONAL_INPUT owner and consumes the left
+    -- stick itself via DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK). If the stock
+    -- owner runs first, it starves the pointer for that frame. Only while the
+    -- library is actively listening, skip the stock consume-both-sticks call
+    -- and reserve the right stick here. When the pointer is absent, ESO's
+    -- original handler remains completely untouched.
+    ZO_PreHook(SCENE_MANAGER, "UpdateDirectionalInput", function()
+        if rt.inWorld and rt.keyboardPresentation and ADDON.saved.pointerEnabled
+            and MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing()
+            and DIRECTIONAL_INPUT and LibMousePointer
+            and DIRECTIONAL_INPUT:IsListening(LibMousePointer) then
+            DIRECTIONAL_INPUT:Consume(ZO_DI_RIGHT_STICK)
+            return true
+        end
+        return false
+    end)
+
+    rt.pointerDirectionalHooked = true
 end
 
 function ADDON:StopPointer()
-    if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(inputObject) then
-        DIRECTIONAL_INPUT:Deactivate(inputObject)
-    end
-    ReleaseSticks()
-    RestoreLibraryDriver()
-    if ADDON.SetKeybind then
-        ADDON:SetKeybind(rightClick, false)
-    end
-end
-
-local function OnFragmentState(_, newState)
-    if newState == SCENE_FRAGMENT_SHOWN then
-        moveStart = GetGameTimeMilliseconds()
-        if not rt.libraryDriverSuppressed then
-            rt.originalLibraryDriver = LibMousePointer.UpdateDirectionalInput
-            LibMousePointer.UpdateDirectionalInput = function() end
-            rt.libraryDriverSuppressed = true
-        end
-        if not DIRECTIONAL_INPUT:IsListening(inputObject) then
-            DIRECTIONAL_INPUT:Activate(inputObject, LibMousePointer.control)
-        end
-        ADDON:SetKeybind(rightClick, true)
-    elseif newState == SCENE_FRAGMENT_HIDING or newState == SCENE_FRAGMENT_HIDDEN then
-        if DIRECTIONAL_INPUT:IsListening(inputObject) then
-            DIRECTIONAL_INPUT:Deactivate(inputObject)
-        end
-        ReleaseSticks()
-        RestoreLibraryDriver()
-        ADDON:SetKeybind(rightClick, false)
+    if self.SetKeybind then
+        self:SetKeybind(rightClick, false)
     end
 end
 
 function ADDON:InitializePointer()
-    local lib = LibMousePointer
     if rt.pointerInitialized then
         return
     end
-    if not lib or not MOUSE_POINTER_FRAGMENT or not lib.control or not lib.gamepadCursor then
-        self:Print("LibMousePointer is not ready; controller pointer is unavailable.")
+    if not LibMousePointer or not MOUSE_POINTER_FRAGMENT
+        or not LibMousePointer.InvokeClick or not LibMousePointer.GetCursorPosition then
+        self:Print("LibMousePointer is missing or too old; pointer support is unavailable.")
         return
     end
 
-    -- Keep the library's fragment and native click descriptor intact. The
-    -- library adds its click action only when the active screen leaves the
-    -- primary shortcut free; HUI never overrides a screen's native action.
+    -- The library handles cursor lifetime, movement, hit testing and the
+    -- native primary-click keybind. HUI controls only when its fragment shows.
     MOUSE_POINTER_FRAGMENT:SetConditional(function()
         return rt.keyboardPresentation and ADDON.saved.pointerEnabled
     end)
     MOUSE_POINTER_FRAGMENT:RegisterCallback("StateChange", OnFragmentState)
 
+    InstallDirectionalInputIntegration()
     rt.pointerInitialized = true
     if MOUSE_POINTER_FRAGMENT:IsShowing() then
-        OnFragmentState(nil, SCENE_FRAGMENT_SHOWN)
+        ADDON:SetKeybind(rightClick, true)
     end
 end
 
 function ADDON:PrintPointerProbe()
     self:Print("Open a supported menu and move the left stick for five seconds.")
     zo_callLater(function()
-        local cursor = LibMousePointer and LibMousePointer.gamepadCursor
-        self:Print(string.format(
-            "init=%s listening=%s cursorId=%s updates=%d rawStick=%.2f,%.2f cursor=%s,%s",
-            tostring(rt.pointerInitialized), tostring(DIRECTIONAL_INPUT:IsListening(inputObject)),
-            tostring(cursor and cursor.cursorId), rt.pointerUpdates,
-            DIRECTIONAL_INPUT:GetXFromInputDevice(ZO_DI_LEFT_STICK),
-            DIRECTIONAL_INPUT:GetYFromInputDevice(ZO_DI_LEFT_STICK),
-            tostring(cursor and cursor.x), tostring(cursor and cursor.y)))
+        local x, y = LibMousePointer and LibMousePointer:GetCursorPosition()
+        local listening = DIRECTIONAL_INPUT and LibMousePointer
+            and DIRECTIONAL_INPUT:IsListening(LibMousePointer)
+        self:Print(string.format("init=%s listening=%s cursor=%s,%s",
+            tostring(rt.pointerInitialized), tostring(listening), tostring(x), tostring(y)))
     end, 5000)
 end

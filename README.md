@@ -40,7 +40,7 @@ HUI no longer calls arbitrary `OnClicked`, `OnMouseDown` or `OnMouseUp` handlers
 - `/hui hybrid` — keyboard-style presentation with controller input (requires Gamepad Mode: On).
 - `/hui gamepad` — restore native Gamepad presentation.
 - `/hui tabs` — report the detected visible menu bar.
-- `/hui pointer` — report LibMousePointer availability and cursor position after five seconds.
+- `/hui pointer` — report LibMousePointer availability and cursor position immediate ownership and cursor-state snapshot.
 - `/huidebug` — capture scene, pointer, keybind and mode diagnostics to account-wide SavedVariables. After capture completes, use `/reloadui` and upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUI.lua`.
 
 Optional settings are available through LibAddonMenu-2.0.
@@ -49,7 +49,7 @@ Optional settings are available through LibAddonMenu-2.0.
 
 - HUI yields its preferred-mode override if another addon already owns `IsInGamepadPreferredMode`; it does not blindly replace another addon's wrapper.
 - HUI preserves ESO's native lockpick presentation and excludes known restricted/special scenes such as Crown Store/market, Scrying, Tribute, Tamriel Tomes and reward-preview screens. New ESO scenes must be audited and added to the restricted list where appropriate.
-- Scene tracking is polled to avoid wrapping the scene-transition stack. There can be a short transition interval before the next poll updates the active-scene flags.
+- Scene tracking registers callbacks on known scenes and attaches the pointer fragment during SCENE_SHOWING, before the scene refreshes fragments. A lightweight poll discovers scenes registered later; it is not used to wait until after a menu has opened before attaching the pointer.
 - Main-menu category switching uses ESO's `ZO_MenuBar_SelectDescriptor` API. Individual tab discovery remains heuristic because not every ESO screen uses `ZO_MenuBar`.
 - D-pad navigation, drag/drop, all screen-specific actions, quickslot/player-interaction wheels, map level switching, crafting, bank/trade, resurrection and housing still require screen-by-screen verification.
 - Static CI checks validate Lua syntax, manifest paths, safety invariants and ZIP structure. They cannot establish live-client behaviour. No claim of 95% runtime functionality should be made until controller tests cover the supported screen matrix.

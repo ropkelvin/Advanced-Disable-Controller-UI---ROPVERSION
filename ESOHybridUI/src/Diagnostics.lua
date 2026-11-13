@@ -42,7 +42,7 @@ local function Sample()
     return string.format(
         "mode=%s inWorld=%s gamepadOn=%s keyboardUI=%s modeConflict=%s restricted=%s lockpick=%s menuScene=%s scene=%s "
         .. "fragmentShowing=%s pointerListening=%s cursor=%s,%s hit=%s primaryHeld=%s "
-        .. "directionalHook=%s tabBar=%s",
+        .. "directionalListening=%s tabBar=%s",
         tostring(ADDON.saved.mode), tostring(rt.inWorld), tostring(rt.gamepadOn),
         tostring(rt.keyboardPresentation), tostring(rt.modeOverrideConflict),
         tostring(rt.restricted), tostring(rt.lockPick), tostring(rt.menuScene),

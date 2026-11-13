@@ -3,7 +3,7 @@ ESOHybridUI = ESOHybridUI or {}
 local ADDON = ESOHybridUI
 
 ADDON.name = "ESOHybridUI"
-ADDON.version = "2.1.0"
+ADDON.version = "2.1.1"
 ADDON.defaults = {
     mode = "hybrid",
     pointerEnabled = true,

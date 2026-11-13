@@ -1,140 +1,172 @@
--- Pointer integration.
+-- Self-contained gamepad pointer.
 --
--- LibMousePointer owns cursor creation, left-stick sampling, cursor hit
--- testing, hover and its primary-click descriptor. HUI does not add a second
--- cursor or alter ESO's directional-input dispatch.
+-- Uses ESO's DIRECTIONAL_INPUT ownership/consumption API and native virtual
+-- cursor APIs. It deliberately does not synthesize mouse events or call
+-- arbitrary control handlers: those calls are not trusted mouse input and can
+-- taint protected inventory actions.
 local ADDON = ESOHybridUI
+local rt = ADDON.rt
 
-local rightClick = {
-    alignment = KEYBIND_STRIP_ALIGN_LEFT,
-    name = "Context menu",
-    keybind = "UI_SHORTCUT_RIGHT_STICK",
-    ethereal = true,
-    callback = function()
-        if LibMousePointer and LibMousePointer.InvokeClick then
-            LibMousePointer:InvokeClick(MOUSE_BUTTON_INDEX_RIGHT)
+local pointerOwner = { name = "ESOHybridUI_PointerInput" }
+local pointerFragment
+local cursorControl
+local cursorId
+local cursorX, cursorY
+local initialX, initialY
+local lastMoveTime = 0
+local cursorSpeed = 3
+local pointerTopLevel
+
+local function UpdateCursorInfo()
+    if not cursorId then
+        return
+    end
+    WINDOW_MANAGER:UpdateCursorPosition(cursorId, cursorX, cursorY)
+    pointerOwner.mouseOverControl = WINDOW_MANAGER:GetControlAtCursor(cursorId)
+end
+
+function pointerOwner:UpdateDirectionalInput()
+    if not DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK) then
+        return
+    end
+
+    local dx, dy = DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)
+
+    -- Claim the left stick while this pointer owner is active. This is the
+    -- critical difference from LibMousePointer's current implementation:
+    -- reading GetXY alone does not claim the input for this owner.
+    DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK)
+
+    dx, dy = zo_clampLength2D(dx, dy, 1.5)
+    if dx == 0 and dy == 0 then
+        lastMoveTime = GetGameTimeMilliseconds()
+        return
+    end
+
+    local elapsed = GetGameTimeMilliseconds() - lastMoveTime
+    local acceleration = zo_clamp(elapsed / 250, 1, 8)
+    local frameDelta = GetFrameDeltaNormalizedForTargetFramerate()
+    local magnitude = frameDelta * cursorSpeed * acceleration
+
+    local oldX, oldY = cursorX, cursorY
+    cursorControl:SetAnchor(CENTER, GuiRoot, TOPLEFT,
+        cursorX + dx * magnitude, cursorY - dy * magnitude)
+    cursorX, cursorY = cursorControl:GetCenter()
+
+    if cursorX ~= oldX or cursorY ~= oldY then
+        UpdateCursorInfo()
+    end
+end
+
+local function SetCursorVisible(visible)
+    cursorControl:SetHidden(not visible)
+    if visible then
+        if not cursorId then
+            cursorId = WINDOW_MANAGER:CreateCursor(cursorX, cursorY)
         end
-    end,
-}
+        pointerTopLevel:BringWindowToTop()
+        UpdateCursorInfo()
+    else
+        if cursorId then
+            WINDOW_MANAGER:DestroyCursor(cursorId)
+            cursorId = nil
+        end
+        pointerOwner.mouseOverControl = nil
+    end
+end
 
-local function OnFragmentState(_, newState)
+local function OnPointerFragmentState(_, newState)
     if newState == SCENE_FRAGMENT_SHOWN then
-        ADDON:SetKeybind(rightClick, true)
-    elseif newState == SCENE_FRAGMENT_HIDING or newState == SCENE_FRAGMENT_HIDDEN then
-        ADDON:SetKeybind(rightClick, false)
+        if not cursorId then
+            cursorX, cursorY = initialX, initialY
+            cursorControl:SetAnchor(CENTER, GuiRoot, TOPLEFT, cursorX, cursorY)
+        end
+        SetCursorVisible(true)
+        DIRECTIONAL_INPUT:Activate(pointerOwner, pointerTopLevel)
+    elseif newState == SCENE_FRAGMENT_HIDING then
+        DIRECTIONAL_INPUT:Deactivate(pointerOwner)
+        SetCursorVisible(false)
     end
 end
 
 function ADDON:StopPointer()
-    if self.SetKeybind then
-        self:SetKeybind(rightClick, false)
+    if pointerFragment and pointerFragment:IsShowing() then
+        pointerFragment:Hide()
+    end
+    if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT.IsListening
+        and DIRECTIONAL_INPUT:IsListening(pointerOwner) then
+        DIRECTIONAL_INPUT:Deactivate(pointerOwner)
+    end
+    if cursorId then
+        SetCursorVisible(false)
     end
 end
 
 function ADDON:InitializePointer()
-    if ADDON.rt.pointerInitialized then
+    if rt.pointerInitialized then
         return
     end
-    if not LibMousePointer or not MOUSE_POINTER_FRAGMENT
-        or not LibMousePointer.InvokeClick or not LibMousePointer.GetCursorPosition then
-        self:Print("LibMousePointer is missing or too old; pointer support is unavailable.")
+    if not HUI_PointerTopLevel or not HUI_PointerTopLevelGamepadCursor
+        or not DIRECTIONAL_INPUT or not WINDOW_MANAGER.CreateCursor
+        or not WINDOW_MANAGER.GetControlAtCursor then
+        self:Print("Native pointer controls or directional-input APIs are unavailable.")
         return
     end
 
-    -- LibMousePointer registers a high-priority DIRECTIONAL_INPUT owner using
-    -- its cursor control. Its GetXY call consumes the left stick. ESO's native
-    -- scene-manager owner runs later and consumes any remaining sticks, which
-    -- is the fallback that prevents input leaking into character movement if
-    -- another visible UI control has higher priority. Do not bypass that owner.
-    MOUSE_POINTER_FRAGMENT:SetConditional(function()
-        return ADDON.rt.keyboardPresentation and ADDON.saved.pointerEnabled
+    pointerTopLevel = HUI_PointerTopLevel
+    cursorControl = HUI_PointerTopLevelGamepadCursor
+    initialX, initialY = GuiRoot:GetCenter()
+    cursorX, cursorY = initialX, initialY
+    cursorSpeed = tonumber(self.saved.pointerSpeed) or 3
+    lastMoveTime = GetGameTimeMilliseconds()
+
+    cursorControl:SetAnchor(CENTER, GuiRoot, TOPLEFT, cursorX, cursorY)
+    pointerFragment = ZO_SimpleSceneFragment:New(pointerTopLevel)
+    pointerFragment:SetConditional(function()
+        return rt.keyboardPresentation and ADDON.saved.pointerEnabled
     end)
-    MOUSE_POINTER_FRAGMENT:RegisterCallback("StateChange", OnFragmentState)
+    pointerFragment:RegisterCallback("StateChange", OnPointerFragmentState)
 
-    ADDON.rt.pointerInitialized = true
-    if MOUSE_POINTER_FRAGMENT:IsShowing() then
-        ADDON:SetKeybind(rightClick, true)
-    end
+    -- Existing scene integration expects this global fragment name. HUI now
+    -- owns it; LibMousePointer is no longer required.
+    MOUSE_POINTER_FRAGMENT = pointerFragment
+    rt.pointerOwner = pointerOwner
+    rt.pointerInitialized = true
 end
 
-function ADDON:PrintPointerProbe()
-    local lib = LibMousePointer
-    local startScene = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
-    local startX, startY
-    if lib then
-        startX, startY = lib:GetCursorPosition()
-    end
-    local startTime = GetGameTimeMilliseconds()
-    local samples, shownSamples, listeningSamples = 0, 0, 0
-    local sceneChanges = 0
-    local previousScene = startScene
-    local maxStick = 0
-    local lastX, lastY = startX, startY
-    local lastScene = startScene
-    local lastFragmentShowing = false
-    local lastListening = false
-    local lastCursorExists = false
-    local ownerSnapshot = nil
-    local movementEvents = 0
-    local movementEventName = "ESOHybridUI_PointerProbeMovement"
-
-    local function CaptureOwners()
-        if ownerSnapshot or not DIRECTIONAL_INPUT or not DIRECTIONAL_INPUT.inputObjects then
-            return
-        end
-        local entries = {}
+local function CaptureOwners()
+    local entries = {}
+    if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT.inputObjects then
         for index = #DIRECTIONAL_INPUT.inputObjects, 1, -1 do
             local owner = DIRECTIONAL_INPUT.inputObjects[index]
             local control = DIRECTIONAL_INPUT.inputControls[index]
             local name = control and control.GetName and control:GetName() or tostring(control)
             entries[#entries + 1] = string.format("%d:%s/%s", index,
-                tostring(owner == lib and "LibMousePointer" or owner), tostring(name))
+                tostring(owner == pointerOwner and "HUI_Pointer" or owner), tostring(name))
         end
-        ownerSnapshot = table.concat(entries, ",")
     end
+    return table.concat(entries, ",")
+end
 
-    local function Sample()
-        local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
-        local scene = sceneName and SCENE_MANAGER:GetScene(sceneName)
-        local fragmentShowing = MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing() or false
-        local listening = lib and DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(lib) or false
-        local cursorExists = lib and lib.gamepadCursor and lib.gamepadCursor.cursorId ~= nil or false
-        local x, y
-        if lib then
-            x, y = lib:GetCursorPosition()
-        end
-        local rawX = GetGamepadLeftStickX(GAMEPAD_INCLUDE_DEADZONE)
-        local rawY = GetGamepadLeftStickY(GAMEPAD_INCLUDE_DEADZONE)
+function ADDON:PrintPointerProbe()
+    local startScene = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
+    local startX, startY = cursorX, cursorY
+    local startTime = GetGameTimeMilliseconds()
+    local samples, shownSamples, listeningSamples = 0, 0, 0
+    local sceneChanges, movementEvents = 0, 0
+    local previousScene = startScene
+    local ownerSnapshot = nil
+    local maxStick = 0
+    local lastScene = startScene
+    local movementEventName = "ESOHybridUI_PointerProbeMovement"
 
-        samples = samples + 1
-        if fragmentShowing then shownSamples = shownSamples + 1 end
-        if listening then
-            listeningSamples = listeningSamples + 1
-            CaptureOwners()
-        end
-        if sceneName ~= previousScene then
-            sceneChanges = sceneChanges + 1
-            previousScene = sceneName
-        end
-        maxStick = math.max(maxStick, math.abs(rawX), math.abs(rawY))
-        lastX, lastY = x, y
-        lastScene = sceneName
-        lastFragmentShowing = fragmentShowing
-        lastListening = listening
-        lastCursorExists = cursorExists
-
-        return scene, sceneName
-    end
-
-    local initialScene, initialName = Sample()
-    self:Print(string.format(
-        "Pointer trace started: scene=%s state=%s fragment=%s listening=%s cursor=%s stick=%.3f,%.3f",
-        tostring(initialName), tostring(initialScene and initialScene:GetState()),
-        tostring(lastFragmentShowing), tostring(lastListening),
-        tostring(lastCursorExists),
+    self:Print(string.format("Pointer trace started: scene=%s fragment=%s listening=%s cursor=%s stick=%.3f,%.3f",
+        tostring(startScene), tostring(pointerFragment and pointerFragment:IsShowing()),
+        tostring(DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(pointerOwner)),
+        tostring(cursorId ~= nil),
         GetGamepadLeftStickX(GAMEPAD_INCLUDE_DEADZONE),
         GetGamepadLeftStickY(GAMEPAD_INCLUDE_DEADZONE)))
-    self:Print("Move the left stick now. Capturing scene, fragment, owner and cursor state for 3 seconds.")
+    self:Print("Move the left stick now. Capturing pointer owner and movement events for 3 seconds.")
 
     if EVENT_NEW_MOVEMENT_IN_UI_MODE then
         EVENT_MANAGER:UnregisterForEvent(movementEventName, EVENT_NEW_MOVEMENT_IN_UI_MODE)
@@ -145,7 +177,25 @@ function ADDON:PrintPointerProbe()
 
     EVENT_MANAGER:UnregisterForUpdate("ESOHybridUI_PointerProbe")
     EVENT_MANAGER:RegisterForUpdate("ESOHybridUI_PointerProbe", 100, function()
-        Sample()
+        samples = samples + 1
+        local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
+        if sceneName ~= previousScene then
+            sceneChanges = sceneChanges + 1
+            previousScene = sceneName
+        end
+        lastScene = sceneName
+
+        local showing = pointerFragment and pointerFragment:IsShowing() or false
+        local listening = DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(pointerOwner) or false
+        if showing then shownSamples = shownSamples + 1 end
+        if listening then
+            listeningSamples = listeningSamples + 1
+            if not ownerSnapshot then ownerSnapshot = CaptureOwners() end
+        end
+        maxStick = math.max(maxStick,
+            math.abs(GetGamepadLeftStickX(GAMEPAD_INCLUDE_DEADZONE)),
+            math.abs(GetGamepadLeftStickY(GAMEPAD_INCLUDE_DEADZONE)))
+
         if GetGameTimeMilliseconds() - startTime >= 3000 then
             EVENT_MANAGER:UnregisterForUpdate("ESOHybridUI_PointerProbe")
             if EVENT_NEW_MOVEMENT_IN_UI_MODE then
@@ -153,25 +203,17 @@ function ADDON:PrintPointerProbe()
             end
             local delta = -1
             if type(startX) == "number" and type(startY) == "number"
-                and type(lastX) == "number" and type(lastY) == "number" then
-                delta = math.sqrt((lastX - startX) ^ 2 + (lastY - startY) ^ 2)
+                and type(cursorX) == "number" and type(cursorY) == "number" then
+                delta = math.sqrt((cursorX - startX) ^ 2 + (cursorY - startY) ^ 2)
             end
             ADDON:Print(string.format(
                 "Pointer trace: samples=%d sceneChanges=%d shown=%d listening=%d maxStick=%.3f cursorDelta=%.1f movementEvents=%d finalScene=%s fragment=%s listeningNow=%s cursorExists=%s",
                 samples, sceneChanges, shownSamples, listeningSamples, maxStick,
-                delta, movementEvents, tostring(lastScene), tostring(lastFragmentShowing),
-                tostring(lastListening), tostring(lastCursorExists)))
+                delta, movementEvents, tostring(lastScene),
+                tostring(pointerFragment and pointerFragment:IsShowing()),
+                tostring(DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(pointerOwner)),
+                tostring(cursorId ~= nil)))
             ADDON:Print("ownersWhileListening=" .. tostring(ownerSnapshot or "none"))
-
-            if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT.inputObjects then
-                for index = #DIRECTIONAL_INPUT.inputObjects, 1, -1 do
-                    local owner = DIRECTIONAL_INPUT.inputObjects[index]
-                    local control = DIRECTIONAL_INPUT.inputControls[index]
-                    local name = control and control.GetName and control:GetName() or tostring(control)
-                    ADDON:Print(string.format("inputOwner[%d]=%s control=%s", index,
-                        tostring(owner == lib and "LibMousePointer" or owner), tostring(name)))
-                end
-            end
         end
     end)
 end

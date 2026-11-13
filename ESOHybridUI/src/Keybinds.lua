@@ -23,11 +23,13 @@ end
 
 -- The strip itself is the source of truth (HasKeybindButton), never a flag.
 local function Sync(descriptor)
-    if not rt.inWorld or not KEYBIND_STRIP then
+    if not KEYBIND_STRIP then
         return
     end
     local present = KEYBIND_STRIP:HasKeybindButton(descriptor)
-    local should = wanted[descriptor] == true and not HeldByOther(descriptor)
+    -- Remove HUI-owned descriptors during player deactivation as well; the
+    -- keybind strip may still exist while the loading transition is underway.
+    local should = rt.inWorld and wanted[descriptor] == true and not HeldByOther(descriptor)
     if should and not present then
         KEYBIND_STRIP:AddKeybindButton(descriptor)
     elseif not should and present then

@@ -69,7 +69,7 @@ function ADDON:StopDiagnostics(reason)
     Append("END", reason or "manual")
     rt.diagActive = false
     self.saved.diagnostics.complete = true
-    self:Print("Capture complete. /reloadui, then upload SavedVariables\\ESOHybridUISavedVariables.lua.")
+    self:Print("Capture complete. /reloadui, then upload SavedVariables\\ESOHybridUI.lua.")
 end
 
 function ADDON:StartDiagnostics()

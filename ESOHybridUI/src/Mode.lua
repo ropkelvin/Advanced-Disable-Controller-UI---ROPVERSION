@@ -1,14 +1,10 @@
--- Presentation mode: while Hybrid is active, ESO's "is gamepad UI preferred"
--- query answers false (keyboard layouts); controller input is untouched.
+-- Presentation mode: Hybrid uses keyboard-layout scenes while ESO remains
+-- configured for Gamepad Mode: On. Controller input/keybinds are handled by
+-- native gamepad APIs and HUI's narrowly-scoped navigation descriptors.
 local ADDON = ESOHybridUI
 local rt = ADDON.rt
 
--- Installed once at load and never removed. When keyboardPresentation is
--- false it is an exact pass-through, so loading/pregame/restricted screens
--- see ESO's original answer. It chains whatever function was global at load.
 local function IsInGamepadPreferredModeWrapper()
-    -- rt.nativeQuery is set only while keybind-prompt helpers run (Prompts.lua)
-    -- so they answer exactly as ESO would in real gamepad mode.
     if rt.keyboardPresentation and not rt.nativeQuery then
         return false
     end
@@ -16,24 +12,18 @@ local function IsInGamepadPreferredModeWrapper()
 end
 _G.IsInGamepadPreferredMode = IsInGamepadPreferredModeWrapper
 
--- Recomputes the cached flags. Returns true if keyboardPresentation flipped.
 function ADDON:Recompute()
     rt.gamepadOn = tonumber(GetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE))
         == INPUT_PREFERRED_MODE_ALWAYS_GAMEPAD
 
-    local want = rt.inWorld
-        and self:IsHybrid()
-        and rt.gamepadOn
-        and not rt.lockPick
-        and not rt.restricted
+    local want = rt.inWorld and self:IsHybrid() and rt.gamepadOn
+        and not rt.lockPick and not rt.restricted
 
     local changed = want ~= rt.keyboardPresentation
     rt.keyboardPresentation = want
     return changed
 end
 
--- HUD_MANAGER:PropagateSettings assumes both HUD tracker elements exist.
--- Defer until they do rather than firing callbacks into a half-built HUD.
 function ADDON:TryRefreshHUDSettings()
     if not rt.hudRefreshPending then
         return
@@ -51,7 +41,6 @@ function ADDON:ApplyMode()
     if not self.saved or not rt.inWorld then
         return
     end
-
     if self:Recompute() then
         rt.hudRefreshPending = true
         self:Record("MODE", "keyboardPresentation=", rt.keyboardPresentation)
@@ -72,9 +61,6 @@ function ADDON:SetMode(mode)
         .. ". Reopen the current menu to apply its layout.")
 end
 
--- Lockpicking keeps ESO's native presentation. LOCK_PICK:SetHidden is where
--- ESO picks the keyboard or gamepad lockpick scene, so the exception must be
--- set before it runs rather than relying on event order.
 function ADDON:InitializeLockpick()
     if rt.lockpickHooked or not LOCK_PICK or not LOCK_PICK.SetHidden then
         return

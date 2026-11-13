@@ -1,0 +1,8 @@
+# ESO SavedVariables / local diagnostics (never commit player data)
+ESOHybridUI.lua
+ESOHybridUISavedVariables.lua
+*.lua.bak
+
+# Local package output
+HUI.zip
+package/

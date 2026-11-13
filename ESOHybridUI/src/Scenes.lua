@@ -22,7 +22,7 @@ local RESTRICTED_TOKENS = {
     "endeavorsealstore", "esoplusoffers", "giftinventory",
     "dailyloginrewards", "dailies", "tamrieltomes", "rewardpreview",
     "promotional", "chapterupgrade", "dyestampconfirmation",
-    "veterancy", "store", "tradinghouse", "guildheraldry",
+    "veterancy", "store",
 }
 
 local nameInfo = {}

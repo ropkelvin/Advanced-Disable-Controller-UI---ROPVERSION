@@ -1,16 +1,17 @@
--- Presentation mode: Hybrid uses keyboard-layout scenes while ESO remains
--- configured for Gamepad Mode: On. Controller input/keybinds are handled by
--- native gamepad APIs and HUI's narrowly-scoped navigation descriptors.
+-- Presentation mode ownership.
+-- HUI changes the preferred-mode query only while it owns the wrapper. If
+-- another addon replaces the global query, HUI yields instead of clobbering it.
 local ADDON = ESOHybridUI
 local rt = ADDON.rt
 
-local function IsInGamepadPreferredModeWrapper()
+local function IsHUIKeyboardPresentationPreferredMode()
     if rt.keyboardPresentation and not rt.nativeQuery then
         return false
     end
     return ADDON.NativeIsInGamepadPreferredMode()
 end
-_G.IsInGamepadPreferredMode = IsInGamepadPreferredModeWrapper
+
+ADDON.HUIPreferredModeWrapper = IsHUIKeyboardPresentationPreferredMode
 
 function ADDON:Recompute()
     rt.gamepadOn = tonumber(GetSetting(SETTING_TYPE_GAMEPAD, GAMEPAD_SETTING_INPUT_PREFERRED_MODE))
@@ -37,14 +38,60 @@ function ADDON:TryRefreshHUDSettings()
     end
 end
 
+local function RestoreOwnedWrapper()
+    if rt.modeOverrideApplied
+        and _G.IsInGamepadPreferredMode == IsHUIKeyboardPresentationPreferredMode then
+        _G.IsInGamepadPreferredMode = ADDON.NativeIsInGamepadPreferredMode
+    end
+    rt.modeOverrideApplied = false
+end
+
 function ADDON:ApplyMode()
-    if not self.saved or not rt.inWorld then
+    if not self.saved then
         return
     end
-    if self:Recompute() then
-        rt.hudRefreshPending = true
-        self:Record("MODE", "keyboardPresentation=", rt.keyboardPresentation)
+
+    if not rt.inWorld then
+        rt.keyboardPresentation = false
+        RestoreOwnedWrapper()
+        rt.modeOverrideConflict = false
+        self:TryRefreshHUDSettings()
+        return
     end
+
+    local changed = self:Recompute()
+    local modeQueryChanged = false
+
+    if rt.keyboardPresentation then
+        if _G.IsInGamepadPreferredMode == self.NativeIsInGamepadPreferredMode
+            or _G.IsInGamepadPreferredMode == IsHUIKeyboardPresentationPreferredMode then
+            if _G.IsInGamepadPreferredMode ~= IsHUIKeyboardPresentationPreferredMode then
+                _G.IsInGamepadPreferredMode = IsHUIKeyboardPresentationPreferredMode
+                modeQueryChanged = true
+            end
+            rt.modeOverrideApplied = true
+            rt.modeOverrideConflict = false
+        else
+            -- Never replace an unrelated addon's wrapper. Pause Hybrid
+            -- presentation rather than running a partially mixed UI mode.
+            rt.modeOverrideConflict = true
+            rt.keyboardPresentation = false
+            self:Debug("Another addon owns IsInGamepadPreferredMode; HUI yielded to avoid replacing its hook.")
+        end
+    else
+        if rt.modeOverrideApplied then
+            modeQueryChanged = _G.IsInGamepadPreferredMode == IsHUIKeyboardPresentationPreferredMode
+            RestoreOwnedWrapper()
+        end
+        rt.modeOverrideConflict = false
+    end
+
+    if changed or modeQueryChanged then
+        rt.hudRefreshPending = true
+        self:Record("MODE", "keyboardPresentation=", rt.keyboardPresentation,
+            "modeOverrideConflict=", rt.modeOverrideConflict)
+    end
+
     self:TryRefreshHUDSettings()
     self:RefreshPointerScenes()
     self:RefreshNavigation()

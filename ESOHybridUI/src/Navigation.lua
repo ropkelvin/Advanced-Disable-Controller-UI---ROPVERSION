@@ -101,7 +101,8 @@ end
 
 function ADDON:GetTabBarName()
     local bar = FindTabBar()
-    return bar and bar:GetName() or "none"
+    rt.lastTabBar = bar and bar:GetName() or "none"
+    return rt.lastTabBar
 end
 
 function ADDON:PrintTabProbe()

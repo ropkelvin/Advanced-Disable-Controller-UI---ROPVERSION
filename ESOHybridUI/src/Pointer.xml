@@ -1,8 +1,8 @@
 <GuiXml>
     <Controls>
         <TopLevelControl name="HUI_PointerTopLevel" allowBringToTop="true" hidden="true" tier="HIGH" level="10000">
-            <Anchor point="TOPLEFT" />
-            <Anchor point="BOTTOMRIGHT" relativeTo="ZO_KeybindStripControl" relativePoint="TOPRIGHT" />
+            <Anchor point="TOPLEFT" relativeTo="GuiRoot" relativePoint="TOPLEFT" />
+            <Anchor point="BOTTOMRIGHT" relativeTo="GuiRoot" relativePoint="BOTTOMRIGHT" />
             <Controls>
                 <Texture name="$(parent)GamepadCursor" hidden="true" tier="HIGH" layer="OVERLAY" clampedToScreen="true" textureFile="EsoUI/Art/WorldMap/map_centerReticle.dds">
                     <ClampedToScreenInsets top="31" left="31" bottom="ZO_GAMEPAD_KEYBIND_STRIP_BACKGROUND_HEIGHT" right="-31" />

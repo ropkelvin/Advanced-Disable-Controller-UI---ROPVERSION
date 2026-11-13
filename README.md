@@ -33,7 +33,7 @@ HUI does not register a custom `DIRECTIONAL_INPUT` owner, consume either stick, 
 - `/hui hybrid` — keyboard-style presentation with controller input (requires Gamepad Mode: On).
 - `/hui gamepad` — restore native Gamepad presentation.
 - `/hui tabs` — report the detected visible menu bar.
-- `/huidebug` — capture scene, pointer, keybind and mode diagnostics to account-wide SavedVariables. After capture completes, use `/reloadui` and upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUI.lua`.
+- `/huidebug` — capture scene, native stick availability, keybind and mode diagnostics to account-wide SavedVariables. After capture completes, use `/reloadui` and upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUI.lua`.
 
 Optional settings are available through LibAddonMenu-2.0.
 
@@ -50,7 +50,6 @@ Optional settings are available through LibAddonMenu-2.0.
 
 - [ESO UI source repository](https://github.com/esoui/esoui) — reference source for scene manager and directional-input behaviour.
 - [ESO UI API documentation](https://esoapi.uesp.net/) — API reference.
-- [LibMousePointer source by Votan](https://github.com/votan73/ESO/tree/e312543ba8a392dfcfd1365457707d841191dd30/Addons/LibMousePointer) — audited to identify input-consumption and click-safety limitations.
 - [ADCUI by Lionas](https://github.com/Lionas/Advanced-Disable-Controller-UI) — studied as an architectural reference; HUI is a separate implementation.
 
 ## Development

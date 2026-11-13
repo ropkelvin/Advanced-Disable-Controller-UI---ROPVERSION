@@ -46,7 +46,7 @@ local function Sample()
         tostring(ADDON.saved.mode), tostring(rt.inWorld), tostring(rt.gamepadOn),
         tostring(rt.keyboardPresentation), tostring(rt.modeOverrideConflict),
         tostring(rt.restricted), tostring(rt.lockPick), tostring(rt.menuScene),
-        tostring(sceneName), tostring(MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing()),
+        tostring(sceneName), tostring(ADDON.PointerFragment and ADDON.PointerFragment:IsShowing()),
         tostring(listening), tostring(cursorX), tostring(cursorY), NameOf(hit),
         tostring(primary ~= nil), tostring(listening),
         tostring(rt.lastTabBar or "not-probed"))

@@ -18,6 +18,7 @@ local cursorSpeed = 3
 local pointerTopLevel
 local pointerListening = false
 local pointerUpdateCount = 0
+local lastPointerUpdateTime
 local lastAvailableBefore, lastAvailableAfterGetXY
 local lastInputX, lastInputY = 0, 0
 local lastInputScene
@@ -33,15 +34,12 @@ end
 
 function pointerOwner:UpdateDirectionalInput()
     pointerUpdateCount = pointerUpdateCount + 1
+    lastPointerUpdateTime = GetGameTimeMilliseconds()
     lastInputScene = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
     lastAvailableBefore = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
     if not lastAvailableBefore then
         lastInputX, lastInputY = 0, 0
         lastAvailableAfterGetXY = false
-        -- Mirror ESO's ClientInput hand-off immediately. Its own callback
-        -- performs this later in the directional-input update; doing it here
-        -- makes the consumed state visible to the game input layer this frame.
-        SetGamepadLeftStickConsumedByUI(true)
         return
     end
 
@@ -49,10 +47,6 @@ function pointerOwner:UpdateDirectionalInput()
     lastInputX, lastInputY = dx, dy
     -- GetXY consumes the queried device, including a neutral reading.
     lastAvailableAfterGetXY = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
-    -- ClientInput normally propagates this state after all directional-input
-    -- owners have run. HUI mirrors it now to avoid a one-frame movement leak
-    -- while keyboard-style scenes are taking over.
-    SetGamepadLeftStickConsumedByUI(not lastAvailableAfterGetXY)
 
     dx, dy = zo_clampLength2D(dx, dy, 1.5)
     if dx == 0 and dy == 0 then
@@ -203,6 +197,16 @@ function ADDON:PrintPointerProbe()
         EVENT_MANAGER:UnregisterForEvent(movementEventName, EVENT_NEW_MOVEMENT_IN_UI_MODE)
         EVENT_MANAGER:RegisterForEvent(movementEventName, EVENT_NEW_MOVEMENT_IN_UI_MODE, function()
             movementEvents = movementEvents + 1
+            local now = GetGameTimeMilliseconds()
+            local callbackAge = lastPointerUpdateTime and (now - lastPointerUpdateTime) or -1
+            movementEventDetail = string.format(
+                "at=%d callbackCount=%d callbackAgeMs=%d scene=%s stick=%.3f,%.3f available=%s sceneManagerListening=%s",
+                now, pointerUpdateCount - startPointerUpdates, callbackAge,
+                tostring(SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()),
+                GetGamepadLeftStickX(GAMEPAD_INCLUDE_DEADZONE),
+                GetGamepadLeftStickY(GAMEPAD_INCLUDE_DEADZONE),
+                tostring(DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)),
+                tostring(DIRECTIONAL_INPUT:IsListening(SCENE_MANAGER)))
         end)
     end
 
@@ -245,6 +249,7 @@ function ADDON:PrintPointerProbe()
                 tostring(DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(pointerOwner)),
                 tostring(cursorId ~= nil)))
             ADDON:Print("ownersWhileListening=" .. tostring(ownerSnapshot or "none"))
+            ADDON:Print("movementEvent=" .. tostring(movementEventDetail or "none"))
             ADDON:Print(string.format(
                 "pointerCallback: calls=%d lastScene=%s input=%.3f,%.3f availableBefore=%s availableAfterGetXY=%s",
                 pointerUpdateCount - startPointerUpdates, tostring(lastInputScene),

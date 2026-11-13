@@ -37,15 +37,22 @@ function pointerOwner:UpdateDirectionalInput()
     lastAvailableBefore = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
     if not lastAvailableBefore then
         lastInputX, lastInputY = 0, 0
-        lastAvailableAfterGetXY = nil
+        lastAvailableAfterGetXY = false
+        -- Mirror ESO's ClientInput hand-off immediately. Its own callback
+        -- performs this later in the directional-input update; doing it here
+        -- makes the consumed state visible to the game input layer this frame.
+        SetGamepadLeftStickConsumedByUI(true)
         return
     end
 
     local dx, dy = DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)
     lastInputX, lastInputY = dx, dy
-    -- ESO's GetXY consumes the queried device itself (even when the stick is
-    -- neutral), preserving DIRECTIONAL_INPUT's owner priority for this frame.
+    -- GetXY consumes the queried device, including a neutral reading.
     lastAvailableAfterGetXY = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
+    -- ClientInput normally propagates this state after all directional-input
+    -- owners have run. HUI mirrors it now to avoid a one-frame movement leak
+    -- while keyboard-style scenes are taking over.
+    SetGamepadLeftStickConsumedByUI(not lastAvailableAfterGetXY)
 
     dx, dy = zo_clampLength2D(dx, dy, 1.5)
     if dx == 0 and dy == 0 then

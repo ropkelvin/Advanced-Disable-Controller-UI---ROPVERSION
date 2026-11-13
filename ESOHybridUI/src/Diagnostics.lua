@@ -29,20 +29,11 @@ local function NameOf(control)
 end
 
 local function Sample()
-    local lib = LibMousePointer
-    local cursorX, cursorY
-    local hit
-    local listening = false
-    if lib then
-        if lib.GetCursorPosition then
-            cursorX, cursorY = lib:GetCursorPosition()
-        end
-        if lib.GetControlAtCursor then
-            hit = lib:GetControlAtCursor()
-        end
-        listening = DIRECTIONAL_INPUT ~= nil
-            and DIRECTIONAL_INPUT:IsListening(lib)
-    end
+    local pointer = rt.pointerOwner
+    local cursorX, cursorY = rt.pointerX, rt.pointerY
+    local hit = pointer and pointer.mouseOverControl
+    local listening = pointer ~= nil and DIRECTIONAL_INPUT ~= nil
+        and DIRECTIONAL_INPUT:IsListening(pointer)
 
     local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
     local primary = KEYBIND_STRIP and KEYBIND_STRIP.keybinds
@@ -57,7 +48,7 @@ local function Sample()
         tostring(rt.restricted), tostring(rt.lockPick), tostring(rt.menuScene),
         tostring(sceneName), tostring(MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing()),
         tostring(listening), tostring(cursorX), tostring(cursorY), NameOf(hit),
-        tostring(primary ~= nil), tostring(rt.pointerDirectionalHooked),
+        tostring(primary ~= nil), tostring(listening),
         tostring(rt.lastTabBar or "not-probed"))
 end
 

@@ -16,7 +16,7 @@ Keep ESO's **Gamepad Mode: On** setting enabled while presenting keyboard-style 
 
 ## Current controls
 
-- **Left stick:** move HUI's virtual cursor in supported keyboard-style menus. HUI registers its own `DIRECTIONAL_INPUT` owner and explicitly consumes the left stick while the pointer is active.
+- **Left stick:** move HUI's virtual cursor in supported keyboard-style menus. HUI registers its own high-priority `DIRECTIONAL_INPUT` owner; ESO's `GetXY` call consumes the queried stick for that update.
 - **A / primary:** uses the active screen's native keybind action when that screen exposes one. HUI does not synthesize a mouse click or invoke arbitrary control handlers.
 - **B / back:** uses the active screen's native back/cancel action.
 - **LB/RB:** previous/next main-menu category while the native keyboard category bar is showing.
@@ -25,11 +25,11 @@ Keep ESO's **Gamepad Mode: On** setting enabled while presenting keyboard-style 
 
 ## Pointer input and click safety
 
-The standalone pointer uses ESO's `DIRECTIONAL_INPUT:Activate`, `IsAvailable`, `GetXY` and `Consume` APIs, plus the native virtual-cursor and hit-testing APIs. The explicit left-stick `Consume` call is important: merely reading `GetXY` does not claim the input for HUI.
+The standalone pointer uses ESO's `DIRECTIONAL_INPUT:Activate`, `IsAvailable` and `GetXY` APIs, plus the native virtual-cursor and hit-testing APIs. ESO's `GetXY` implementation consumes the queried input device for the current update, including a neutral reading; an extra `Consume` call is redundant. HUI activates its owner as the pointer fragment starts showing, before the transition completes.
 
 HUI deliberately does not reproduce LibMousePointer's `InvokeClick` implementation. Its published source directly calls a control's `OnClicked`, `OnMouseDown` or `OnMouseUp` handler. Those calls are not equivalent to trusted mouse input and can violate ESO's protected-action restrictions. This is particularly important for destructive inventory and other secure workflows.
 
-A virtual cursor can safely provide movement, hover and hit-testing, but ESO's public addon API does not provide a general trusted way for an addon to inject arbitrary mouse clicks into every keyboard-style control. HUI therefore relies on native screen keybinds for activation. Some mouse-only controls may remain non-activatable until a screen-specific native keybind/navigation integration is implemented. HUI will not bypass the protected-action boundary.
+A virtual cursor can safely provide movement and hit-testing, but ESO's public addon API does not provide a general trusted way for an addon to inject arbitrary mouse clicks into every keyboard-style control. HUI therefore relies on native screen keybinds for activation. Some mouse-only controls may remain non-activatable until a screen-specific native keybind/navigation integration is implemented. HUI will not bypass the protected-action boundary.
 
 ## Modes and commands
 

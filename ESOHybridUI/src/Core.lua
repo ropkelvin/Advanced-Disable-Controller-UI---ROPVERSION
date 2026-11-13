@@ -72,7 +72,7 @@ local function OnPlayerDeactivated()
         SetGamepadRightStickConsumedByUI(false)
     end
     ADDON:ResetSceneState()
-    ADDON:Recompute()
+    ADDON:ApplyMode()
 end
 
 local function OnAddOnLoaded(_, addonName)

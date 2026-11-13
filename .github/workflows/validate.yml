@@ -24,7 +24,7 @@ jobs:
       - name: Check addon metadata and single canonical tree
         run: |
           grep -q '^## APIVersion: 101051$' ESOHybridUI/ESOHybridUI.txt
-          grep -q '^## Version: 2.2.0$' ESOHybridUI/ESOHybridUI.txt
+          grep -q '^## Version: 2.2.1$' ESOHybridUI/ESOHybridUI.txt
           test ! -e ESOHybridUI.txt
           test ! -e ESOHybridUI.lua
           ! grep -q '^## DependsOn: LibMousePointer' ESOHybridUI/ESOHybridUI.txt

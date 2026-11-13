@@ -1,7 +1,7 @@
 -- Scene tracking. Polling avoids wrapping the scene transition stack (which
--- can taint calls into protected ESO UI code). Unknown scene names are cached
--- and evaluated conservatively; restricted/native-special scenes never get
--- HUI's pointer fragment.
+-- can taint calls into protected ESO UI code). Known restricted/native-special
+-- scenes never get HUI's pointer fragment. Other keyboard scenes are treated
+-- as menu scenes; newly introduced restricted screens must be added below.
 local ADDON = ESOHybridUI
 local rt = ADDON.rt
 

@@ -1,7 +1,9 @@
--- Scene tracking. Polling avoids wrapping the scene transition stack (which
--- can taint calls into protected ESO UI code). Known restricted/native-special
--- scenes never get HUI's pointer fragment. Other keyboard scenes are treated
--- as menu scenes; newly introduced restricted screens must be added below.
+-- Scene tracking and early pointer-fragment attachment.
+--
+-- Register on each scene's StateChange callback, so the pointer fragment is
+-- attached during SCENE_SHOWING, before that scene refreshes its fragments.
+-- A post-show polling attach can miss the first directional-input frame and
+-- let ESO interpret the left stick as new gameplay movement.
 local ADDON = ESOHybridUI
 local rt = ADDON.rt
 
@@ -15,8 +17,6 @@ local NON_MENU = {
     lockpickkeyboard = true, lockpickgamepad = true,
 }
 
--- These screens deliberately retain ESO's native flow. Keep the list broad:
--- new/special monetization, reward and feature scenes should fail closed.
 local RESTRICTED_TOKENS = {
     "scrying", "tribute", "market", "crown", "gildbarstore",
     "endeavorsealstore", "esoplusoffers", "giftinventory",
@@ -25,11 +25,13 @@ local RESTRICTED_TOKENS = {
 }
 
 local nameInfo = {}
+local trackedScenes = {}
 local function GetInfo(name)
     local info = nameInfo[name]
     if info then
         return info
     end
+
     local lowered = string.lower(name)
     local restricted = false
     for i = 1, #RESTRICTED_TOKENS do
@@ -38,22 +40,45 @@ local function GetInfo(name)
             break
         end
     end
+
     local lockpick = string.find(lowered, "lockpick", 1, true) ~= nil
     info = {
         restricted = restricted,
         lockpick = lockpick,
-        -- A scene name containing "gamepad" is not itself a reason to deny
-        -- pointer support. Some keyboard-style/forced-mode transitions still
-        -- land on gamepad-suffixed scene names (for example inventory roots).
-        -- Explicitly exclude only known non-menu and restricted scenes.
         menu = not restricted and not lockpick and not NON_MENU[lowered],
     }
     nameInfo[name] = info
     return info
 end
 
+local function AttachPointer(scene, name)
+    local info = GetInfo(name)
+    if info.menu and MOUSE_POINTER_FRAGMENT
+        and not scene:HasFragment(MOUSE_POINTER_FRAGMENT) then
+        scene:AddFragment(MOUSE_POINTER_FRAGMENT)
+        ADDON:Record("POINTER_ATTACH", name, "state=", scene:GetState())
+    end
+end
+
+local function TrackScene(name, scene)
+    if not scene or trackedScenes[scene] then
+        return
+    end
+    trackedScenes[scene] = true
+
+    scene:RegisterCallback("StateChange", function(_, newState)
+        if newState == SCENE_SHOWING then
+            AttachPointer(scene, name)
+        end
+    end)
+
+    -- Also cover a menu that was already showing when HUI initialized.
+    if scene:IsShowing() then
+        AttachPointer(scene, name)
+    end
+end
+
 local currentName = nil
-local attached = {}
 local tick = 0
 
 function ADDON:ResetSceneState()
@@ -73,12 +98,18 @@ local function Poll()
         return
     end
 
+    -- Scene definitions may be registered by other addons after player
+    -- activation. Track them before they are next opened.
+    for name, scene in pairs(SCENE_MANAGER.scenes or {}) do
+        TrackScene(name, scene)
+    end
+
     local name = SCENE_MANAGER:GetCurrentSceneName()
     if type(name) ~= "string" then
         return
     end
-    local info = GetInfo(name)
 
+    local info = GetInfo(name)
     if name ~= currentName then
         currentName = name
         rt.menuScene = info.menu
@@ -86,16 +117,6 @@ local function Poll()
         rt.restricted = info.restricted
         ADDON:Record("SCENE", name)
         ADDON:ApplyMode()
-    end
-
-    if info.menu and MOUSE_POINTER_FRAGMENT and not attached[name] then
-        local scene = SCENE_MANAGER:GetScene(name)
-        if scene and scene:GetState() == SCENE_SHOWN then
-            attached[name] = true
-            if not scene:HasFragment(MOUSE_POINTER_FRAGMENT) then
-                scene:AddFragment(MOUSE_POINTER_FRAGMENT)
-            end
-        end
     end
 
     tick = tick + 1
@@ -109,6 +130,14 @@ function ADDON:InitializeScenes()
     if rt.scenesPolling then
         return
     end
+
+    -- Attach callbacks to every scene already registered. The update below
+    -- only discovers scenes registered later; it no longer waits until a
+    -- scene is SHOWN before attaching the pointer fragment.
+    for name, scene in pairs(SCENE_MANAGER.scenes or {}) do
+        TrackScene(name, scene)
+    end
+
     EVENT_MANAGER:RegisterForUpdate(POLL_NAME, POLL_MS, Poll)
     rt.scenesPolling = true
 end

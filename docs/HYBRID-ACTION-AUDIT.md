@@ -1,4 +1,4 @@
-# HUI 2.0.2 — controller and action audit
+# HUI 2.0.3 — controller and action audit
 
 **Status:** source-reviewed development build. Not release-ready and not verified end-to-end in the live ESO client. Static checks cannot establish controller behaviour.
 

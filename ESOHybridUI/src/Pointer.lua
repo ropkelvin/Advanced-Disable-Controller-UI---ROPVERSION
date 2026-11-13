@@ -60,7 +60,10 @@ end
 function ADDON:PrintPointerProbe()
     local lib = LibMousePointer
     local startScene = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
-    local startX, startY = lib and lib:GetCursorPosition()
+    local startX, startY
+    if lib then
+        startX, startY = lib:GetCursorPosition()
+    end
     local startTime = GetGameTimeMilliseconds()
     local samples, shownSamples, listeningSamples = 0, 0, 0
     local sceneChanges = 0
@@ -78,7 +81,10 @@ function ADDON:PrintPointerProbe()
         local fragmentShowing = MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing() or false
         local listening = lib and DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(lib) or false
         local cursorExists = lib and lib.gamepadCursor and lib.gamepadCursor.cursorId ~= nil or false
-        local x, y = lib and lib:GetCursorPosition()
+        local x, y
+        if lib then
+            x, y = lib:GetCursorPosition()
+        end
         local rawX = GetGamepadLeftStickX(GAMEPAD_INCLUDE_DEADZONE)
         local rawY = GetGamepadLeftStickY(GAMEPAD_INCLUDE_DEADZONE)
 

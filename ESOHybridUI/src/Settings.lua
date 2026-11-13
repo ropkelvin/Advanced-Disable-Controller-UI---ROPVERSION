@@ -23,7 +23,7 @@ function ADDON:InitializeSettings()
         {
             type = "dropdown",
             name = "Interface mode",
-            tooltip = "Hybrid: keyboard-style UI with controller input. Pure Gamepad: ESO's native Gamepad UI.",
+            tooltip = "Hybrid: keyboard-style presentation with Gamepad Mode On and ESO-native controller input. Pure Gamepad: ESO's native Gamepad presentation.",
             choices = { "Hybrid", "Pure Gamepad" },
             getFunc = function() return self.saved.mode == "hybrid" and "Hybrid" or "Pure Gamepad" end,
             setFunc = function(value) self:SetMode(value == "Hybrid" and "hybrid" or "gamepad") end,
@@ -31,27 +31,8 @@ function ADDON:InitializeSettings()
         },
         {
             type = "checkbox",
-            name = "Controller pointer in menus",
-            tooltip = "Left stick moves HUI's cursor. Activation uses the screen's native keybinds; arbitrary mouse clicks are not synthesized.",
-            getFunc = function() return self.saved.pointerEnabled end,
-            setFunc = function(value)
-                self.saved.pointerEnabled = value
-                self:RefreshPointerScenes()
-            end,
-            default = true,
-        },
-        {
-            type = "slider",
-            name = "Pointer speed",
-            min = 1, max = 8, step = 0.5,
-            getFunc = function() return self.saved.pointerSpeed end,
-            setFunc = function(value) self.saved.pointerSpeed = value end,
-            default = 3,
-        },
-        {
-            type = "checkbox",
             name = "Controller button prompts",
-            tooltip = "Show controller glyphs instead of keyboard keys in keyboard-style menus.",
+            tooltip = "Show controller glyphs in supported keyboard-style UI elements.",
             getFunc = function() return self.saved.controllerPrompts end,
             setFunc = function(value) self.saved.controllerPrompts = value end,
             default = true,

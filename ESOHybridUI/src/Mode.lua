@@ -75,6 +75,7 @@ function ADDON:ApplyMode()
             -- Never replace an unrelated addon's wrapper. Pause Hybrid
             -- presentation rather than running a partially mixed UI mode.
             rt.modeOverrideConflict = true
+            rt.modeOverrideApplied = false
             rt.keyboardPresentation = false
             self:Debug("Another addon owns IsInGamepadPreferredMode; HUI yielded to avoid replacing its hook.")
         end

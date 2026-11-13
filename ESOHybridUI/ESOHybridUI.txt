@@ -1,8 +1,8 @@
 ## Title: HUI - ESO Hybrid UI
 ## Author: @ZOSPlsFix
-## Version: 2.0.1
+## Version: 2.0.2
 ## APIVersion: 101051
-## Description: Keyboard-style ESO UI with full native controller input (Gamepad Mode: On). Requires LibMousePointer by Votan. Inspired by ADCUI by Lionas.
+## Description: Keyboard-style ESO UI with controller support (Gamepad Mode: On). Requires LibMousePointer by Votan. Inspired by ADCUI by Lionas.
 ## SavedVariables: ESOHybridUISavedVariables
 ## DependsOn: LibMousePointer>=10000
 ## OptionalDependsOn: LibAddonMenu-2.0

@@ -39,11 +39,14 @@ local function GetInfo(name)
         end
     end
     local lockpick = string.find(lowered, "lockpick", 1, true) ~= nil
-    local isGamepad = string.find(lowered, "gamepad", 1, true) ~= nil
     info = {
         restricted = restricted,
         lockpick = lockpick,
-        menu = not restricted and not lockpick and not NON_MENU[lowered] and not isGamepad,
+        -- A scene name containing "gamepad" is not itself a reason to deny
+        -- pointer support. Some keyboard-style/forced-mode transitions still
+        -- land on gamepad-suffixed scene names (for example inventory roots).
+        -- Explicitly exclude only known non-menu and restricted scenes.
+        menu = not restricted and not lockpick and not NON_MENU[lowered],
     }
     nameInfo[name] = info
     return info

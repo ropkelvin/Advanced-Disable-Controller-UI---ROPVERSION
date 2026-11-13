@@ -56,6 +56,8 @@ function ADDON:ApplyMode()
         RestoreOwnedWrapper()
         rt.modeOverrideConflict = false
         self:TryRefreshHUDSettings()
+        self:RefreshPointerScenes()
+        self:RefreshNavigation()
         return
     end
 

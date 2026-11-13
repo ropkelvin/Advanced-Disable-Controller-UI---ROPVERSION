@@ -24,7 +24,7 @@ Pointer click is not guaranteed to perform every protected ESO action. Destructi
 - `/hui gamepad` — native Gamepad presentation.
 - `/hui tabs` — inspect the detected tab bar.
 - `/hui pointer` — report LibMousePointer and cursor state.
-- `/huidebug` — capture 90 seconds of diagnostics. After it completes, run `/reloadui`, then upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUISavedVariables.lua`.
+- `/huidebug` — capture 90 seconds of diagnostics. After it completes, run `/reloadui`, then upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUI.lua`.
 
 ## Requirements and safety
 

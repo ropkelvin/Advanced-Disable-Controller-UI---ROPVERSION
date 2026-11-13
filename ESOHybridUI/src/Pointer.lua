@@ -85,12 +85,34 @@ function ADDON:InitializePointer()
 end
 
 function ADDON:PrintPointerProbe()
-    self:Print("Open a supported menu and move the left stick for five seconds.")
+    self:Print("Move the left stick in this window for five seconds; checking scene and directional-input ownership.")
     zo_callLater(function()
-        local x, y = LibMousePointer and LibMousePointer:GetCursorPosition()
-        local listening = DIRECTIONAL_INPUT and LibMousePointer
-            and DIRECTIONAL_INPUT:IsListening(LibMousePointer)
-        self:Print(string.format("init=%s listening=%s cursor=%s,%s",
-            tostring(rt.pointerInitialized), tostring(listening), tostring(x), tostring(y)))
+        local lib = LibMousePointer
+        local x, y = lib and lib:GetCursorPosition()
+        local listening = DIRECTIONAL_INPUT and lib and DIRECTIONAL_INPUT:IsListening(lib)
+        local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
+        local scene = sceneName and SCENE_MANAGER:GetScene(sceneName)
+        local sceneState = scene and scene:GetState()
+        local attached = scene and scene:HasFragment(MOUSE_POINTER_FRAGMENT)
+        local fragmentShowing = MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing()
+        local cursorExists = lib and lib.gamepadCursor and lib.gamepadCursor.cursorId ~= nil
+        local rawX = GetGamepadLeftStickX(GAMEPAD_INCLUDE_DEADZONE)
+        local rawY = GetGamepadLeftStickY(GAMEPAD_INCLUDE_DEADZONE)
+
+        self:Print(string.format("scene=%s state=%s menu=%s restricted=%s",
+            tostring(sceneName), tostring(sceneState), tostring(rt.menuScene), tostring(rt.restricted)))
+        self:Print(string.format("fragmentAttached=%s fragmentShowing=%s cursorExists=%s listening=%s",
+            tostring(attached), tostring(fragmentShowing), tostring(cursorExists), tostring(listening)))
+        self:Print(string.format("rawLeftStick=%.3f,%.3f cursor=%s,%s",
+            rawX, rawY, tostring(x), tostring(y)))
+
+        if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT.inputObjects then
+            for index = #DIRECTIONAL_INPUT.inputObjects, 1, -1 do
+                local owner = DIRECTIONAL_INPUT.inputObjects[index]
+                local control = DIRECTIONAL_INPUT.inputControls[index]
+                local name = control and control.GetName and control:GetName() or tostring(control)
+                self:Print(string.format("inputOwner[%d]=%s control=%s", index, tostring(owner == lib and "LibMousePointer" or owner), tostring(name)))
+            end
+        end
     end, 5000)
 end

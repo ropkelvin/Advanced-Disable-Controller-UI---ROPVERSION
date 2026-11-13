@@ -1,9 +1,9 @@
 -- Pointer input for keyboard-style scenes.
 --
 -- LibMousePointer owns the virtual cursor and its native click keybind. HUI
--- only supplies left-stick movement. Never synthesize OnClicked/OnMouseUp:
--- calling arbitrary UI handlers is not equivalent to trusted mouse input and
--- can trip ESO's protected-action boundary (inventory destruction, etc.).
+-- supplies left-stick movement only. Never synthesize OnClicked/OnMouseUp:
+-- arbitrary handler calls are not trusted mouse input and can trip ESO's
+-- protected-action boundary (inventory destruction, etc.).
 local ADDON = ESOHybridUI
 local rt = ADDON.rt
 
@@ -27,10 +27,6 @@ local function Step()
     end
 
     rt.pointerUpdates = rt.pointerUpdates + 1
-
-    -- The pointer owns both sticks while its fragment is visible. Consume via
-    -- DIRECTIONAL_INPUT (priority-aware) and tell the game not to pass either
-    -- stick to movement/camera processing.
     DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK, ZO_DI_RIGHT_STICK)
     SetGamepadLeftStickConsumedByUI(true)
     SetGamepadRightStickConsumedByUI(true)
@@ -58,12 +54,13 @@ local function Step()
         cursor.x, cursor.y = cx, cy
         cursor.directionalX, cursor.directionalY = cx, cy
         control:ClearAnchors()
-        control:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, cx, cy)
+        control:SetAnchor(CENTER, GuiRoot, TOPLEFT, cx, cy)
     end
     cursor:UpdateCursorInfo()
 end
 
 local inputObject = {}
+rt.pointerInputObject = inputObject
 function inputObject:UpdateDirectionalInput()
     Step()
 end
@@ -74,12 +71,17 @@ local function ReleaseSticks()
     rt.rawStickX, rt.rawStickY = 0, 0
 end
 
+local function RestoreLibraryDriver()
+    if rt.libraryDriverSuppressed and LibMousePointer then
+        LibMousePointer.UpdateDirectionalInput = rt.originalLibraryDriver
+        rt.libraryDriverSuppressed = false
+        rt.originalLibraryDriver = nil
+    end
+end
+
 local function OnFragmentState(_, newState)
     if newState == SCENE_FRAGMENT_SHOWN then
         moveStart = GetGameTimeMilliseconds()
-        -- Ensure the native library's directional driver does not move the
-        -- same cursor a second time. Its fragment, cursor and click descriptor
-        -- remain intact and are still owned by LibMousePointer.
         if not rt.libraryDriverSuppressed then
             rt.originalLibraryDriver = LibMousePointer.UpdateDirectionalInput
             LibMousePointer.UpdateDirectionalInput = function() end
@@ -93,6 +95,7 @@ local function OnFragmentState(_, newState)
             DIRECTIONAL_INPUT:Deactivate(inputObject)
         end
         ReleaseSticks()
+        RestoreLibraryDriver()
     end
 end
 
@@ -106,9 +109,9 @@ function ADDON:InitializePointer()
         return
     end
 
-    -- Do not replace InvokeClick, re-key the library descriptor, or dispatch
-    -- synthetic mouse events. The library's own click descriptor is added only
-    -- when the active screen has not claimed UI_SHORTCUT_PRIMARY.
+    -- Keep the library's fragment and native click descriptor intact. The
+    -- library adds its click action only when the active screen leaves the
+    -- primary shortcut free; HUI never overrides a screen's native action.
     MOUSE_POINTER_FRAGMENT:SetConditional(function()
         return rt.keyboardPresentation and ADDON.saved.pointerEnabled
     end)

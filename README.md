@@ -16,7 +16,7 @@ Keep ESO's **Gamepad Mode: On** setting enabled while presenting keyboard-style 
 
 ## Current controls
 
-- **Left stick:** move HUI's virtual cursor in supported keyboard-style menus. HUI registers its own high-priority `DIRECTIONAL_INPUT` owner; ESO's `GetXY` call consumes the queried stick for that update, and HUI immediately propagates that state to the game input layer with ESO's `SetGamepadLeftStickConsumedByUI` API.
+- **Left stick:** move HUI's virtual cursor in supported keyboard-style menus. HUI registers its own high-priority `DIRECTIONAL_INPUT` owner; ESO's `GetXY` call consumes the queried stick for that update, and ESO's `ClientInput` owner propagates the consumed state to the game input layer.
 - **A / primary:** uses the active screen's native keybind action when that screen exposes one. HUI does not synthesize a mouse click or invoke arbitrary control handlers.
 - **B / back:** uses the active screen's native back/cancel action.
 - **LB/RB:** previous/next main-menu category while the native keyboard category bar is showing.
@@ -37,7 +37,7 @@ A virtual cursor can safely provide movement and hit-testing, but ESO's public a
 - `/hui hybrid` — keyboard-style presentation with controller input (requires Gamepad Mode: On).
 - `/hui gamepad` — restore native Gamepad presentation.
 - `/hui tabs` — report the detected visible menu bar.
-- `/hui pointer` — trace HUI pointer ownership, stick input, cursor movement and movement events for three seconds.
+- `/hui pointer` — trace HUI pointer ownership, stick input, cursor movement, and the timing of any UI-mode movement event for three seconds.
 - `/huidebug` — capture scene, pointer, keybind and mode diagnostics to account-wide SavedVariables. After capture completes, use `/reloadui` and upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUI.lua`.
 
 Optional settings are available through LibAddonMenu-2.0.

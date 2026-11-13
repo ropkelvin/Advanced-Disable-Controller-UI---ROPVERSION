@@ -2,37 +2,34 @@
 
 **Development status:** actively audited, not yet verified end-to-end in the live ESO client. Do not treat this branch as a stable public release.
 
-**Canonical addon source:** `ESOHybridUI/`. The GitHub Actions workflow validates and packages this folder as `ESOHybridUI/ESOHybridUI.txt` plus its `src/` directory. The old root-level addon manifest and local SavedVariables capture have been removed to avoid packaging the wrong implementation.
+**Canonical addon source:** `ESOHybridUI/`. GitHub Actions validates and packages this folder as `ESOHybridUI/ESOHybridUI.txt` plus its `src/` directory. The old root-level addon manifest and local SavedVariables capture have been removed.
 
 ## Goal
 
-Keep ESO's **Gamepad Mode: On** setting enabled while presenting keyboard-style menus and providing controller navigation. HUI does not attempt to replace ESO's native UI actions with arbitrary simulated mouse events.
+Keep ESO's **Gamepad Mode: On** setting enabled while presenting keyboard-style menus and providing controller navigation. HUI owns its pointer implementation and does not require LibMousePointer.
 
 ## Requirements
 
 - PC version of The Elder Scrolls Online.
 - ESO Controls setting **Gamepad Mode: On** (not Auto).
-- [LibMousePointer by Votan](https://www.esoui.com/downloads/info4518-libmousepointer.html), AddOnVersion 10000 or later.
 - LibAddonMenu-2.0 is optional.
-
-LibMousePointer is a required dependency. Its published API provides a scene fragment, cursor-position/hit-testing helpers and `InvokeClick(button, desiredHandlers)`. HUI delegates cursor creation, movement, hover and primary click to that library rather than creating a second cursor or directly invoking arbitrary mouse handlers.
 
 ## Current controls
 
-- **Left stick:** LibMousePointer's virtual cursor in supported keyboard-style menus.
-- **Primary/select:** LibMousePointer's native `UI_SHORTCUT_PRIMARY` action when that shortcut is not already owned by the active screen. If a screen owns it, that screen's native action takes priority.
-- **Right-stick click:** HUI's optional context-click descriptor, using LibMousePointer's documented `InvokeClick(MOUSE_BUTTON_INDEX_RIGHT)` API, when the shortcut is available.
+- **Left stick:** move HUI's virtual cursor in supported keyboard-style menus. HUI registers its own `DIRECTIONAL_INPUT` owner and explicitly consumes the left stick while the pointer is active.
+- **A / primary:** uses the active screen's native keybind action when that screen exposes one. HUI does not synthesize a mouse click or invoke arbitrary control handlers.
+- **B / back:** uses the active screen's native back/cancel action.
 - **LB/RB:** previous/next main-menu category while the native keyboard category bar is showing.
 - **LT/RT:** previous/next detected visible `ZO_MenuBar` tab on the current menu screen. Screens using other tab implementations are not covered yet.
-- **Right stick movement:** ESO's normal UI directional-input fallback consumes it while in UI mode; generic pointer scrolling is not implemented.
+- **Right stick:** remains under ESO's native UI directional-input handling; generic pointer scrolling is not implemented.
 
-### Stick ownership
+## Pointer input and click safety
 
-ESO's `DIRECTIONAL_INPUT` system orders active input owners by their associated control's visual priority. LibMousePointer registers its high-priority cursor control and reads/consumes the left stick through `GetXY`. ESO's scene-manager owner then consumes any remaining stick input while in UI mode. HUI deliberately leaves this native fallback intact: if another UI control has priority over the pointer, the remaining stick must not leak into character movement. HUI does not replace or bypass ESO's directional-input dispatcher.
+The standalone pointer uses ESO's `DIRECTIONAL_INPUT:Activate`, `IsAvailable`, `GetXY` and `Consume` APIs, plus the native virtual-cursor and hit-testing APIs. The explicit left-stick `Consume` call is important: merely reading `GetXY` does not claim the input for HUI.
 
-### Click safety
+HUI deliberately does not reproduce LibMousePointer's `InvokeClick` implementation. Its published source directly calls a control's `OnClicked`, `OnMouseDown` or `OnMouseUp` handler. Those calls are not equivalent to trusted mouse input and can violate ESO's protected-action restrictions. This is particularly important for destructive inventory and other secure workflows.
 
-HUI no longer calls arbitrary `OnClicked`, `OnMouseDown` or `OnMouseUp` handlers itself. It delegates pointer clicks to LibMousePointer's public API and lets native screen keybinds take precedence. The library's click helper is still not a guarantee that every protected ESO action can be performed through a virtual pointer. Destructive inventory actions, trade operations and other protected workflows must be tested individually and should use their native keybind action if the game rejects pointer activation. HUI does not bypass ESO's secure/protected-action boundary.
+A virtual cursor can safely provide movement, hover and hit-testing, but ESO's public addon API does not provide a general trusted way for an addon to inject arbitrary mouse clicks into every keyboard-style control. HUI therefore relies on native screen keybinds for activation. Some mouse-only controls may remain non-activatable until a screen-specific native keybind/navigation integration is implemented. HUI will not bypass the protected-action boundary.
 
 ## Modes and commands
 
@@ -40,7 +37,7 @@ HUI no longer calls arbitrary `OnClicked`, `OnMouseDown` or `OnMouseUp` handlers
 - `/hui hybrid` — keyboard-style presentation with controller input (requires Gamepad Mode: On).
 - `/hui gamepad` — restore native Gamepad presentation.
 - `/hui tabs` — report the detected visible menu bar.
-- `/hui pointer` — trace scene, fragment visibility, LibMousePointer ownership, left-stick input and cursor movement for three seconds.
+- `/hui pointer` — trace HUI pointer ownership, stick input, cursor movement and movement events for three seconds.
 - `/huidebug` — capture scene, pointer, keybind and mode diagnostics to account-wide SavedVariables. After capture completes, use `/reloadui` and upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUI.lua`.
 
 Optional settings are available through LibAddonMenu-2.0.
@@ -48,8 +45,8 @@ Optional settings are available through LibAddonMenu-2.0.
 ## Safety and limitations
 
 - HUI yields its preferred-mode override if another addon already owns `IsInGamepadPreferredMode`; it does not blindly replace another addon's wrapper.
-- HUI preserves ESO's native lockpick presentation and excludes known restricted/special scenes such as Crown Store/market, Scrying, Tribute, Tamriel Tomes and reward-preview screens. New ESO scenes must be audited and added to the restricted list where appropriate.
-- Scene tracking registers callbacks on known scenes and attaches the pointer fragment during SCENE_SHOWING, before the scene refreshes fragments. A lightweight poll discovers scenes registered later; it is not used to wait until after a menu has opened before attaching the pointer.
+- HUI preserves ESO's native lockpick presentation and excludes known restricted/special scenes such as Crown Store/market, Scrying, Tribute, Tamriel Tomes and reward-preview screens.
+- Scene tracking registers callbacks on known scenes and attaches the pointer fragment during `SCENE_SHOWING`. A lightweight poll discovers scenes registered later.
 - Main-menu category switching uses ESO's `ZO_MenuBar_SelectDescriptor` API. Individual tab discovery remains heuristic because not every ESO screen uses `ZO_MenuBar`.
 - D-pad navigation, drag/drop, all screen-specific actions, quickslot/player-interaction wheels, map level switching, crafting, bank/trade, resurrection and housing still require screen-by-screen verification.
 - Static CI checks validate Lua syntax, manifest paths, safety invariants and ZIP structure. They cannot establish live-client behaviour. No claim of 95% runtime functionality should be made until controller tests cover the supported screen matrix.
@@ -58,7 +55,7 @@ Optional settings are available through LibAddonMenu-2.0.
 
 - [ESO UI source repository](https://github.com/esoui/esoui) — reference source for scene manager and directional-input behaviour.
 - [ESO UI API documentation](https://esoapi.uesp.net/) — API reference.
-- [LibMousePointer documentation](https://www.esoui.com/downloads/info4518-libmousepointer.html) — documented cursor fragment and click API.
+- [LibMousePointer source by Votan](https://github.com/votan73/ESO/tree/e312543ba8a392dfcfd1365457707d841191dd30/Addons/LibMousePointer) — audited to identify input-consumption and click-safety limitations.
 - [ADCUI by Lionas](https://github.com/Lionas/Advanced-Disable-Controller-UI) — studied as an architectural reference; HUI is a separate implementation.
 
 ## Development

@@ -124,6 +124,9 @@ function ADDON:InitializeLockpick()
 end
 
 function ADDON:InitializeMode()
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_ADD_ONS_LOADED, function()
+        ADDON:TryRefreshHUDSettings()
+    end)
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_GAMEPAD_PREFERRED_MODE_CHANGED, function()
         ADDON:ApplyMode()
     end)

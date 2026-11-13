@@ -1,11 +1,85 @@
--- Controller navigation of native ZO_MenuBar tab bars.
--- LB/RB select main-menu categories; LT/RT select a visible screen tab.
--- All activation goes through ESO's menu-bar API, never synthetic mouse events.
+-- Controller navigation for ESO's keyboard main menu and native tab bars.
+-- Main-menu category switching follows ADCUI's sceneInfo/ShowCategory model.
+-- Other tab bars are activated through ESO's ZO_MenuBar API.
+
 local ADDON = ESOHybridUI
 local rt = ADDON.rt
 
 local function GetCategoryBar()
     return MAIN_MENU_KEYBOARD and MAIN_MENU_KEYBOARD.categoryBar
+end
+
+local function GetCurrentCategory()
+    if not MAIN_MENU_KEYBOARD or not MAIN_MENU_KEYBOARD.sceneInfo or not SCENE_MANAGER then
+        return nil
+    end
+    local sceneInfo = MAIN_MENU_KEYBOARD.sceneInfo[SCENE_MANAGER:GetCurrentSceneName()]
+    return sceneInfo and sceneInfo.category or nil
+end
+
+local function GetLastCategory()
+    local categories = MAIN_MENU_KEYBOARD and MAIN_MENU_KEYBOARD.categoryInfo
+    if not categories then
+        return 0
+    end
+    local count = 0
+    for _, info in ipairs(categories) do
+        if info.lastSceneGroupName or info.lastSceneName then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+-- Match category indexes to the actual keyboard main-menu buttons. This is
+-- the same mapping ADCUI uses; it avoids guessing which visible menu bar is
+-- the main category bar.
+local function IsCategoryHidden(categoryIndex)
+    local bar = GetCategoryBar()
+    if not bar then
+        return true
+    end
+
+    local buttonIndex = 0
+    for i = 1, bar:GetNumChildren() do
+        local control = bar:GetChild(i)
+        local name = control:GetName()
+        if name and string.find(name, "Button", 1, true) then
+            buttonIndex = buttonIndex + 1
+            if buttonIndex == categoryIndex then
+                return control:IsHidden()
+            end
+        end
+    end
+    return false
+end
+
+local function IsMarketCategory(categoryIndex)
+    local groupInfo = MAIN_MENU_KEYBOARD and MAIN_MENU_KEYBOARD.sceneGroupInfo
+    local market = groupInfo and groupInfo.marketSceneGroup
+    return market and market.category == categoryIndex or false
+end
+
+local function ShowAdjacentCategory(direction)
+    if not MAIN_MENU_KEYBOARD or type(MAIN_MENU_KEYBOARD.ShowCategory) ~= "function" then
+        return false
+    end
+
+    local current = GetCurrentCategory()
+    local last = GetLastCategory()
+    if not current or last < 1 then
+        return false
+    end
+
+    local candidate = current + direction
+    while candidate >= 1 and candidate <= last do
+        if not IsCategoryHidden(candidate) and not IsMarketCategory(candidate) then
+            MAIN_MENU_KEYBOARD:ShowCategory(candidate)
+            return true
+        end
+        candidate = candidate + direction
+    end
+    return false
 end
 
 local function IsMenuBar(control)
@@ -18,8 +92,6 @@ local function Activate(bar, entry)
     if type(ZO_MenuBar_SelectDescriptor) ~= "function" then
         return false
     end
-    -- Signature: bar, descriptor, skipAnimation, reselectIfSelected.
-    -- The function's return value is not a reliable success indicator.
     ZO_MenuBar_SelectDescriptor(bar, entry[3], true, false)
     return true
 end
@@ -69,9 +141,6 @@ local function CountVisible(bar)
     return n
 end
 
--- Discover candidate tab bars in the active visible UI tree. This remains a
--- heuristic because ESO screens do not all use ZO_MenuBar; unsupported bars
--- are left to their native controls rather than receiving fake mouse clicks.
 local function Scan(control, best, depth, excluded)
     if not control or control:IsHidden() then
         return best
@@ -119,13 +188,13 @@ local previousCategory = {
     alignment = KEYBIND_STRIP_ALIGN_LEFT,
     name = "Previous category",
     keybind = "UI_SHORTCUT_LEFT_SHOULDER",
-    callback = function() CycleBar(GetCategoryBar(), -1) end,
+    callback = function() ShowAdjacentCategory(-1) end,
 }
 local nextCategory = {
     alignment = KEYBIND_STRIP_ALIGN_LEFT,
     name = "Next category",
     keybind = "UI_SHORTCUT_RIGHT_SHOULDER",
-    callback = function() CycleBar(GetCategoryBar(), 1) end,
+    callback = function() ShowAdjacentCategory(1) end,
 }
 local previousTab = {
     alignment = KEYBIND_STRIP_ALIGN_LEFT,

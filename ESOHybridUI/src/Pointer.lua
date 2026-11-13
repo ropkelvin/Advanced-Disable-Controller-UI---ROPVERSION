@@ -74,6 +74,24 @@ function ADDON:PrintPointerProbe()
     local lastFragmentShowing = false
     local lastListening = false
     local lastCursorExists = false
+    local ownerSnapshot = nil
+    local movementEvents = 0
+    local movementEventName = "ESOHybridUI_PointerProbeMovement"
+
+    local function CaptureOwners()
+        if ownerSnapshot or not DIRECTIONAL_INPUT or not DIRECTIONAL_INPUT.inputObjects then
+            return
+        end
+        local entries = {}
+        for index = #DIRECTIONAL_INPUT.inputObjects, 1, -1 do
+            local owner = DIRECTIONAL_INPUT.inputObjects[index]
+            local control = DIRECTIONAL_INPUT.inputControls[index]
+            local name = control and control.GetName and control:GetName() or tostring(control)
+            entries[#entries + 1] = string.format("%d:%s/%s", index,
+                tostring(owner == lib and "LibMousePointer" or owner), tostring(name))
+        end
+        ownerSnapshot = table.concat(entries, ",")
+    end
 
     local function Sample()
         local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
@@ -90,7 +108,10 @@ function ADDON:PrintPointerProbe()
 
         samples = samples + 1
         if fragmentShowing then shownSamples = shownSamples + 1 end
-        if listening then listeningSamples = listeningSamples + 1 end
+        if listening then
+            listeningSamples = listeningSamples + 1
+            CaptureOwners()
+        end
         if sceneName ~= previousScene then
             sceneChanges = sceneChanges + 1
             previousScene = sceneName
@@ -115,21 +136,32 @@ function ADDON:PrintPointerProbe()
         GetGamepadLeftStickY(GAMEPAD_INCLUDE_DEADZONE)))
     self:Print("Move the left stick now. Capturing scene, fragment, owner and cursor state for 3 seconds.")
 
+    if EVENT_NEW_MOVEMENT_IN_UI_MODE then
+        EVENT_MANAGER:UnregisterForEvent(movementEventName, EVENT_NEW_MOVEMENT_IN_UI_MODE)
+        EVENT_MANAGER:RegisterForEvent(movementEventName, EVENT_NEW_MOVEMENT_IN_UI_MODE, function()
+            movementEvents = movementEvents + 1
+        end)
+    end
+
     EVENT_MANAGER:UnregisterForUpdate("ESOHybridUI_PointerProbe")
     EVENT_MANAGER:RegisterForUpdate("ESOHybridUI_PointerProbe", 100, function()
         Sample()
         if GetGameTimeMilliseconds() - startTime >= 3000 then
             EVENT_MANAGER:UnregisterForUpdate("ESOHybridUI_PointerProbe")
+            if EVENT_NEW_MOVEMENT_IN_UI_MODE then
+                EVENT_MANAGER:UnregisterForEvent(movementEventName, EVENT_NEW_MOVEMENT_IN_UI_MODE)
+            end
             local delta = -1
             if type(startX) == "number" and type(startY) == "number"
                 and type(lastX) == "number" and type(lastY) == "number" then
                 delta = math.sqrt((lastX - startX) ^ 2 + (lastY - startY) ^ 2)
             end
             ADDON:Print(string.format(
-                "Pointer trace: samples=%d sceneChanges=%d shown=%d listening=%d maxStick=%.3f cursorDelta=%.1f finalScene=%s fragment=%s listeningNow=%s cursorExists=%s",
+                "Pointer trace: samples=%d sceneChanges=%d shown=%d listening=%d maxStick=%.3f cursorDelta=%.1f movementEvents=%d finalScene=%s fragment=%s listeningNow=%s cursorExists=%s",
                 samples, sceneChanges, shownSamples, listeningSamples, maxStick,
-                delta, tostring(lastScene), tostring(lastFragmentShowing),
+                delta, movementEvents, tostring(lastScene), tostring(lastFragmentShowing),
                 tostring(lastListening), tostring(lastCursorExists)))
+            ADDON:Print("ownersWhileListening=" .. tostring(ownerSnapshot or "none"))
 
             if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT.inputObjects then
                 for index = #DIRECTIONAL_INPUT.inputObjects, 1, -1 do

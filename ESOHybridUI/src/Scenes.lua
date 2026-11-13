@@ -53,9 +53,10 @@ end
 
 local function AttachPointer(scene, name)
     local info = GetInfo(name)
-    if info.menu and MOUSE_POINTER_FRAGMENT
-        and not scene:HasFragment(MOUSE_POINTER_FRAGMENT) then
-        scene:AddFragment(MOUSE_POINTER_FRAGMENT)
+    local pointerFragment = ADDON.PointerFragment
+    if info.menu and pointerFragment
+        and not scene:HasFragment(pointerFragment) then
+        scene:AddFragment(pointerFragment)
         ADDON:Record("POINTER_ATTACH", name, "state=", scene:GetState())
     end
 end
@@ -88,8 +89,9 @@ function ADDON:ResetSceneState()
 end
 
 function ADDON:RefreshPointerScenes()
-    if MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT.Refresh then
-        MOUSE_POINTER_FRAGMENT:Refresh()
+    local pointerFragment = ADDON.PointerFragment
+    if pointerFragment and pointerFragment.Refresh then
+        pointerFragment:Refresh()
     end
 end
 

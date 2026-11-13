@@ -16,8 +16,9 @@ local initialX, initialY
 local lastMoveTime = 0
 local cursorSpeed = 3
 local pointerTopLevel
+local pointerListening = false
 local pointerUpdateCount = 0
-local lastAvailableBefore, lastAvailableAfterGetXY, lastAvailableAfterConsume
+local lastAvailableBefore, lastAvailableAfterGetXY
 local lastInputX, lastInputY = 0, 0
 local lastInputScene
 
@@ -37,19 +38,14 @@ function pointerOwner:UpdateDirectionalInput()
     if not lastAvailableBefore then
         lastInputX, lastInputY = 0, 0
         lastAvailableAfterGetXY = nil
-        lastAvailableAfterConsume = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
         return
     end
 
     local dx, dy = DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)
     lastInputX, lastInputY = dx, dy
+    -- ESO's GetXY consumes the queried device itself (even when the stick is
+    -- neutral), preserving DIRECTIONAL_INPUT's owner priority for this frame.
     lastAvailableAfterGetXY = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
-
-    -- Claim the left stick while this pointer owner is active. This is the
-    -- critical difference from LibMousePointer's current implementation:
-    -- reading GetXY alone does not claim the input for this owner.
-    DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK)
-    lastAvailableAfterConsume = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
 
     dx, dy = zo_clampLength2D(dx, dy, 1.5)
     if dx == 0 and dy == 0 then
@@ -89,24 +85,40 @@ local function SetCursorVisible(visible)
     end
 end
 
-local function OnPointerFragmentState(_, newState)
-    if newState == SCENE_FRAGMENT_SHOWN then
-        if not cursorId then
-            cursorX, cursorY = initialX, initialY
-            cursorControl:SetAnchor(CENTER, GuiRoot, TOPLEFT, cursorX, cursorY)
-        end
-        SetCursorVisible(true)
+local function StartPointer()
+    if not cursorId then
+        cursorX, cursorY = initialX, initialY
+        cursorControl:SetAnchor(CENTER, GuiRoot, TOPLEFT, cursorX, cursorY)
+    end
+    SetCursorVisible(true)
+    if not pointerListening then
         DIRECTIONAL_INPUT:Activate(pointerOwner, pointerTopLevel)
-    elseif newState == SCENE_FRAGMENT_HIDING then
+        pointerListening = true
+    end
+end
+
+local function StopPointer()
+    if pointerListening then
         DIRECTIONAL_INPUT:Deactivate(pointerOwner)
-        SetCursorVisible(false)
+        pointerListening = false
+    end
+    SetCursorVisible(false)
+end
+
+local function OnPointerFragmentState(_, newState)
+    -- Take ownership as soon as the fragment starts appearing, not only after
+    -- its transition completes. This closes the first-frame input leak window.
+    if newState == SCENE_FRAGMENT_SHOWING or newState == SCENE_FRAGMENT_SHOWN then
+        StartPointer()
+    elseif newState == SCENE_FRAGMENT_HIDING then
+        StopPointer()
     end
 end
 
 function ADDON:StopPointer()
-    if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT.IsListening
-        and DIRECTIONAL_INPUT:IsListening(pointerOwner) then
+    if DIRECTIONAL_INPUT and pointerListening then
         DIRECTIONAL_INPUT:Deactivate(pointerOwner)
+        pointerListening = false
     end
     if cursorId then
         SetCursorVisible(false)
@@ -153,7 +165,7 @@ local function CaptureOwners()
             local control = DIRECTIONAL_INPUT.inputControls[index]
             local name = control and control.GetName and control:GetName() or tostring(control)
             entries[#entries + 1] = string.format("%d:%s/%s", index,
-                tostring(owner == pointerOwner and "HUI_Pointer" or owner), tostring(name))
+                tostring(owner == pointerOwner and "HUI_Pointer" or owner == SCENE_MANAGER and "SceneManager" or owner == CLIENT_INPUT and "ClientInput" or owner), tostring(name))
         end
     end
     return table.concat(entries, ",")
@@ -227,10 +239,10 @@ function ADDON:PrintPointerProbe()
                 tostring(cursorId ~= nil)))
             ADDON:Print("ownersWhileListening=" .. tostring(ownerSnapshot or "none"))
             ADDON:Print(string.format(
-                "pointerCallback: calls=%d lastScene=%s input=%.3f,%.3f availableBefore=%s afterGetXY=%s afterConsume=%s",
+                "pointerCallback: calls=%d lastScene=%s input=%.3f,%.3f availableBefore=%s availableAfterGetXY=%s",
                 pointerUpdateCount - startPointerUpdates, tostring(lastInputScene),
                 lastInputX, lastInputY, tostring(lastAvailableBefore),
-                tostring(lastAvailableAfterGetXY), tostring(lastAvailableAfterConsume)))
+                tostring(lastAvailableAfterGetXY)))
         end
     end)
 end

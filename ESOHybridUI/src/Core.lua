@@ -3,7 +3,7 @@ ESOHybridUI = ESOHybridUI or {}
 local ADDON = ESOHybridUI
 
 ADDON.name = "ESOHybridUI"
-ADDON.version = "2.2.0"
+ADDON.version = "2.2.1"
 ADDON.defaults = {
     mode = "hybrid",
     controllerPrompts = true,

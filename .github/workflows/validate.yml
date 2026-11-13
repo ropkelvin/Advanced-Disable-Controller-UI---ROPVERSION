@@ -16,10 +16,52 @@ jobs:
       - name: Check Lua syntax in the canonical addon
         run: |
           find ESOHybridUI/src -name '*.lua' -print0 | xargs -0 -r -n1 luac5.1 -p
-      - name: Check addon metadata
+      - name: Check addon metadata and single canonical tree
         run: |
-          grep -q '^## APIVersion: 101051$' ESOHybridUI/ESOHybridUI.txt
-          grep -q '^## Version: 2.0.3$' ESOHybridUI/ESOHybridUI.txt
+          grep -q '^## APIVersion: 101051      - name: Check manifest paths
+        run: |
+          awk '!/^#/ && NF {print}' ESOHybridUI/ESOHybridUI.txt | while read file; do
+            test -f "ESOHybridUI/$file" || { echo "Missing manifest file: $file"; exit 1; }
+          done
+      - name: Check required safety invariants
+        run: |
+          ! grep -R -E 'GetHandler\("(OnClicked|OnMouseDown|OnMouseUp)"\)' ESOHybridUI/src
+          ! grep -R -E 'lib\.InvokeClick[[:space:]]*=' ESOHybridUI/src
+      - name: Build the canonical addon ZIP
+        run: |
+          mkdir -p package/ESOHybridUI
+          cp ESOHybridUI/ESOHybridUI.txt package/ESOHybridUI/
+          cp -R ESOHybridUI/src package/ESOHybridUI/
+          cd package
+          zip -r ../HUI.zip ESOHybridUI
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HUI-addon
+          path: HUI.zip
+ ESOHybridUI/ESOHybridUI.txt
+          grep -q '^## Version: 2.0.3      - name: Check manifest paths
+        run: |
+          awk '!/^#/ && NF {print}' ESOHybridUI/ESOHybridUI.txt | while read file; do
+            test -f "ESOHybridUI/$file" || { echo "Missing manifest file: $file"; exit 1; }
+          done
+      - name: Check required safety invariants
+        run: |
+          ! grep -R -E 'GetHandler\("(OnClicked|OnMouseDown|OnMouseUp)"\)' ESOHybridUI/src
+          ! grep -R -E 'lib\.InvokeClick[[:space:]]*=' ESOHybridUI/src
+      - name: Build the canonical addon ZIP
+        run: |
+          mkdir -p package/ESOHybridUI
+          cp ESOHybridUI/ESOHybridUI.txt package/ESOHybridUI/
+          cp -R ESOHybridUI/src package/ESOHybridUI/
+          cd package
+          zip -r ../HUI.zip ESOHybridUI
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HUI-addon
+          path: HUI.zip
+ ESOHybridUI/ESOHybridUI.txt
+          test ! -e ESOHybridUI.txt
+          test ! -e ESOHybridUI.lua
       - name: Check manifest paths
         run: |
           awk '!/^#/ && NF {print}' ESOHybridUI/ESOHybridUI.txt | while read file; do

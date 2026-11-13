@@ -1,4 +1,4 @@
-# HUI 2.0.3 — controller and action audit
+# HUI 2.0.4 — controller and action audit
 
 **Status:** source-reviewed development build. Not release-ready and not verified end-to-end in the live ESO client. Static checks cannot establish controller behaviour.
 
@@ -17,7 +17,7 @@
 |---|---|---|
 | Mode selection | `Mode.lua` changes `IsInGamepadPreferredMode` only while Hybrid is active and Gamepad Mode is explicitly On. It yields if another addon owns the global wrapper. | The preferred-mode query affects more than scene selection; some HUD/platform-style controls may still be mixed. |
 | Lockpicking | Lockpick events and a pre-hook on `LOCK_PICK:SetHidden` temporarily restore native presentation. | Needs live testing on start, success, failure and cancellation. |
-| Scene tracking | `Scenes.lua` polls the current scene every 50 ms and attaches the pointer fragment to keyboard-style scenes after they reach SHOWN. Known special/restricted scenes are excluded. | There is a short transition window. New ESO feature scenes must be added to the exclusion list when appropriate. |
+| Scene tracking | `Scenes.lua` polls the current scene every 50 ms and attaches the pointer fragment to menu scenes after they reach SHOWN, including scenes whose names contain `gamepad`. Known special/restricted scenes are excluded. | There is a short transition window. New ESO feature scenes must be added to the exclusion list when appropriate. |
 | Cursor | LibMousePointer owns cursor creation, movement, hover, hit testing and its primary click descriptor. HUI does not build a second cursor. | The library's primary click is conditional on `UI_SHORTCUT_PRIMARY` being free. Its click helper is not guaranteed to work for protected actions. |
 | Stick ownership | `Pointer.lua` pre-hooks the live `SCENE_MANAGER.UpdateDirectionalInput` instance. While LibMousePointer is actively registered, HUI skips ESO's consume-both-sticks callback and consumes the right stick. LibMousePointer consumes the left stick through ESO's directional-input API. | Requires physical-controller testing for every screen and transition; verify no left-stick movement/camera leak. |
 | Primary click | HUI leaves LibMousePointer's native `UI_SHORTCUT_PRIMARY` descriptor intact. | A screen that claims primary before the pointer fragment appears prevents the library click descriptor from being added. Later dynamic keybind claims also need testing. |
@@ -58,7 +58,7 @@ References:
 | Crown Store/market, Scrying, Tribute, Tamriel Tomes and reward previews | Exclude from HUI pointer/presentation routing where detected. | Exclusion tokens require checking against new scene names. |
 | Loading and character selection | HUI's mode wrapper is pass-through outside the active world. | Needs transition testing. |
 
-## Known unresolved architecture gaps
+## Recent pointer-scene fix (2.0.4)\n\nThe previous scene classifier used `not isGamepad` as a blanket requirement for pointer attachment. This meant a menu scene whose name contained `gamepad` could be displayed without ever receiving `MOUSE_POINTER_FRAGMENT`; LibMousePointer therefore never created its cursor or registered itself with `DIRECTIONAL_INPUT`. Merchant/store scenes without that suffix could work, while other windows could not. HUI now excludes only explicit non-menu/restricted scenes and allows pointer attachment to gamepad-suffixed menu scenes. `/hui pointer` now reports the active scene, scene state, fragment attachment/visibility, cursor existence, library listening state, raw left-stick values and active directional-input owners to diagnose any remaining per-screen conflicts.\n\n## Known unresolved architecture gaps
 
 1. **Global preferred-mode query:** it is used by scene selection, keybind selection and platform-style controls. HUI now avoids overwriting another addon's wrapper, but a global false result can still select a keyboard path that lacks a complete controller adapter.
 2. **Prompt/action mismatch:** selected glyph helpers are wrapped, but the actual keybind-strip descriptor and callback must be audited per screen.

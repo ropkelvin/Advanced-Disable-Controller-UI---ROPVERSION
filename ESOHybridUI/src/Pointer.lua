@@ -79,6 +79,14 @@ local function RestoreLibraryDriver()
     end
 end
 
+function ADDON:StopPointer()
+    if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(inputObject) then
+        DIRECTIONAL_INPUT:Deactivate(inputObject)
+    end
+    ReleaseSticks()
+    RestoreLibraryDriver()
+end
+
 local function OnFragmentState(_, newState)
     if newState == SCENE_FRAGMENT_SHOWN then
         moveStart = GetGameTimeMilliseconds()

@@ -65,11 +65,12 @@ local function OnPlayerDeactivated()
     rt.inWorld = false
     rt.lockPick = false
     rt.hudRefreshPending = true
-    if DIRECTIONAL_INPUT and rt.pointerInputObject and DIRECTIONAL_INPUT:IsListening(rt.pointerInputObject) then
-        DIRECTIONAL_INPUT:Deactivate(rt.pointerInputObject)
+    if ADDON.StopPointer then
+        ADDON:StopPointer()
+    else
+        SetGamepadLeftStickConsumedByUI(false)
+        SetGamepadRightStickConsumedByUI(false)
     end
-    SetGamepadLeftStickConsumedByUI(false)
-    SetGamepadRightStickConsumedByUI(false)
     ADDON:ResetSceneState()
     ADDON:Recompute()
 end

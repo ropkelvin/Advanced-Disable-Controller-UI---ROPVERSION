@@ -43,8 +43,8 @@ local function OnPlayerActivated()
     rt.inWorld = true
 
     local installers = {
-        "InitializeLockpick", "InitializeScenes", "InitializeKeybinds",
-        "InitializePointer", "InitializeNavigation", "InitializePrompts",
+        "InitializeLockpick", "InitializePointer", "InitializeScenes",
+        "InitializeKeybinds", "InitializeNavigation", "InitializePrompts",
         "InitializeSettings",
     }
     for _, name in ipairs(installers) do

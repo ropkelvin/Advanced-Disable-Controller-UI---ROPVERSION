@@ -1,25 +1,28 @@
--- Scene tracking by polling the current scene name. No hooks on
--- SCENE_MANAGER on purpose: a hook wrapped around Show/OnSceneStateChange sits
--- above the whole scene transition, so ESO treats every screen that opens
--- inside it (e.g. Tamriel Tomes calling a private store function) as
--- insecure code and throws. Polling is a leaf call and taints nothing.
+-- Scene tracking. Polling avoids wrapping the scene transition stack (which
+-- can taint calls into protected ESO UI code). Unknown scene names are cached
+-- and evaluated conservatively; restricted/native-special scenes never get
+-- HUI's pointer fragment.
 local ADDON = ESOHybridUI
 local rt = ADDON.rt
 
 local POLL_NAME = "ESOHybridUI_Scenes"
 local POLL_MS = 50
-local RESYNC_EVERY = 4 -- polls
+local RESYNC_EVERY = 4
 
 local NON_MENU = {
-    hud = true, hudui = true, loot_gamepad = true, loading = true,
-    characterselect = true, lockpickkeyboard = true, lockpickgamepad = true,
+    hud = true, hudui = true, loot = true, loot_keyboard = true,
+    loot_gamepad = true, loading = true, characterselect = true,
+    lockpickkeyboard = true, lockpickgamepad = true,
 }
 
--- Matched as substrings so keyboard/gamepad variants are both covered.
--- "scrying" is deliberately distinct from "scribing".
+-- These screens deliberately retain ESO's native flow. Keep the list broad:
+-- new/special monetization, reward and feature scenes should fail closed.
 local RESTRICTED_TOKENS = {
     "scrying", "tribute", "market", "crown", "gildbarstore",
-    "endeavorsealstore", "esoplusoffers", "giftinventory", "dailyloginrewards",
+    "endeavorsealstore", "esoplusoffers", "giftinventory",
+    "dailyloginrewards", "dailies", "tamrieltomes", "rewardpreview",
+    "promotional", "chapterupgrade", "dyestampconfirmation",
+    "veterancy", "store", "tradinghouse", "guildheraldry",
 }
 
 local nameInfo = {}
@@ -37,11 +40,11 @@ local function GetInfo(name)
         end
     end
     local lockpick = string.find(lowered, "lockpick", 1, true) ~= nil
+    local isGamepad = string.find(lowered, "gamepad", 1, true) ~= nil
     info = {
         restricted = restricted,
         lockpick = lockpick,
-        menu = not restricted and not lockpick and not NON_MENU[lowered]
-            and not string.find(lowered, "gamepad", 1, true),
+        menu = not restricted and not lockpick and not NON_MENU[lowered] and not isGamepad,
     }
     nameInfo[name] = info
     return info
@@ -57,10 +60,6 @@ function ADDON:ResetSceneState()
     rt.menuScene = false
 end
 
--- The pointer fragment is attached once per menu scene, only after that scene
--- is fully SHOWN (never mid-transition, where adding a fragment could finish
--- the transition inside our own call). After that, the fragment's conditional
--- decides whether it shows; Refresh() re-evaluates it.
 function ADDON:RefreshPointerScenes()
     if MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT.Refresh then
         MOUSE_POINTER_FRAGMENT:Refresh()

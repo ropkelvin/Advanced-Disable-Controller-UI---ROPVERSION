@@ -1,112 +1,89 @@
-# HUI Hybrid UI — action and input-routing audit
+# HUI 2.0.2 — controller and action audit
 
-**Status:** source audit in progress; not release-ready. This document separates what the current code/source establishes from what still requires live controller testing. A scene receiving a pointer fragment is not proof that every action in that scene works.
+**Status:** source-reviewed development build. Not release-ready and not verified end-to-end in the live ESO client. Static checks cannot establish controller behaviour.
 
-## Design contract
+## Target behaviour
 
-- ESO's Controls setting must remain **Gamepad Mode: On** (not Auto).
-- HUI may change UI presentation, but it must not synthesize gameplay input, call protected/private actions, automate interactions, or alter movement/combat.
-- Native gamepad bindings remain responsible for gameplay. HUI's pointer is a UI-navigation aid only.
-- Pure Gamepad mode must restore ESO's native presentation and leave native input routing alone.
-- Loading/pregame, Crown Store/market, Scrying and Tribute must remain outside HUI's modifications.
+- ESO Controls remains **Gamepad Mode: On**, not Auto.
+- Menus use keyboard-style scenes where ESO exposes them.
+- The controller operates the UI without player movement or camera movement leaking through.
+- Native ESO keybind descriptors and callbacks remain authoritative.
+- HUI never invokes protected/private ESO actions directly or simulates arbitrary mouse events.
+- Pure Gamepad mode, loading/pregame and known restricted feature screens retain native ESO behaviour.
 
-## Findings from the uploaded diagnostic capture
+## Current implementation
 
-The capture was complete (90 seconds, 151 samples).
+| Area | Current implementation | Remaining risk |
+|---|---|---|
+| Mode selection | `Mode.lua` changes `IsInGamepadPreferredMode` only while Hybrid is active and Gamepad Mode is explicitly On. It yields if another addon owns the global wrapper. | The preferred-mode query affects more than scene selection; some HUD/platform-style controls may still be mixed. |
+| Lockpicking | Lockpick events and a pre-hook on `LOCK_PICK:SetHidden` temporarily restore native presentation. | Needs live testing on start, success, failure and cancellation. |
+| Scene tracking | `Scenes.lua` polls the current scene every 50 ms and attaches the pointer fragment to keyboard-style scenes after they reach SHOWN. Known special/restricted scenes are excluded. | There is a short transition window. New ESO feature scenes must be added to the exclusion list when appropriate. |
+| Cursor | LibMousePointer owns cursor creation, movement, hover, hit testing and its primary click descriptor. HUI does not build a second cursor. | The library's primary click is conditional on `UI_SHORTCUT_PRIMARY` being free. Its click helper is not guaranteed to work for protected actions. |
+| Stick ownership | `Pointer.lua` pre-hooks the live `SCENE_MANAGER.UpdateDirectionalInput` instance. While LibMousePointer is actively registered, HUI skips ESO's consume-both-sticks callback and consumes the right stick. LibMousePointer consumes the left stick through ESO's directional-input API. | Requires physical-controller testing for every screen and transition; verify no left-stick movement/camera leak. |
+| Primary click | HUI leaves LibMousePointer's native `UI_SHORTCUT_PRIMARY` descriptor intact. | A screen that claims primary before the pointer fragment appears prevents the library click descriptor from being added. Later dynamic keybind claims also need testing. |
+| Context click | Right-stick click calls LibMousePointer's documented `InvokeClick(MOUSE_BUTTON_INDEX_RIGHT)` API through a HUI keybind-strip descriptor. | Context actions are screen-dependent; native descriptors take priority. |
+| Main categories | LB/RB use `ZO_MenuBar_SelectDescriptor` to select adjacent enabled category descriptors in `MAIN_MENU_KEYBOARD.categoryBar`. | Hidden/disabled categories, screen-owned shoulder actions and overlays require live tests. |
+| Screen tabs | LT/RT cycle the visible `ZO_MenuBar` candidate found in the visible UI tree. | This is heuristic; some screens use other tab systems and an overlay may contain a competing bar. |
+| Prompts | `Prompts.lua` wraps selected ESO keybinding helper functions and temporarily restores native preferred-mode lookup while they resolve glyphs. | Not every prompt helper is covered. Correct glyphs do not prove the selected action descriptor invokes the correct callback. |
+| Diagnostics | `/huidebug` records scene, pointer, mode and keybind state to account-wide SavedVariables. | Diagnostics are observational; they do not validate an action by themselves. |
+| Packaging | CI validates the canonical `ESOHybridUI/` tree, Lua 5.1 syntax, manifest paths, safety invariants and ZIP layout. | CI does not run the ESO client or verify controller actions. |
 
-- Hybrid active, explicit Gamepad Mode On, native preferred-mode query true, HUI effective query false.
-- No preferred-mode hook conflict or restricted-scene state was recorded.
-- LibMousePointer initialized and its cursor moved in Scribing, Retrait, Interact and Smithing samples.
-- Scribing and Notifications produced POINTER_PRIMARY_CONFLICT; HUI removed the library's automatic UI_SHORTCUT_PRIMARY click descriptor to avoid colliding with the screen's native primary action. This preserves the native keybind but leaves pointer-click support absent on those screens.
-- World Map had two GuiRoot directional-input owners in addition to LibMousePointer, and its cursor coordinates remained at the bottom-left edge for the captured samples. This is a strong lead for an input-priority conflict, not proof of its exact cause.
-- Universal Deconstruction and Store only had one sample each during scene transitions. The pointer fragment was attached, but the cursor was not visible/registered in those samples. The capture does not distinguish a fragment that had not reached SHOWN from one already entering HIDING, so those samples are insufficient to call either screen broken.
-- The log's original directionalHookInstalled=false exposed a definite code bug: HUI tried to hook ZO_IngameSceneManager, but ESO declares that class as a local, not a global. HUI now hooks the live SCENE_MANAGER instance's UpdateDirectionalInput method.
-- The pointer refresh gate also now checks explicit Gamepad Mode: On, rather than the native preferred-mode query, so changing to Auto cannot leave HUI-owned pointer fragments attached in other scenes.
-- Restricted scene detection now matches scrying and tribute tokens with scene suffixes, while keeping scribing distinct.
+## Directional-input research
 
-## Action-family compatibility matrix
+ESO's API notes specify that gamepad sticks should be queried through `DIRECTIONAL_INPUT` and that a visible UI should register an input owner with `DIRECTIONAL_INPUT:Activate(owner, control)`. ESO's current in-game scene manager normally consumes both sticks in UI mode. LibMousePointer is itself a directional-input owner and consumes the left stick through `DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)`. Since directional-input owners are ordered by control visual priority, ESO's stock consume-both-sticks callback can run first and starve the pointer. HUI therefore skips only that stock callback while the library is actively listening, and consumes the right stick. If the pointer is not active, the stock handler remains untouched.
 
-| ESO action family | Native source path | HUI responsibility | Current assessment |
-|---|---|---|---|
-| Movement: move, turn, jump, roll dodge, sprint, crouch, mount | Native movement bindings | Do not intercept or synthesize | Must remain native; no HUI gameplay adapter |
-| Combat: light/heavy attack, block, interrupt, skills, ultimate, weapon swap, synergy | Native combat/action-bar bindings | Do not intercept or synthesize | Must remain native; HUD glyph/layout audit still open |
-| Companion commands and companion hotbar | Native companion/action bindings | Do not synthesize commands | Native path retained; not live-verified |
-| Siege controls | Siege binding layer | Do not intercept | Native path retained; not live-verified |
-| Targeting and target-marker wheel | Targeting bindings and Interactive Wheel Manager | Do not invoke wheel actions programmatically | Native path retained; not live-verified |
-| Camera zoom/free-look/first-person | Camera bindings | Do not intercept | Native path retained |
-| Game-camera interaction / fishing wheel | GAME_CAMERA_INTERACT, Interactive Wheel Manager | Preserve native Down/Up lifecycle | Native path retained; wheel presentation needs testing |
-| Player-to-player interaction (trade/duel/emote wheel entry) | PLAYER_TO_PLAYER_INTERACT, PLAYER_TO_PLAYER | Preserve native Down/Up lifecycle | Native path retained; wheel presentation needs testing |
-| Quickslot / utility wheel | ACTION_BUTTON_9, UI_SHORTCUT_QUICK_SLOTS, Interactive Wheel Manager | Preserve native binding and hold/release semantics | No HUI-specific wheel adapter yet |
-| Main menu toggles: inventory, character, skills, champion, journal, collections, map, group, contacts, guilds, Alliance War, mail, notifications, Activity Finder, help | GamepadUIMode allowlist and menu bindings | Keep keyboard scenes navigable without replacing menu actions | Native toggles exist; each destination screen still needs testing |
-| Main-menu category switching | `MAIN_MENU_KEYBOARD.categoryBar`, `ZO_MenuBar_SelectDescriptor`, native category callbacks | Shoulder-button previous/next category controls, only when the screen does not already own the shortcut | Implemented on HUI; live validation still required for hidden/disabled categories and screen-specific shoulder conflicts |
-| UI shortcuts: primary/secondary/tertiary/quaternary/quinary/negative/help/exit and directional shortcuts | UI shortcut binding layer + keybind strip | Ensure selected descriptor and actual callback agree with gamepad input | Known primary-key collision; full dispatch audit open |
-| Inventory actions: use, equip, destroy, split, move, bank, trade | Screen keybind descriptors and protected ESO functions | Never directly call protected functions from pointer callbacks | High-risk; pointer click must not be treated as a secure native click |
-| Dialogs, notifications, confirmations | ZO_Dialogs and screen keybind descriptors | Preserve native callbacks and safe focus/selection | Notifications primary conflict observed; no generic click adapter |
-| Map, map-floor switching, quest pins, map panning | Keyboard map scene + directional input + map-specific handlers | Route sticks without leaking into player movement | World Map cursor stationary in capture; input-owner investigation open |
-| Crafting, research, deconstruction, Scribing, stores, banks, guild stores | Scene-specific controllers and controls | Pointer plus native keyboard-scene navigation | Partial samples only; not verified end-to-end |
-| Loot, resurrection/death, player interaction prompts | Reticle/HUD/prompt systems and screen-specific keybinds | Correct glyphs and native action dispatch | Dedicated adapters and live tests remain open |
-| Lockpicking | Native lockpick scene selection | Restore native gamepad preference before ESO chooses lockpick scene | Explicit exception exists; needs live validation |
-| Housing editor, radial menus, furniture placement | Housing-specific mode and interaction systems | Preserve native mode transitions; no automated placement | Not audited end-to-end |
-| Chat/text entry | Native chat bindings | Do not send messages; only allow user typing and manual send | Native path retained |
-| Crown Store/market, Scrying, Tribute | ESOUI restrictions | No HUI mode/prompt/pointer changes | Restricted scene guard exists; variants are now matched by token |
-| Loading, character select, pregame | ESOUI restrictions and player activation lifecycle | No HUI UI changes | In-world active-state guard exists; transition test required |
+References:
+- [ESO API patch notes: gamepad directional input](https://forums.elderscrollsonline.com/en/discussion/222240/orsinium-api-patch-notes-change-log-pts)
+- [ESO source repository](https://github.com/esoui/esoui)
+- [ESO scene manager source](https://github.com/esoui/esoui/blob/live/esoui/ingame/scenes/ingamescenemanager.lua)
+- [LibMousePointer documentation](https://www.esoui.com/downloads/info4518-libmousepointer.html)
 
-## Important architectural risks
+## Action-family support matrix
 
-### 1. Presentation preference is a global query
+| Family | HUI policy | Verification status |
+|---|---|---|
+| Character movement, camera, sprint, jump, dodge, crouch, mount | Never intercept or synthesize gameplay input. | Must be tested for stick leakage with every pointer scene. |
+| Combat, skills, ultimate, block, interrupt, synergy, weapon swap | Leave native gamepad bindings alone. | Not live-verified. |
+| Companion commands and siege controls | Leave native gamepad bindings alone. | Not live-verified. |
+| Targeting, target marker, quickslot and player-interaction wheels | Preserve native bindings and hold/release semantics. | No HUI-specific wheel adapter yet; not verified. |
+| Main menu categories | Native menu-bar selection through HUI shoulder descriptors. | Implemented in source; live verification required. |
+| Individual tabs | Native menu-bar selection through HUI trigger descriptors. | Only visible `ZO_MenuBar` implementations are candidates; heuristic. |
+| Inventory use/equip/destroy/split/move, bank and trade | Do not invoke protected functions from HUI. Use native screen keybinds. | High risk; test each action. |
+| Dialogs, notifications and confirmations | Preserve native keybind callbacks; pointer click only where safe. | Not verified across dialogs and overlays. |
+| Map panning, pins and level switching | Use LibMousePointer and native map handlers; no fake gameplay input. | Not verified; map has historically shown directional-input contention. |
+| Crafting, research, deconstruction, scribing, guild store | Native screen callbacks and keybinds; pointer as optional UI aid. | Not verified end-to-end. |
+| Loot, resurrection, death and player prompts | Native screen actions; prompt wrappers are not a complete adapter. | Not verified. |
+| Housing and furniture placement | Preserve native housing controls; no automated placement. | Not verified. |
+| Chat/text entry | Preserve native typing and send controls. | Not verified. |
+| Crown Store/market, Scrying, Tribute, Tamriel Tomes and reward previews | Exclude from HUI pointer/presentation routing where detected. | Exclusion tokens require checking against new scene names. |
+| Loading and character selection | HUI's mode wrapper is pass-through outside the active world. | Needs transition testing. |
 
-HUI wraps IsInGamepadPreferredMode() while active in Hybrid. That query is consulted by more than menu scene selection: platform-style controls, keybind-strip presentation, HUD elements and some feature-specific scene selection can also depend on it. A global false result can therefore create mixed layouts or force a keyboard path for a scene that only has a gamepad implementation. This needs a scene-family audit; do not solve it by blindly firing ESO's internal mode-changed event.
+## Known unresolved architecture gaps
 
-### 2. Prompt selection is not proof of action dispatch
+1. **Global preferred-mode query:** it is used by scene selection, keybind selection and platform-style controls. HUI now avoids overwriting another addon's wrapper, but a global false result can still select a keyboard path that lacks a complete controller adapter.
+2. **Prompt/action mismatch:** selected glyph helpers are wrapped, but the actual keybind-strip descriptor and callback must be audited per screen.
+3. **Primary click conflicts:** LibMousePointer adds its primary-click descriptor only when the shortcut is free. HUI does not currently implement a universal descriptor conflict manager for every dynamic screen state.
+4. **Non-menu tab systems:** some screens do not use `ZO_MenuBar`; LT/RT cannot switch those tabs yet.
+5. **D-pad focus navigation:** no general keyboard-focus graph or generic D-pad adapter exists. Native screen-specific focus systems must be audited rather than guessed.
+6. **Scrolling and drag/drop:** right-stick scrolling and controller drag/drop are not implemented.
+7. **Wheels and specialized UI:** quickslot, player-interaction, target-marker and housing wheels need dedicated source-reviewed integration if native input does not already operate them.
+8. **Platform-style refresh:** HUD anchor propagation is not a universal refresh for all `ZO_PlatformStyle` controls. Compass, action bar, ultimate, boss bar, reticle, death UI and other prompts require targeted review.
+9. **Restricted-scene completeness:** ESO adds scenes over time; the exclusion list must be checked against the current source before release.
 
-Prompts.lua wraps ZO_Keybindings_ShouldUseGamepadAction, ZO_Keybindings_GetPreferredKeyType and ZO_Keybindings_ShouldShowGamepadKeybind. Those wrappers influence prompt/key type selection. They do not prove that every keyboard scene's selected keybind descriptor has a working callback for the gamepad UI shortcut action. Each screen's actual KEYBIND_STRIP descriptor and callback must be audited.
+## Required live verification
 
-### 3. Pointer click is not equivalent to trusted hardware input
+For every screen/action family, test with a physical controller:
 
-LibMousePointer's InvokeClick obtains a control and directly calls its OnClicked, OnMouseDown or OnMouseUp handler. Those callbacks may eventually invoke protected ESO functions. An addon-originated callback can therefore fail with the insecure/protected-function error previously observed for inventory destruction. HUI must not claim universal click compatibility or attempt to bypass ESO's secure-action restrictions. Use native gamepad keybind callbacks where available; treat unsupported protected clicks as a hard limitation, not something to work around with fake input.
+1. Open and close the scene repeatedly, including overlays and confirmation dialogs.
+2. Confirm the intended keyboard-style scene appears while Gamepad Mode remains On.
+3. Move the left stick in all directions; the cursor moves and the player/camera remain still.
+4. Confirm the right stick does not rotate the camera or move the player while the pointer is active.
+5. Test D-pad focus, A/primary, B/back, X/Y, shoulders and triggers. Confirm each action fires exactly once.
+6. Confirm the prompt glyph matches the physical controller action.
+7. Test safe pointer clicks separately from protected actions. Do not try to bypass a protected-action rejection.
+8. Close the menu and confirm normal movement and camera control return immediately.
+9. Switch to Pure Gamepad and confirm native presentation/input returns.
+10. Confirm restricted screens and loading/pregame remain untouched.
+11. Check for Lua errors, duplicate descriptors, stuck directional owners, stale fragments and stuck consumed sticks.
 
-### 4. Directional-input ownership is ordered and exclusive
-
-ESO's gamepad API requires controls to register through DIRECTIONAL_INPUT so multiple UI systems do not consume the same stick. LibMousePointer consumes the left stick through GetXY(ZO_DI_LEFT_STICK). ESO's in-game scene manager consumes both sticks in its default UI-mode handler. HUI hooks the SCENE_MANAGER instance. The original availability check was order-dependent: if the scene manager's directional-input callback ran before LibMousePointer, the left stick was still available and ESO consumed both sticks before the pointer got its turn. HUI now checks that LibMousePointer is registered, skips only the stock consume-both-sticks callback, and consumes the right stick itself. LibMousePointer's own GetXY call claims the left stick, including zero-magnitude frames; if the pointer is not registered, ESO's original handler remains in control. It must never allow a stick to leak into player movement.
-
-### 5. Pointer fragment attachment does not prove fragment activation
-
-The diagnostic capture now records the current scene state, whether the scene is showing, whether the pointer fragment is showing, the actual scene-manager directional method, and more detailed directional-input owner identities. These fields are needed to distinguish an attached-but-not-shown fragment from an input owner that is active but losing priority.
-
-### 6. Platform-style refresh is incomplete
-
-HUI does not yet have a verified, supported way to refresh every already-created ZO_PlatformStyle control after its preferred-mode query changes. HUD_MANAGER:PropagateSettings() is not a universal platform-style refresh. Action-bar, ultimate, reticle, death, boss-bar, compass and prompt visuals require individual source review and live checks.
-
-### 7. Main-menu category navigation
-
-HUI now adds left/right shoulder keybind-strip descriptors while the keyboard main-menu category bar is showing and only when the active keybind strip does not already own those shortcuts. The callbacks select adjacent enabled category-bar descriptors through ESO's own `ZO_MenuBar_SelectDescriptor` path, so the keyboard menu's existing category callback performs the scene change. A later native shoulder descriptor removes the HUI descriptor instead of being replaced. This is a non-gameplay navigation adapter; it still requires live testing for category visibility, overlays, and keybind-strip state transitions.
-
-## ESOUI / ZOS safety boundary
-
-ESOUI's published addon guidance prohibits changing the UI at loading/pregame and in Crown Store/market, Scrying and Tribute; it also prohibits addons from moving/jumping/crouching/swimming/blocking, casting skills, pressing movement/combat keybinds, starting interactions automatically, or automating gameplay. HUI must remain a presentation/input-routing addon and must not cross those boundaries. When a controller action is a native gameplay action, ESO's own binding must handle it.
-
-## Verification required before calling an action supported
-
-For each scene/action, verify all of the following with a physical controller in the live client:
-
-1. Scene opens from the expected native menu action.
-2. Correct keyboard-style scene is selected (or native gamepad fallback if no keyboard scene exists).
-3. Left stick moves the pointer or navigates the control without moving the character.
-4. D-pad and right stick behave as expected and never leak to camera/player movement.
-5. Native UI shortcut invokes the correct callback exactly once.
-6. Pointer click works only for safe controls; protected actions remain on native secure paths.
-7. Back/exit, overlays, confirmation dialogs and scene-stack restoration work.
-8. Prompt glyphs match the actual controller action.
-9. No Lua error, stuck directional owner, orphaned fragment or stale keybind descriptor remains after closing/reopening.
-10. Pure Gamepad mode restores native behaviour; loading and restricted screens remain untouched.
-
-A screen is not verified merely because it appeared in the diagnostic capture. HUI should only be described as fully compatible after this checklist has been exercised across the screen families above.
-
-## Primary source references
-
-- ESO live keybinding definitions: https://github.com/esoui/esoui/blob/live/esoui/ingame/globals/bindings.xml
-- ESO live in-game scene manager: https://github.com/esoui/esoui/blob/live/esoui/ingame/scenes/ingamescenemanager.lua
-- ESO directional-input API: https://github.com/esoui/esoui/blob/live/esoui/libraries/zo_directionalinput/zo_directionalinput.lua
-- LibMousePointer by Votan: https://www.esoui.com/downloads/info4518-libmousepointer.html
-- ESOUI addon rules: https://www.esoui.com/forums/showthread.php?t=9865
-- ESO gamepad API notes on directional-input ownership: https://forums.elderscrollsonline.com/en/discussion/222240/orsinium-api-patch-notes-change-log-pts
+A feature is not “supported” merely because a scene opens or a glyph appears. The full action lifecycle must pass. HUI should not be called 95% functional until this test matrix is completed on the live client.

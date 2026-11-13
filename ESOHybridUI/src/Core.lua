@@ -3,7 +3,7 @@ ESOHybridUI = ESOHybridUI or {}
 local ADDON = ESOHybridUI
 
 ADDON.name = "ESOHybridUI"
-ADDON.version = "2.0.6"
+ADDON.version = "2.1.0"
 ADDON.defaults = {
     mode = "hybrid",
     pointerEnabled = true,
@@ -67,9 +67,6 @@ local function OnPlayerDeactivated()
     rt.hudRefreshPending = true
     if ADDON.StopPointer then
         ADDON:StopPointer()
-    else
-        SetGamepadLeftStickConsumedByUI(false)
-        SetGamepadRightStickConsumedByUI(false)
     end
     ADDON:ResetSceneState()
     ADDON:ApplyMode()
@@ -109,9 +106,9 @@ function ADDON:HandleSlash(arg)
     elseif arg == "pointer" then
         self:PrintPointerProbe()
     elseif arg == "help" then
-        self:Print("Left stick: move pointer | A: native LibMousePointer select when UI_SHORTCUT_PRIMARY is free.")
-        self:Print("R3: context click when available | LB/RB: categories | LT/RT: detected tabs.")
-        self:Print("Protected actions remain native; HUI does not simulate arbitrary mouse clicks.")
+        self:Print("Left stick: move pointer | A/B: use native screen keybinds and actions.")
+        self:Print("LB/RB: categories | LT/RT: detected tabs.")
+        self:Print("HUI does not synthesize mouse clicks or invoke arbitrary control handlers.")
         self:Print("/hui hybrid | gamepad | status | tabs | pointer | /huidebug")
     else
         self:Print(string.format(

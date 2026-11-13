@@ -1,11 +1,9 @@
 -- Pointer integration.
 --
--- LibMousePointer already owns the cursor, left-stick sampling, cursor hit
--- testing, hover and primary-click descriptor. HUI must not implement a
--- second cursor or replace library methods. Its own documented InvokeClick
--- API is used only for an optional right-click/context action.
+-- LibMousePointer owns cursor creation, left-stick sampling, cursor hit
+-- testing, hover and its primary-click descriptor. HUI does not add a second
+-- cursor or alter ESO's directional-input dispatch.
 local ADDON = ESOHybridUI
-local rt = ADDON.rt
 
 local rightClick = {
     alignment = KEYBIND_STRIP_ALIGN_LEFT,
@@ -27,33 +25,6 @@ local function OnFragmentState(_, newState)
     end
 end
 
-local function InstallDirectionalInputIntegration()
-    if rt.pointerDirectionalHooked or not SCENE_MANAGER
-        or not SCENE_MANAGER.UpdateDirectionalInput then
-        return
-    end
-
-    -- ESO's stock scene-manager owner consumes BOTH sticks while in UI mode.
-    -- LibMousePointer is also a DIRECTIONAL_INPUT owner and consumes the left
-    -- stick itself via DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK). If the stock
-    -- owner runs first, it starves the pointer for that frame. Only while the
-    -- library is actively listening, skip the stock consume-both-sticks call
-    -- and reserve the right stick here. When the pointer is absent, ESO's
-    -- original handler remains completely untouched.
-    ZO_PreHook(SCENE_MANAGER, "UpdateDirectionalInput", function()
-        if rt.inWorld and rt.keyboardPresentation and ADDON.saved.pointerEnabled
-            and MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing()
-            and DIRECTIONAL_INPUT and LibMousePointer
-            and DIRECTIONAL_INPUT:IsListening(LibMousePointer) then
-            DIRECTIONAL_INPUT:Consume(ZO_DI_RIGHT_STICK)
-            return true
-        end
-        return false
-    end)
-
-    rt.pointerDirectionalHooked = true
-end
-
 function ADDON:StopPointer()
     if self.SetKeybind then
         self:SetKeybind(rightClick, false)
@@ -61,7 +32,7 @@ function ADDON:StopPointer()
 end
 
 function ADDON:InitializePointer()
-    if rt.pointerInitialized then
+    if ADDON.rt.pointerInitialized then
         return
     end
     if not LibMousePointer or not MOUSE_POINTER_FRAGMENT
@@ -70,15 +41,17 @@ function ADDON:InitializePointer()
         return
     end
 
-    -- The library handles cursor lifetime, movement, hit testing and the
-    -- native primary-click keybind. HUI controls only when its fragment shows.
+    -- LibMousePointer registers a high-priority DIRECTIONAL_INPUT owner using
+    -- its cursor control. Its GetXY call consumes the left stick. ESO's native
+    -- scene-manager owner runs later and consumes any remaining sticks, which
+    -- is the fallback that prevents input leaking into character movement if
+    -- another visible UI control has higher priority. Do not bypass that owner.
     MOUSE_POINTER_FRAGMENT:SetConditional(function()
-        return rt.keyboardPresentation and ADDON.saved.pointerEnabled
+        return ADDON.rt.keyboardPresentation and ADDON.saved.pointerEnabled
     end)
     MOUSE_POINTER_FRAGMENT:RegisterCallback("StateChange", OnFragmentState)
 
-    InstallDirectionalInputIntegration()
-    rt.pointerInitialized = true
+    ADDON.rt.pointerInitialized = true
     if MOUSE_POINTER_FRAGMENT:IsShowing() then
         ADDON:SetKeybind(rightClick, true)
     end
@@ -100,14 +73,12 @@ function ADDON:PrintPointerProbe()
         local rawY = GetGamepadLeftStickY(GAMEPAD_INCLUDE_DEADZONE)
 
         self:Print(string.format("scene=%s state=%s menu=%s restricted=%s",
-            tostring(sceneName), tostring(sceneState), tostring(rt.menuScene), tostring(rt.restricted)))
+            tostring(sceneName), tostring(sceneState), tostring(ADDON.rt.menuScene), tostring(ADDON.rt.restricted)))
         self:Print(string.format("fragmentAttached=%s fragmentShowing=%s cursorExists=%s listening=%s",
             tostring(attached), tostring(fragmentShowing), tostring(cursorExists), tostring(listening)))
         self:Print(string.format("rawLeftStick=%.3f,%.3f cursor=%s,%s",
             rawX, rawY, tostring(x), tostring(y)))
 
-        -- Some ESO windows are shown as fragments/top-level UI while the
-        -- scene manager continues to report the HUD as its current scene.
         local function IsSceneShowing(name)
             return SCENE_MANAGER and SCENE_MANAGER.IsShowing
                 and SCENE_MANAGER:IsShowing(name) or false
@@ -129,7 +100,8 @@ function ADDON:PrintPointerProbe()
                 local owner = DIRECTIONAL_INPUT.inputObjects[index]
                 local control = DIRECTIONAL_INPUT.inputControls[index]
                 local name = control and control.GetName and control:GetName() or tostring(control)
-                self:Print(string.format("inputOwner[%d]=%s control=%s", index, tostring(owner == lib and "LibMousePointer" or owner), tostring(name)))
+                self:Print(string.format("inputOwner[%d]=%s control=%s", index,
+                    tostring(owner == lib and "LibMousePointer" or owner), tostring(name)))
             end
         end
     end, 5000)

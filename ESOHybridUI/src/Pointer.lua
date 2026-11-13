@@ -90,9 +90,6 @@ local function OnPointerFragmentState(_, newState)
 end
 
 function ADDON:StopPointer()
-    if pointerFragment and pointerFragment:IsShowing() then
-        pointerFragment:Hide()
-    end
     if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT.IsListening
         and DIRECTIONAL_INPUT:IsListening(pointerOwner) then
         DIRECTIONAL_INPUT:Deactivate(pointerOwner)

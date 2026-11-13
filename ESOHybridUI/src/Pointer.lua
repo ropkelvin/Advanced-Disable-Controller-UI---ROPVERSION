@@ -71,6 +71,20 @@ local function ReleaseSticks()
     rt.rawStickX, rt.rawStickY = 0, 0
 end
 
+-- Use LibMousePointer's documented hit-testing/click API. This is deliberately
+-- not a hand-written OnMouseUp/OnClicked dispatch.
+local rightClick = {
+    alignment = KEYBIND_STRIP_ALIGN_LEFT,
+    name = "Context menu",
+    keybind = "UI_SHORTCUT_RIGHT_STICK",
+    ethereal = true,
+    callback = function()
+        if LibMousePointer and LibMousePointer.InvokeClick then
+            LibMousePointer:InvokeClick(MOUSE_BUTTON_INDEX_RIGHT)
+        end
+    end,
+}
+
 local function RestoreLibraryDriver()
     if rt.libraryDriverSuppressed and LibMousePointer then
         LibMousePointer.UpdateDirectionalInput = rt.originalLibraryDriver
@@ -85,6 +99,9 @@ function ADDON:StopPointer()
     end
     ReleaseSticks()
     RestoreLibraryDriver()
+    if ADDON.SetKeybind then
+        ADDON:SetKeybind(rightClick, false)
+    end
 end
 
 local function OnFragmentState(_, newState)
@@ -98,12 +115,14 @@ local function OnFragmentState(_, newState)
         if not DIRECTIONAL_INPUT:IsListening(inputObject) then
             DIRECTIONAL_INPUT:Activate(inputObject, LibMousePointer.control)
         end
+        ADDON:SetKeybind(rightClick, true)
     elseif newState == SCENE_FRAGMENT_HIDING or newState == SCENE_FRAGMENT_HIDDEN then
         if DIRECTIONAL_INPUT:IsListening(inputObject) then
             DIRECTIONAL_INPUT:Deactivate(inputObject)
         end
         ReleaseSticks()
         RestoreLibraryDriver()
+        ADDON:SetKeybind(rightClick, false)
     end
 end
 

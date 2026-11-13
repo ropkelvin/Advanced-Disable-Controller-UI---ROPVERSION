@@ -1,8 +1,6 @@
--- Controller navigation of ZO_MenuBar tab bars (verified against ESO's
--- zo_menubar.lua): bar.m_object.m_buttons is an ordered list of
--- { buttonControl, poolKey, descriptor }, selected via GetSelectedDescriptor.
---   LB / RB : main menu categories (the category bar)
---   LT / RT : tabs of the current screen (topmost other tab bar)
+-- Controller navigation of native ZO_MenuBar tab bars.
+-- LB/RB select main-menu categories; LT/RT select a visible screen tab.
+-- All activation goes through ESO's menu-bar API, never synthetic mouse events.
 local ADDON = ESOHybridUI
 local rt = ADDON.rt
 
@@ -11,27 +9,26 @@ local function GetCategoryBar()
 end
 
 local function IsMenuBar(control)
-    local object = control.m_object
+    local object = control and control.m_object
     return type(object) == "table" and type(object.m_buttons) == "table"
-        and object.GetSelectedDescriptor ~= nil
+        and type(object.GetSelectedDescriptor) == "function"
 end
 
--- Click a tab like a player would (OnMouseUp with upInside) so the bar's
--- player-driven callbacks and click sound run; fall back to the API.
 local function Activate(bar, entry)
-    local control = entry[1]
-    local onUp = control:GetHandler("OnMouseUp")
-    if onUp then
-        onUp(control, MOUSE_BUTTON_INDEX_LEFT, true, false, false, false, false)
-        return true
+    if type(ZO_MenuBar_SelectDescriptor) ~= "function" then
+        return false
     end
-    return ZO_MenuBar_SelectDescriptor(bar, entry[3]) == true
+    -- Signature: bar, descriptor, skipAnimation, reselectIfSelected.
+    -- The function's return value is not a reliable success indicator.
+    ZO_MenuBar_SelectDescriptor(bar, entry[3], true, false)
+    return true
 end
 
 local function CycleBar(bar, direction)
     if not bar or not IsMenuBar(bar) then
         return false
     end
+
     local object = bar.m_object
     local buttons = object.m_buttons
     local count = #buttons
@@ -51,14 +48,12 @@ local function CycleBar(bar, direction)
     for offset = 1, count do
         local index = ((start - 1 + direction * offset) % count) + 1
         local entry = buttons[index]
-        local control = entry[1]
-        local buttonObject = control.m_object
-        if not control:IsHidden() and buttonObject
+        local control = entry and entry[1]
+        local buttonObject = control and control.m_object
+        if control and not control:IsHidden() and buttonObject
             and buttonObject:GetState() ~= BSTATE_DISABLED
             and entry[3] ~= selected then
-            if Activate(bar, entry) then
-                return true
-            end
+            return Activate(bar, entry)
         end
     end
     return false
@@ -67,23 +62,25 @@ end
 local function CountVisible(bar)
     local n = 0
     for _, entry in ipairs(bar.m_object.m_buttons) do
-        if not entry[1]:IsHidden() then
+        if entry[1] and not entry[1]:IsHidden() then
             n = n + 1
         end
     end
     return n
 end
 
--- Walks only visible controls and never into a bar. Runs on a button press,
--- not per frame, so the cost is irrelevant.
+-- Discover candidate tab bars in the active visible UI tree. This remains a
+-- heuristic because ESO screens do not all use ZO_MenuBar; unsupported bars
+-- are left to their native controls rather than receiving fake mouse clicks.
 local function Scan(control, best, depth, excluded)
-    if control:IsHidden() then
+    if not control or control:IsHidden() then
         return best
     end
     if control ~= excluded and IsMenuBar(control) then
         if CountVisible(control) >= 2 then
             local top, left = control:GetTop(), control:GetLeft()
-            if not best or top < best.top or (top == best.top and left < best.left) then
+            if top and left and (not best or top < best.top
+                or (top == best.top and left < best.left)) then
                 best = { bar = control, top = top, left = left }
             end
         end
@@ -105,7 +102,7 @@ end
 function ADDON:PrintTabProbe()
     local bar = FindTabBar()
     if not bar then
-        self:Print("No tab bar found on this screen.")
+        self:Print("No visible ZO_MenuBar tab bar found on this screen.")
         return
     end
     self:Print(string.format("Tab bar: %s | visible buttons=%d | selected=%s",

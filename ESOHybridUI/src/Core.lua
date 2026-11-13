@@ -3,7 +3,7 @@ ESOHybridUI = ESOHybridUI or {}
 local ADDON = ESOHybridUI
 
 ADDON.name = "ESOHybridUI"
-ADDON.version = "2.0.1"
+ADDON.version = "2.0.2"
 ADDON.defaults = {
     mode = "hybrid",
     pointerEnabled = true,
@@ -12,21 +12,17 @@ ADDON.defaults = {
     debug = false,
 }
 
--- Runtime state. Everything the hot paths need is a plain boolean here, so
--- the IsInGamepadPreferredMode wrapper never does string work or API calls.
--- (/reloadui rebuilds the Lua state, so nothing here needs to survive it.)
 ADDON.rt = {
     inWorld = false,
-    gamepadOn = false,            -- ESO "Gamepad Mode: On" (not Auto)
+    gamepadOn = false,
     lockPick = false,
-    restricted = false,           -- a restricted screen is showing/pending
-    menuScene = false,            -- current scene is a keyboard-style menu
-    keyboardPresentation = false, -- the single flag every module reads
+    restricted = false,
+    menuScene = false,
+    keyboardPresentation = false,
     hudRefreshPending = false,
 }
 local rt = ADDON.rt
 
--- ESO's original query, captured once at load.
 ADDON.NativeIsInGamepadPreferredMode = IsInGamepadPreferredMode
 
 function ADDON:IsHybrid()
@@ -46,8 +42,6 @@ end
 local function OnPlayerActivated()
     rt.inWorld = true
 
-    -- Installers are idempotent. Each runs isolated so one failure can never
-    -- stop the others, and is reported instead of failing silently.
     local installers = {
         "InitializeLockpick", "InitializeScenes", "InitializeKeybinds",
         "InitializePointer", "InitializeNavigation", "InitializePrompts",
@@ -62,17 +56,20 @@ local function OnPlayerActivated()
     ADDON:ApplyMode()
 
     if ADDON:IsHybrid() and not rt.gamepadOn and not rt.gamepadWarned then
-        ADDON:Print("Hybrid needs ESO Gamepad Mode set to On (Settings > Controls).")
+        ADDON:Print("Hybrid requires ESO Gamepad Mode set to On (Settings > Controls).")
         rt.gamepadWarned = true
     end
 end
 
 local function OnPlayerDeactivated()
-    -- Raised as the loading screen appears. Only touch our own state; do not
-    -- touch scenes, controls, HUD or the keybind strip during loading.
     rt.inWorld = false
     rt.lockPick = false
     rt.hudRefreshPending = true
+    if DIRECTIONAL_INPUT and rt.pointerInputObject and DIRECTIONAL_INPUT:IsListening(rt.pointerInputObject) then
+        DIRECTIONAL_INPUT:Deactivate(rt.pointerInputObject)
+    end
+    SetGamepadLeftStickConsumedByUI(false)
+    SetGamepadRightStickConsumedByUI(false)
     ADDON:ResetSceneState()
     ADDON:Recompute()
 end
@@ -98,7 +95,6 @@ local function OnAddOnLoaded(_, addonName)
         ADDON:HandleSlash(string.lower(argument or ""))
     end
 
-    -- Loaded while already in the world (rare, but cheap to support).
     if IsPlayerActivated and IsPlayerActivated() then
         OnPlayerActivated()
     end
@@ -112,16 +108,16 @@ function ADDON:HandleSlash(arg)
     elseif arg == "pointer" then
         self:PrintPointerProbe()
     elseif arg == "help" then
-        self:Print("Left stick: move pointer | A / L3: click | R3: right-click")
-        self:Print("Right stick: scroll | LB/RB: main menu category | LT/RT: screen tabs")
+        self:Print("Left stick: move pointer | A/click: LibMousePointer native select when UI_SHORTCUT_PRIMARY is free.")
+        self:Print("LB/RB: main menu category | LT/RT: detected ZO_MenuBar tabs.")
+        self:Print("Protected actions remain native; HUI does not simulate arbitrary mouse clicks.")
         self:Print("/hui hybrid | gamepad | status | tabs | pointer | /huidebug")
     else
-        local rtState = self.rt
         self:Print(string.format(
             "mode=%s inWorld=%s gamepadOn=%s keyboardUI=%s restricted=%s lockpick=%s scene=%s",
-            tostring(self.saved.mode), tostring(rtState.inWorld), tostring(rtState.gamepadOn),
-            tostring(rtState.keyboardPresentation), tostring(rtState.restricted),
-            tostring(rtState.lockPick), tostring(SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName())))
+            tostring(self.saved.mode), tostring(rt.inWorld), tostring(rt.gamepadOn),
+            tostring(rt.keyboardPresentation), tostring(rt.restricted), tostring(rt.lockPick),
+            tostring(SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName())))
         self:Print("/hui help for controls.")
     end
 end

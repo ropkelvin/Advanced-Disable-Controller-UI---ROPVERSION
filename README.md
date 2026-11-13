@@ -24,11 +24,11 @@ LibMousePointer is a required dependency. Its published API provides a scene fra
 - **Right-stick click:** HUI's optional context-click descriptor, using LibMousePointer's documented `InvokeClick(MOUSE_BUTTON_INDEX_RIGHT)` API, when the shortcut is available.
 - **LB/RB:** previous/next main-menu category while the native keyboard category bar is showing.
 - **LT/RT:** previous/next detected visible `ZO_MenuBar` tab on the current menu screen. Screens using other tab implementations are not covered yet.
-- **Right stick movement:** reserved while the pointer is active; generic scrolling is not implemented.
+- **Right stick movement:** ESO's normal UI directional-input fallback consumes it while in UI mode; generic pointer scrolling is not implemented.
 
 ### Stick ownership
 
-ESO's scene manager normally consumes both sticks while in UI mode. LibMousePointer is itself a `DIRECTIONAL_INPUT` owner and reads/consumes the left stick. HUI skips ESO's stock consume-both-sticks handler only while the pointer fragment is showing and the library is actively listening; HUI then reserves the right stick. When the pointer is not active, ESO's original handler is left untouched. This follows ESO's directional-input priority model and avoids running a second cursor implementation.
+ESO's `DIRECTIONAL_INPUT` system orders active input owners by their associated control's visual priority. LibMousePointer registers its high-priority cursor control and reads/consumes the left stick through `GetXY`. ESO's scene-manager owner then consumes any remaining stick input while in UI mode. HUI deliberately leaves this native fallback intact: if another UI control has priority over the pointer, the remaining stick must not leak into character movement. HUI does not replace or bypass ESO's directional-input dispatcher.
 
 ### Click safety
 

@@ -32,7 +32,7 @@ function ADDON:InitializeSettings()
         {
             type = "checkbox",
             name = "Controller pointer in menus",
-            tooltip = "Left stick moves a cursor, A or L3 clicks, R3 right-clicks, right stick scrolls.",
+            tooltip = "Left stick moves the cursor. LibMousePointer provides its native click action when the screen leaves the primary shortcut free.",
             getFunc = function() return self.saved.pointerEnabled end,
             setFunc = function(value)
                 self.saved.pointerEnabled = value

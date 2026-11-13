@@ -23,7 +23,7 @@ Pointer click is not guaranteed to perform every protected ESO action. Destructi
 - `/hui hybrid` — keyboard-style presentation with controller input.
 - `/hui gamepad` — native Gamepad presentation.
 - `/hui tabs` — inspect the detected tab bar.
-- `/hui pointer` — report LibMousePointer and cursor state.
+- `/hui pointer` — trace scene, fragment visibility, LibMousePointer ownership, left-stick input and cursor movement for three seconds.
 - `/huidebug` — capture 90 seconds of diagnostics. After it completes, run `/reloadui`, then upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUI.lua`.
 
 ## Requirements and safety

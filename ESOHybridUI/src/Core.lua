@@ -109,8 +109,8 @@ function ADDON:HandleSlash(arg)
     elseif arg == "pointer" then
         self:PrintPointerProbe()
     elseif arg == "help" then
-        self:Print("Left stick: move pointer | A/click: LibMousePointer native select when UI_SHORTCUT_PRIMARY is free.")
-        self:Print("LB/RB: main menu category | LT/RT: detected ZO_MenuBar tabs.")
+        self:Print("Left stick: move pointer | A: native LibMousePointer select when UI_SHORTCUT_PRIMARY is free.")
+        self:Print("R3: context click when available | LB/RB: categories | LT/RT: detected tabs.")
         self:Print("Protected actions remain native; HUI does not simulate arbitrary mouse clicks.")
         self:Print("/hui hybrid | gamepad | status | tabs | pointer | /huidebug")
     else

@@ -1,4 +1,4 @@
-# HUI - ESO Hybrid UI 2.1.2
+# HUI - ESO Hybrid UI 2.1.3
 
 Keyboard-style ESO menus with controller input. ESO's **Gamepad Mode must be On** (not Auto). HUI includes its own pointer; LibAddonMenu-2.0 is optional.
 
@@ -13,7 +13,7 @@ Keyboard-style ESO menus with controller input. ESO's **Gamepad Mode must be On*
 | LB / RB | Previous / next main-menu category while the native keyboard category bar is showing |
 | LT / RT | Previous / next detected visible `ZO_MenuBar` tab; other tab implementations are not covered |
 
-HUI owns its cursor and registers a high-priority directional-input owner. ESO's `DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)` consumes the queried device for that update, so HUI does not issue a redundant second consume. HUI also immediately mirrors the consumed state to ESO's `SetGamepadLeftStickConsumedByUI` input API, rather than waiting for the later ClientInput callback. Ownership starts when the pointer fragment begins showing.
+HUI owns its cursor and registers a high-priority directional-input owner. ESO's `DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)` consumes the queried device for that update, so HUI does not issue a redundant second consume. ESO's native `ClientInput` owner propagates the consumed state to the game input layer. Ownership starts when the pointer fragment begins showing.
 
 ## Click safety
 
@@ -25,7 +25,7 @@ HUI does not copy LibMousePointer's arbitrary handler dispatch. Its published so
 - `/hui hybrid` — keyboard-style presentation with controller input.
 - `/hui gamepad` — native Gamepad presentation.
 - `/hui tabs` — inspect the detected tab bar.
-- `/hui pointer` — trace HUI pointer ownership, stick input, cursor movement and movement events for three seconds.
+- `/hui pointer` — trace HUI pointer ownership, stick input, cursor movement, and the timing of any UI-mode movement event for three seconds.
 - `/huidebug` — capture 90 seconds of diagnostics. After it completes, run `/reloadui`, then upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUI.lua`.
 
 ## Requirements and safety

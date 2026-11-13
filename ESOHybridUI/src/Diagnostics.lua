@@ -29,26 +29,22 @@ local function NameOf(control)
 end
 
 local function Sample()
-    local pointer = rt.pointerOwner
-    local cursorX, cursorY = rt.pointerX, rt.pointerY
-    local hit = pointer and pointer.mouseOverControl
-    local listening = pointer ~= nil and DIRECTIONAL_INPUT ~= nil
-        and DIRECTIONAL_INPUT:IsListening(pointer)
-
     local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
     local primary = KEYBIND_STRIP and KEYBIND_STRIP.keybinds
         and KEYBIND_STRIP.keybinds.UI_SHORTCUT_PRIMARY
+    local leftStickAvailable = DIRECTIONAL_INPUT
+        and DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
+    local rightStickAvailable = DIRECTIONAL_INPUT
+        and DIRECTIONAL_INPUT:IsAvailable(ZO_DI_RIGHT_STICK)
 
     return string.format(
         "mode=%s inWorld=%s gamepadOn=%s keyboardUI=%s modeConflict=%s restricted=%s lockpick=%s menuScene=%s scene=%s "
-        .. "fragmentShowing=%s pointerListening=%s cursor=%s,%s hit=%s primaryHeld=%s "
-        .. "directionalListening=%s tabBar=%s",
+        .. "primaryHeld=%s leftStickAvailable=%s rightStickAvailable=%s tabBar=%s",
         tostring(ADDON.saved.mode), tostring(rt.inWorld), tostring(rt.gamepadOn),
         tostring(rt.keyboardPresentation), tostring(rt.modeOverrideConflict),
         tostring(rt.restricted), tostring(rt.lockPick), tostring(rt.menuScene),
-        tostring(sceneName), tostring(ADDON.PointerFragment and ADDON.PointerFragment:IsShowing()),
-        tostring(listening), tostring(cursorX), tostring(cursorY), NameOf(hit),
-        tostring(primary ~= nil), tostring(listening),
+        tostring(sceneName), tostring(primary ~= nil),
+        tostring(leftStickAvailable), tostring(rightStickAvailable),
         tostring(rt.lastTabBar or "not-probed"))
 end
 
@@ -68,7 +64,7 @@ function ADDON:StartDiagnostics()
         self:Print("Capture already running.")
         return
     end
-    self.saved.diagnostics = { version = 3, complete = false, log = {} }
+    self.saved.diagnostics = { version = 4, complete = false, log = {} }
     rt.diagActive = true
     Append("START", Sample())
 

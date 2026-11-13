@@ -24,10 +24,6 @@ function ADDON:Record(kind, ...)
     Append(kind, table.concat(parts, " "))
 end
 
-local function NameOf(control)
-    return control and control.GetName and control:GetName() or "nil"
-end
-
 local function Sample()
     local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
     local primary = KEYBIND_STRIP and KEYBIND_STRIP.keybinds

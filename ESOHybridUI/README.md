@@ -1,4 +1,4 @@
-# HUI - ESO Hybrid UI 2.0.5
+# HUI - ESO Hybrid UI 2.0.6
 
 Keyboard-style ESO menus with controller input. ESO's **Gamepad Mode must be On** (not Auto). Requires LibMousePointer by Votan; LibAddonMenu-2.0 is optional.
 
@@ -32,7 +32,7 @@ Pointer click is not guaranteed to perform every protected ESO action. Destructi
 - [LibMousePointer by Votan](https://www.esoui.com/downloads/info4518-libmousepointer.html), AddOnVersion 10000 or later.
 - Crown Store/market, Scrying, Tribute, Tamriel Tomes, reward previews and known special scenes are excluded from HUI pointer routing. Lockpicking retains ESO's native mode.
 - HUI yields its preferred-mode wrapper if another addon already owns `IsInGamepadPreferredMode`; it will not overwrite another addon's wrapper.
-- Scene polling is used to avoid wrapping scene-transition methods. There may be a short scene-transition interval before the new state is applied.
+- HUI registers callbacks on known scene objects and attaches the pointer fragment during SCENE_SHOWING, before the scene refreshes fragments. A lightweight poll discovers scenes registered later.
 - D-pad navigation, generic scrolling, drag/drop, all screen-specific actions, quickslot/player-interaction wheels, map-floor switching, crafting, bank/trade, resurrection and housing still require screen-by-screen testing.
 
 ## Development status

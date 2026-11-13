@@ -41,7 +41,7 @@ HUI no longer calls arbitrary `OnClicked`, `OnMouseDown` or `OnMouseUp` handlers
 - `/hui gamepad` — restore native Gamepad presentation.
 - `/hui tabs` — report the detected visible menu bar.
 - `/hui pointer` — report LibMousePointer availability and cursor position after five seconds.
-- `/huidebug` — capture scene, pointer, keybind and mode diagnostics to account-wide SavedVariables. After capture completes, use `/reloadui` and upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUISavedVariables.lua`.
+- `/huidebug` — capture scene, pointer, keybind and mode diagnostics to account-wide SavedVariables. After capture completes, use `/reloadui` and upload `Documents/Elder Scrolls Online/live/SavedVariables/ESOHybridUI.lua`.
 
 Optional settings are available through LibAddonMenu-2.0.
 

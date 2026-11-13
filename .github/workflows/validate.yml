@@ -13,21 +13,27 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y lua5.1 zip
-      - name: Check Lua syntax
+      - name: Check Lua syntax in the canonical addon
         run: |
-          find src -name '*.lua' -print0 | xargs -0 -r -n1 luac5.1 -p
-      - name: Check live API version metadata
-        run: grep -q '^## APIVersion: 101051$' ESOHybridUI.txt
+          find ESOHybridUI/src -name '*.lua' -print0 | xargs -0 -r -n1 luac5.1 -p
+      - name: Check addon metadata
+        run: |
+          grep -q '^## APIVersion: 101051$' ESOHybridUI/ESOHybridUI.txt
+          grep -q '^## Version: 2.0.2$' ESOHybridUI/ESOHybridUI.txt
       - name: Check manifest paths
         run: |
-          awk '!/^#/ && NF {print}' ESOHybridUI.txt | while read file; do
-            test -f "$file" || { echo "Missing manifest file: $file"; exit 1; }
+          awk '!/^#/ && NF {print}' ESOHybridUI/ESOHybridUI.txt | while read file; do
+            test -f "ESOHybridUI/$file" || { echo "Missing manifest file: $file"; exit 1; }
           done
-      - name: Build addon ZIP with the correct root folder
+      - name: Check required safety invariants
+        run: |
+          ! grep -R -E 'GetHandler\("(OnClicked|OnMouseDown|OnMouseUp)"\)' ESOHybridUI/src
+          ! grep -R -E 'lib\.InvokeClick[[:space:]]*=' ESOHybridUI/src
+      - name: Build the canonical addon ZIP
         run: |
           mkdir -p package/ESOHybridUI
-          cp ESOHybridUI.txt package/ESOHybridUI/
-          cp -R src package/ESOHybridUI/
+          cp ESOHybridUI/ESOHybridUI.txt package/ESOHybridUI/
+          cp -R ESOHybridUI/src package/ESOHybridUI/
           cd package
           zip -r ../HUI.zip ESOHybridUI
       - uses: actions/upload-artifact@v4

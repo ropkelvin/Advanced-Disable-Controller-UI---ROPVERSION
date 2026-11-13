@@ -106,6 +106,24 @@ function ADDON:PrintPointerProbe()
         self:Print(string.format("rawLeftStick=%.3f,%.3f cursor=%s,%s",
             rawX, rawY, tostring(x), tostring(y)))
 
+        -- Some ESO windows are shown as fragments/top-level UI while the
+        -- scene manager continues to report the HUD as its current scene.
+        local function IsSceneShowing(name)
+            return SCENE_MANAGER and SCENE_MANAGER.IsShowing
+                and SCENE_MANAGER:IsShowing(name) or false
+        end
+        local function IsFragmentShowing(fragment)
+            return fragment and fragment.IsShowing and fragment:IsShowing() or false
+        end
+        self:Print(string.format("mapScenes worldMap=%s gamepad_worldMap=%s mapFragment=%s gamepadMapInfo=%s",
+            tostring(IsSceneShowing("worldMap")),
+            tostring(IsSceneShowing("gamepad_worldMap")),
+            tostring(IsFragmentShowing(WORLD_MAP_FRAGMENT)),
+            tostring(IsFragmentShowing(GAMEPAD_WORLD_MAP_INFO_FRAGMENT))))
+        self:Print(string.format("inventoryFragments inventory=%s gamepadInventory=%s",
+            tostring(IsFragmentShowing(INVENTORY_FRAGMENT)),
+            tostring(IsFragmentShowing(GAMEPAD_INVENTORY_FRAGMENT))))
+
         if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT.inputObjects then
             for index = #DIRECTIONAL_INPUT.inputObjects, 1, -1 do
                 local owner = DIRECTIONAL_INPUT.inputObjects[index]

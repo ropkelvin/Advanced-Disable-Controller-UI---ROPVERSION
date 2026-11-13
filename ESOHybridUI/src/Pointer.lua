@@ -58,51 +58,82 @@ function ADDON:InitializePointer()
 end
 
 function ADDON:PrintPointerProbe()
-    self:Print("Move the left stick in this window for five seconds; checking scene and directional-input ownership.")
-    zo_callLater(function()
-        local lib = LibMousePointer
-        local x, y = lib and lib:GetCursorPosition()
-        local listening = DIRECTIONAL_INPUT and lib and DIRECTIONAL_INPUT:IsListening(lib)
+    local lib = LibMousePointer
+    local startScene = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
+    local startX, startY = lib and lib:GetCursorPosition()
+    local startTime = GetGameTimeMilliseconds()
+    local samples, shownSamples, listeningSamples = 0, 0, 0
+    local sceneChanges = 0
+    local previousScene = startScene
+    local maxStick = 0
+    local lastX, lastY = startX, startY
+    local lastScene = startScene
+    local lastFragmentShowing = false
+    local lastListening = false
+    local lastCursorExists = false
+
+    local function Sample()
         local sceneName = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
         local scene = sceneName and SCENE_MANAGER:GetScene(sceneName)
-        local sceneState = scene and scene:GetState()
-        local attached = scene and scene:HasFragment(MOUSE_POINTER_FRAGMENT)
-        local fragmentShowing = MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing()
-        local cursorExists = lib and lib.gamepadCursor and lib.gamepadCursor.cursorId ~= nil
+        local fragmentShowing = MOUSE_POINTER_FRAGMENT and MOUSE_POINTER_FRAGMENT:IsShowing() or false
+        local listening = lib and DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(lib) or false
+        local cursorExists = lib and lib.gamepadCursor and lib.gamepadCursor.cursorId ~= nil or false
+        local x, y = lib and lib:GetCursorPosition()
         local rawX = GetGamepadLeftStickX(GAMEPAD_INCLUDE_DEADZONE)
         local rawY = GetGamepadLeftStickY(GAMEPAD_INCLUDE_DEADZONE)
 
-        self:Print(string.format("scene=%s state=%s menu=%s restricted=%s",
-            tostring(sceneName), tostring(sceneState), tostring(ADDON.rt.menuScene), tostring(ADDON.rt.restricted)))
-        self:Print(string.format("fragmentAttached=%s fragmentShowing=%s cursorExists=%s listening=%s",
-            tostring(attached), tostring(fragmentShowing), tostring(cursorExists), tostring(listening)))
-        self:Print(string.format("rawLeftStick=%.3f,%.3f cursor=%s,%s",
-            rawX, rawY, tostring(x), tostring(y)))
-
-        local function IsSceneShowing(name)
-            return SCENE_MANAGER and SCENE_MANAGER.IsShowing
-                and SCENE_MANAGER:IsShowing(name) or false
+        samples = samples + 1
+        if fragmentShowing then shownSamples = shownSamples + 1 end
+        if listening then listeningSamples = listeningSamples + 1 end
+        if sceneName ~= previousScene then
+            sceneChanges = sceneChanges + 1
+            previousScene = sceneName
         end
-        local function IsFragmentShowing(fragment)
-            return fragment and fragment.IsShowing and fragment:IsShowing() or false
-        end
-        self:Print(string.format("mapScenes worldMap=%s gamepad_worldMap=%s mapFragment=%s gamepadMapInfo=%s",
-            tostring(IsSceneShowing("worldMap")),
-            tostring(IsSceneShowing("gamepad_worldMap")),
-            tostring(IsFragmentShowing(WORLD_MAP_FRAGMENT)),
-            tostring(IsFragmentShowing(GAMEPAD_WORLD_MAP_INFO_FRAGMENT))))
-        self:Print(string.format("inventoryFragments inventory=%s gamepadInventory=%s",
-            tostring(IsFragmentShowing(INVENTORY_FRAGMENT)),
-            tostring(IsFragmentShowing(GAMEPAD_INVENTORY_FRAGMENT))))
+        maxStick = math.max(maxStick, math.abs(rawX), math.abs(rawY))
+        lastX, lastY = x, y
+        lastScene = sceneName
+        lastFragmentShowing = fragmentShowing
+        lastListening = listening
+        lastCursorExists = cursorExists
 
-        if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT.inputObjects then
-            for index = #DIRECTIONAL_INPUT.inputObjects, 1, -1 do
-                local owner = DIRECTIONAL_INPUT.inputObjects[index]
-                local control = DIRECTIONAL_INPUT.inputControls[index]
-                local name = control and control.GetName and control:GetName() or tostring(control)
-                self:Print(string.format("inputOwner[%d]=%s control=%s", index,
-                    tostring(owner == lib and "LibMousePointer" or owner), tostring(name)))
+        return scene, sceneName
+    end
+
+    local initialScene, initialName = Sample()
+    self:Print(string.format(
+        "Pointer trace started: scene=%s state=%s fragment=%s listening=%s cursor=%s stick=%.3f,%.3f",
+        tostring(initialName), tostring(initialScene and initialScene:GetState()),
+        tostring(lastFragmentShowing), tostring(lastListening),
+        tostring(lastCursorExists),
+        GetGamepadLeftStickX(GAMEPAD_INCLUDE_DEADZONE),
+        GetGamepadLeftStickY(GAMEPAD_INCLUDE_DEADZONE)))
+    self:Print("Move the left stick now. Capturing scene, fragment, owner and cursor state for 3 seconds.")
+
+    EVENT_MANAGER:UnregisterForUpdate("ESOHybridUI_PointerProbe")
+    EVENT_MANAGER:RegisterForUpdate("ESOHybridUI_PointerProbe", 100, function()
+        Sample()
+        if GetGameTimeMilliseconds() - startTime >= 3000 then
+            EVENT_MANAGER:UnregisterForUpdate("ESOHybridUI_PointerProbe")
+            local delta = -1
+            if type(startX) == "number" and type(startY) == "number"
+                and type(lastX) == "number" and type(lastY) == "number" then
+                delta = math.sqrt((lastX - startX) ^ 2 + (lastY - startY) ^ 2)
+            end
+            ADDON:Print(string.format(
+                "Pointer trace: samples=%d sceneChanges=%d shown=%d listening=%d maxStick=%.3f cursorDelta=%.1f finalScene=%s fragment=%s listeningNow=%s cursorExists=%s",
+                samples, sceneChanges, shownSamples, listeningSamples, maxStick,
+                delta, tostring(lastScene), tostring(lastFragmentShowing),
+                tostring(lastListening), tostring(lastCursorExists)))
+
+            if DIRECTIONAL_INPUT and DIRECTIONAL_INPUT.inputObjects then
+                for index = #DIRECTIONAL_INPUT.inputObjects, 1, -1 do
+                    local owner = DIRECTIONAL_INPUT.inputObjects[index]
+                    local control = DIRECTIONAL_INPUT.inputControls[index]
+                    local name = control and control.GetName and control:GetName() or tostring(control)
+                    ADDON:Print(string.format("inputOwner[%d]=%s control=%s", index,
+                        tostring(owner == lib and "LibMousePointer" or owner), tostring(name)))
+                end
             end
         end
-    end, 5000)
+    end)
 end

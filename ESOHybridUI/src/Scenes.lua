@@ -20,9 +20,8 @@ local NON_MENU = {
 local RESTRICTED_TOKENS = {
     "scrying", "tribute", "market", "crown", "gildbarstore",
     "endeavorsealstore", "esoplusoffers", "giftinventory",
-    "dailyloginrewards", "dailies", "tamrieltomes", "rewardpreview",
+    "dailyloginrewards", "tamrieltomes", "rewardpreview",
     "promotional", "chapterupgrade", "dyestampconfirmation",
-    "veterancy", "store",
 }
 
 local nameInfo = {}

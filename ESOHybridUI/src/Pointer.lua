@@ -16,6 +16,10 @@ local initialX, initialY
 local lastMoveTime = 0
 local cursorSpeed = 3
 local pointerTopLevel
+local pointerUpdateCount = 0
+local lastAvailableBefore, lastAvailableAfterGetXY, lastAvailableAfterConsume
+local lastInputX, lastInputY = 0, 0
+local lastInputScene
 
 local function UpdateCursorInfo()
     if not cursorId then
@@ -27,16 +31,25 @@ local function UpdateCursorInfo()
 end
 
 function pointerOwner:UpdateDirectionalInput()
-    if not DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK) then
+    pointerUpdateCount = pointerUpdateCount + 1
+    lastInputScene = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
+    lastAvailableBefore = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
+    if not lastAvailableBefore then
+        lastInputX, lastInputY = 0, 0
+        lastAvailableAfterGetXY = nil
+        lastAvailableAfterConsume = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
         return
     end
 
     local dx, dy = DIRECTIONAL_INPUT:GetXY(ZO_DI_LEFT_STICK)
+    lastInputX, lastInputY = dx, dy
+    lastAvailableAfterGetXY = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
 
     -- Claim the left stick while this pointer owner is active. This is the
     -- critical difference from LibMousePointer's current implementation:
     -- reading GetXY alone does not claim the input for this owner.
     DIRECTIONAL_INPUT:Consume(ZO_DI_LEFT_STICK)
+    lastAvailableAfterConsume = DIRECTIONAL_INPUT:IsAvailable(ZO_DI_LEFT_STICK)
 
     dx, dy = zo_clampLength2D(dx, dy, 1.5)
     if dx == 0 and dy == 0 then
@@ -150,6 +163,7 @@ function ADDON:PrintPointerProbe()
     local startScene = SCENE_MANAGER and SCENE_MANAGER:GetCurrentSceneName()
     local startX, startY = cursorX, cursorY
     local startTime = GetGameTimeMilliseconds()
+    local startPointerUpdates = pointerUpdateCount
     local samples, shownSamples, listeningSamples = 0, 0, 0
     local sceneChanges, movementEvents = 0, 0
     local previousScene = startScene
@@ -212,6 +226,11 @@ function ADDON:PrintPointerProbe()
                 tostring(DIRECTIONAL_INPUT and DIRECTIONAL_INPUT:IsListening(pointerOwner)),
                 tostring(cursorId ~= nil)))
             ADDON:Print("ownersWhileListening=" .. tostring(ownerSnapshot or "none"))
+            ADDON:Print(string.format(
+                "pointerCallback: calls=%d lastScene=%s input=%.3f,%.3f availableBefore=%s afterGetXY=%s afterConsume=%s",
+                pointerUpdateCount - startPointerUpdates, tostring(lastInputScene),
+                lastInputX, lastInputY, tostring(lastAvailableBefore),
+                tostring(lastAvailableAfterGetXY), tostring(lastAvailableAfterConsume)))
         end
     end)
 end

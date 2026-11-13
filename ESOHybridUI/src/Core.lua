@@ -3,11 +3,9 @@ ESOHybridUI = ESOHybridUI or {}
 local ADDON = ESOHybridUI
 
 ADDON.name = "ESOHybridUI"
-ADDON.version = "2.1.3"
+ADDON.version = "2.2.0"
 ADDON.defaults = {
     mode = "hybrid",
-    pointerEnabled = true,
-    pointerSpeed = 3,
     controllerPrompts = true,
     debug = false,
 }
@@ -43,7 +41,7 @@ local function OnPlayerActivated()
     rt.inWorld = true
 
     local installers = {
-        "InitializeLockpick", "InitializePointer", "InitializeScenes",
+        "InitializeLockpick", "InitializeScenes",
         "InitializeKeybinds", "InitializeNavigation", "InitializePrompts",
         "InitializeSettings",
     }
@@ -65,9 +63,6 @@ local function OnPlayerDeactivated()
     rt.inWorld = false
     rt.lockPick = false
     rt.hudRefreshPending = true
-    if ADDON.StopPointer then
-        ADDON:StopPointer()
-    end
     ADDON:ResetSceneState()
     ADDON:ApplyMode()
 end
@@ -103,13 +98,11 @@ function ADDON:HandleSlash(arg)
         self:SetMode(arg)
     elseif arg == "tabs" then
         self:PrintTabProbe()
-    elseif arg == "pointer" then
-        self:PrintPointerProbe()
     elseif arg == "help" then
-        self:Print("Left stick: move pointer | A/B: use native screen keybinds and actions.")
-        self:Print("LB/RB: categories | LT/RT: detected tabs.")
-        self:Print("HUI does not synthesize mouse clicks or invoke arbitrary control handlers.")
-        self:Print("/hui hybrid | gamepad | status | tabs | pointer | /huidebug")
+        self:Print("Gamepad Mode: On | ESO-native controller navigation | keyboard-style presentation.")
+        self:Print("LB/RB: categories | LT/RT: detected tabs where supported.")
+        self:Print("HUI does not emulate mouse clicks or bypass protected actions.")
+        self:Print("/hui hybrid | gamepad | status | tabs | /huidebug")
     else
         self:Print(string.format(
             "mode=%s inWorld=%s gamepadOn=%s keyboardUI=%s restricted=%s lockpick=%s scene=%s",
